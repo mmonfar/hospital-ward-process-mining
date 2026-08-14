@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -sL -o Essentials.pdf \"https://people.cs.gmu.edu/~sean/book/metaheuristics/Essentials.pdf\")",
+      "Bash(python -c \"import pypdf; print\\('pypdf ok'\\)\")",
+      "Bash(python -c \"import pdfplumber; print\\('pdfplumber ok'\\)\")",
+      "Bash(pdftotext -layout Essentials.pdf Essentials.txt)",
+      "Bash(python -c ' *)",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(git add *)",
+      "Bash(git -c commit.gpgsign=false commit -q -m 'Baseline: existing three.js hospital ward motion prototype *)"
+    ]
+  }
+}

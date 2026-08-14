@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hospital Process Mining — Physician Motion</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js",
+    "three/addons/exporters/OBJExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js",
+    "three/addons/exporters/GLTFExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+    "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js": "sha384-nbwtoZENJD3Vq+ACK0CuGQdPMuDWHkamC2KJD70EV5nfg6jQjfppKOea07YJN+N3",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js": "sha384-VofkvpG6HERhFCYbsUOHeNXBCqID2nfqkQqnVzE1jc/oPcz+qJ13ADdXH08hE+cQ"
+  }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  three-d-stage:not(:defined) { visibility: hidden; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font-family: 'Inter', -apple-system, sans-serif; background: #eef1f0; }
+  a { color: #16777a; } a:hover { color: #106064; }
+  #ui { position: fixed; inset: 0; pointer-events: none; z-index: 10; display: flex; flex-direction: column; justify-content: space-between; }
+  #header { pointer-events: auto; padding: 16px 20px 0 20px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  #title-block h1 { margin: 0; font-size: 17px; font-weight: 700; color: #1c2b30; letter-spacing: -0.01em; }
+  #title-block p { margin: 3px 0 0 0; font-size: 12px; color: #5b6d72; max-width: 420px; line-height: 1.4; }
+  .panel { pointer-events: auto; background: rgba(255,255,255,0.95); backdrop-filter: blur(6px); border-radius: 10px; box-shadow: 0 2px 12px rgba(20,40,40,0.1); }
+  #left-col { position: fixed; left: 20px; top: 76px; bottom: 20px; width: 250px; display: flex; flex-direction: column; gap: 12px; pointer-events: none; overflow-y: auto; }
+  #left-col .panel { pointer-events: auto; padding: 12px; }
+  #floormap h2, #import-panel h2, #actor-panel h2 { margin: 0 0 8px 0; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #5b6d72; }
+  .floor-row { margin-bottom: 8px; }
+  .floor-row .fl-label { font-size: 10.5px; color: #8a9599; margin-bottom: 4px; }
+  .ward-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+  .ward-tile { border: 1px solid rgba(20,40,40,0.14); border-radius: 6px; padding: 6px 4px; font-size: 10px; text-align: center; cursor: pointer; background: #f7f9f8; color: #33454b; line-height: 1.3; }
+  .ward-tile:hover { border-color: #16777a; }
+  .ward-tile.active { background: #16777a; color: #fff; border-color: #16777a; font-weight: 600; }
+  .ward-tile.visited:not(.active) { border-color: #16777a; box-shadow: inset 0 0 0 1px #16777a; }
+  #import-panel { font-size: 12px; }
+#floormap, #actor-panel, #import-panel { flex: none; }
+  #import-panel button, #actor-panel select, #import-panel select { font-family: inherit; }
+  .btn { appearance: none; border: none; border-radius: 7px; background: #16777a; color: #fff; font-size: 11.5px; font-weight: 600; padding: 7px 10px; cursor: pointer; }
+  .btn:hover { background: #106064; }
+  .btn.secondary { background: #eef1f0; color: #26333a; border: 1px solid rgba(20,40,40,0.14); }
+  .btn.secondary:hover { background: #e2e8e6; }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+  #file-row { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  #map-table { width: 100%; border-collapse: collapse; font-size: 10.5px; margin-bottom: 8px; }
+  #map-table th, #map-table td { text-align: left; padding: 3px 2px; border-bottom: 1px solid rgba(20,40,40,0.08); }
+  #map-table select { width: 100%; font-size: 10.5px; padding: 2px; }
+  #loc-map-list { max-height: 150px; overflow-y: auto; margin-bottom: 8px; }
+  .loc-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; align-items: center; margin-bottom: 4px; font-size: 10px; }
+  .loc-row select { font-size: 10px; padding: 2px; }
+  .loc-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #33454b; }
+  #import-status { font-size: 10.5px; color: #5b6d72; margin-top: 4px; line-height: 1.4; }
+  #actor-panel select { width: 100%; padding: 6px; border-radius: 6px; border: 1px solid rgba(20,40,40,0.16); font-size: 12px; margin-bottom: 8px; }
+  #speed-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  #speed-row input[type=range] { flex: 1; accent-color: #16777a; }
+  #speed-val { font-size: 11px; color: #33454b; min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+  .stat { background: #f4f7f6; border-radius: 7px; padding: 6px 8px; }
+  .stat .lab { font-size: 9.5px; color: #8a9599; text-transform: uppercase; letter-spacing: 0.03em; }
+  .stat .val { font-size: 14px; font-weight: 700; color: #16474a; font-variant-numeric: tabular-nums; }
+  #bottom { pointer-events: none; display: flex; gap: 16px; align-items: flex-end; padding: 0 20px 20px 290px; }
+  #timeline-panel { pointer-events: auto; flex: 1 1 auto; padding: 12px 16px; }
+  #time-row { display: flex; align-items: center; gap: 12px; }
+  #play-btn { appearance: none; border: none; border-radius: 8px; width: 32px; height: 32px; background: #16777a; color: #fff; font-size: 13px; cursor: pointer; flex: none; display: flex; align-items: center; justify-content: center; }
+  #play-btn:hover { background: #106064; }
+  #clock { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 14px; color: #1c2b30; min-width: 74px; }
+  #slider { flex: 1; accent-color: #16777a; height: 4px; }
+  #ward-label { font-size: 11px; color: #5b6d72; margin-top: 6px; }
+  #log-panel { pointer-events: auto; width: 300px; max-height: 190px; overflow-y: auto; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+  .log-item { font-size: 11px; line-height: 1.35; padding: 5px 7px; border-radius: 6px; color: #9aa3a5; cursor: pointer; border-left: 3px solid transparent; }
+  .log-item:hover { background: rgba(22,119,122,0.08); }
+  .log-item.done { color: #33454b; }
+  .log-item.current { background: rgba(22,119,122,0.1); color: #12474a; font-weight: 600; border-left-color: #16777a; }
+  .log-time { font-variant-numeric: tabular-nums; opacity: 0.85; margin-right: 6px; }
+  .log-meta { display: block; font-size: 9.5px; color: #8a9599; margin-top: 1px; }
+  #empty-note { pointer-events: none; position: fixed; left: 290px; right: 20px; top: 46%; text-align: center; font-size: 13px; color: #7c8a8e; }
+</style>
+</head>
+<body>
+
+<three-d-stage id="stage" name="hospital-ward-scene" background="#eef1f0"></three-d-stage>
+<script src="./three-d-stage.js"></script>
+
+<div id="ui">
+  <div id="header">
+    <div id="title-block">
+      <h1>Hospital Process Mining — Physician Motion</h1>
+      <p>Import a case log to see how far, and how long, clinicians walk between wards when subspecialties don't coordinate.</p>
+    </div>
+  </div>
+
+  <div id="empty-note">Load the sample data or import a CSV to begin →</div>
+  <div id="bottom">
+    <div id="timeline-panel" class="panel">
+      <div id="time-row">
+        <button id="play-btn" aria-label="Play">▶</button>
+        <div id="clock">—</div>
+        <input id="slider" type="range" min="0" max="1" step="1" value="0" disabled>
+      </div>
+      <div id="ward-label">No data loaded</div>
+    </div>
+    <div id="log-panel" class="panel"></div>
+  </div>
+</div>
+
+<div id="left-col">
+  <div id="floormap" class="panel"><h2>Hospital map</h2><div id="floor-rows"></div></div>
+  <div id="actor-panel" class="panel">
+    <h2>Motion &amp; speed</h2>
+    <select id="actor-select" disabled><option>No data loaded</option></select>
+    <div id="speed-row">
+      <span style="font-size:11px;color:#5b6d72">Walk speed</span>
+      <input id="speed-slider" type="range" min="0.3" max="2.0" step="0.1" value="1.2">
+      <span id="speed-val">1.2 m/s</span>
+    </div>
+    <div class="stat-grid">
+      <div class="stat"><div class="lab">Distance so far</div><div class="val" id="stat-dist-now">—</div></div>
+      <div class="stat"><div class="lab">Motion time so far</div><div class="val" id="stat-time-now">—</div></div>
+      <div class="stat"><div class="lab">Total distance</div><div class="val" id="stat-dist-total">—</div></div>
+      <div class="stat"><div class="lab">Total motion time</div><div class="val" id="stat-time-total">—</div></div>
+      <div class="stat"><div class="lab">Wards visited</div><div class="val" id="stat-wards">—</div></div>
+      <div class="stat"><div class="lab">Floor changes</div><div class="val" id="stat-floors">—</div></div>
+    </div>
+  </div>
+  <div id="import-panel" class="panel">
+    <h2>Import case log</h2>
+    <div id="file-row">
+      <label class="btn secondary" for="csv-file" style="display:inline-block">Choose CSV</label>
+      <input type="file" id="csv-file" accept=".csv" style="display:none">
+      <button class="btn secondary" id="sample-btn">Load sample</button>
+    </div>
+    <div id="mapping-area"></div>
+    <div id="import-status"></div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+const stage = document.getElementById('stage');
+await stage.ready;
+
+// ---------- hospital layout ----------
+const WARDS = [
+  { id: '1A', name: 'Cardiology', floor: 0 }, { id: '1B', name: 'Nephrology', floor: 0 }, { id: '1C', name: 'General Medicine', floor: 0 },
+  { id: '2A', name: 'Surgical', floor: 1 },   { id: '2B', name: 'ICU', floor: 1 },        { id: '2C', name: 'Recovery', floor: 1 },
+  { id: '3A', name: 'Oncology', floor: 2 },   { id: '3B', name: 'Renal', floor: 2 },       { id: '3C', name: 'Rehabilitation', floor: 2 },
+];
+const FLOOR_LABELS = ['Floor 1', 'Floor 2', 'Floor 3'];
+const floorCounters = [0, 0, 0];
+WARDS.forEach(w => { w.indexOnFloor = floorCounters[w.floor]++; });
+const WARD_BY_ID = Object.fromEntries(WARDS.map(w => [w.id, w]));
+const BED_LOCAL = [
+  { x: -4, z: -2.2 }, { x: 0, z: -2.2 }, { x: 4, z: -2.2 },
+  { x: -4, z: 2.2 },  { x: 0, z: 2.2 },  { x: 4, z: 2.2 },
+];
+function globalPos(wardId, bedIndex) {
+  const w = WARD_BY_ID[wardId];
+  const x = w.indexOnFloor * 32, y = w.floor * 4.2;
+  if (bedIndex == null) return new THREE.Vector3(x, y, 0);
+  const bp = BED_LOCAL[bedIndex];
+  return new THREE.Vector3(x + bp.x, y, bp.z);
+}
+function localMarkerPos(bedIndex) {
+  if (bedIndex == null) return new THREE.Vector3(-4.6, 0.02, 0.9);
+  const bp = BED_LOCAL[bedIndex];
+  const facing = bp.z < 0 ? 1 : -1;
+  return new THREE.Vector3(bp.x, 0.02, bp.z + facing * 0.3);
+}
+
+// ---------- floor map UI ----------
+const floorRows = document.getElementById('floor-rows');
+FLOOR_LABELS.forEach((label, fi) => {
+  const row = document.createElement('div');
+  row.className = 'floor-row';
+  row.innerHTML = `<div class="fl-label">${label}</div>`;
+  const tiles = document.createElement('div');
+  tiles.className = 'ward-tiles';
+  WARDS.filter(w => w.floor === fi).forEach(w => {
+    const t = document.createElement('div');
+    t.className = 'ward-tile'; t.dataset.ward = w.id;
+    t.innerHTML = `${w.id}<br>${w.name}`;
+    t.addEventListener('click', () => selectWard(w.id));
+    tiles.appendChild(t);
+  });
+  row.appendChild(tiles);
+  floorRows.appendChild(row);
+});
+function refreshWardTiles(visitedSet) {
+  document.querySelectorAll('.ward-tile').forEach(t => {
+    t.classList.toggle('active', t.dataset.ward === displayedWardId);
+    t.classList.toggle('visited', visitedSet ? visitedSet.has(t.dataset.ward) : false);
+  });
+}
+
+// ---------- materials ----------
+const PALETTE = {
+  floor: 0xe7e2d8, wall: 0xcfd8d6, bedFrame: 0xb9c0c2, mattress: 0xf5f2ea,
+  pillow: 0xffffff, curtainFabric: 0x6f93a0, curtainTrack: 0x8a8f91,
+  deskWood: 0xa9835a, deskTop: 0xdcd3c4, chair: 0x35424a, monitorScreen: 0x1c2b30, ivPole: 0x9aa3a5,
+};
+const mat = {};
+function getMat(key, color, opts) { if (!mat[key]) mat[key] = new THREE.MeshStandardMaterial(Object.assign({ color, name: key }, opts)); return mat[key]; }
+
+function buildWardArchitecture() {
+  const ward = new THREE.Group(); ward.name = 'ward';
+  const ROOM_W = 12, ROOM_D = 7, WALL_H = 2.6;
+  const floor = new THREE.Mesh(new THREE.BoxGeometry(ROOM_W, 0.08, ROOM_D), getMat('floor', PALETTE.floor, { roughness: 0.85 }));
+  floor.name = 'floor'; floor.position.y = -0.04; ward.add(floor);
+  function wall(w, h, d, x, y, z, name) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), getMat('wall', PALETTE.wall, { roughness: 0.95 }));
+    m.name = name; m.position.set(x, y, z); ward.add(m);
+  }
+  wall(ROOM_W, WALL_H, 0.15, 0, WALL_H / 2, -ROOM_D / 2, 'wall_north');
+  wall(ROOM_W, WALL_H, 0.15, 0, WALL_H / 2, ROOM_D / 2, 'wall_south');
+  wall(0.15, WALL_H, ROOM_D, ROOM_W / 2, WALL_H / 2, 0, 'wall_east');
+
+  const bedMeta = [
+    { x: -4, z: -2.5, facing: 1 }, { x: 0, z: -2.5, facing: 1 }, { x: 4, z: -2.5, facing: 1 },
+    { x: -4, z: 2.5, facing: -1 }, { x: 0, z: 2.5, facing: -1 }, { x: 4, z: 2.5, facing: -1 },
+  ];
+  bedMeta.forEach((p, i) => {
+    const g = new THREE.Group(); g.name = 'bed_' + i; g.position.set(p.x, 0, p.z);
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.42, 1.95), getMat('bedFrame', PALETTE.bedFrame, { roughness: 0.5, metalness: 0.3 }));
+    frame.name = 'bedFrame_' + i; frame.position.y = 0.21; g.add(frame);
+    const mattress = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.18, 1.88), getMat('mattress', PALETTE.mattress, { roughness: 0.9 }));
+    mattress.name = 'mattress_' + i; mattress.position.y = 0.42 + 0.09; g.add(mattress);
+    const pillow = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.12, 0.32), getMat('pillow', PALETTE.pillow, { roughness: 0.95 }));
+    pillow.name = 'pillow_' + i; pillow.position.set(0, 0.42 + 0.18 + 0.06, -p.facing * 0.72); g.add(pillow);
+    const head = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.75, 0.06), getMat('bedFrame', PALETTE.bedFrame, { roughness: 0.5, metalness: 0.3 }));
+    head.name = 'headboard_' + i; head.position.set(0, 0.375, -p.facing * 0.97); g.add(head);
+    const foot = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.5, 0.05), getMat('bedFoot', PALETTE.ivPole, { roughness: 0.5, metalness: 0.35 }));
+    foot.name = 'footboard_' + i; foot.position.set(0, 0.25, p.facing * 0.98); g.add(foot);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1.5, 10), getMat('ivPole', PALETTE.ivPole, { roughness: 0.4, metalness: 0.6 }));
+    pole.name = 'ivPole_' + i; pole.position.set(0.65, 0.75, -p.facing * 0.9); g.add(pole);
+    const bag = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 0.04), getMat('ivBag', 0xdfeaf0, { roughness: 0.3, transparent: true, opacity: 0.85 }));
+    bag.name = 'ivBag_' + i; bag.position.set(0.65, 1.38, -p.facing * 0.9); g.add(bag);
+    ward.add(g);
+  });
+  [-2, 2].forEach((x, idx) => {
+    [[-2.5, 'n' + idx], [2.5, 's' + idx]].forEach(([z, tag]) => {
+      const g = new THREE.Group(); g.name = 'curtain_' + tag; g.position.set(x, 0, z);
+      const track = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 2.1), getMat('curtainTrack', PALETTE.curtainTrack, { roughness: 0.4, metalness: 0.6 }));
+      track.name = 'curtainTrack_' + tag; track.position.y = 2.15; g.add(track);
+      const panel = new THREE.Mesh(new THREE.BoxGeometry(0.03, 1.9, 0.85), getMat('curtainFabric', PALETTE.curtainFabric, { roughness: 0.9 }));
+      panel.name = 'curtainFabric_' + tag; panel.position.set(0, 1.05, -0.55); g.add(panel);
+      ward.add(g);
+    });
+  });
+  const station = new THREE.Group(); station.name = 'nurseStation'; station.position.set(-5.3, 0, 0);
+  const desk = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.75, 1.6), getMat('deskWood', PALETTE.deskWood, { roughness: 0.6 }));
+  desk.name = 'deskBody'; desk.position.y = 0.375; station.add(desk);
+  const deskTop = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.05, 1.7), getMat('deskTop', PALETTE.deskTop, { roughness: 0.5 }));
+  deskTop.name = 'deskTop'; deskTop.position.y = 0.775; station.add(deskTop);
+  const monitor = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.24, 0.03), getMat('monitorScreen', PALETTE.monitorScreen, { roughness: 0.3 }));
+  monitor.name = 'monitorScreen'; monitor.position.set(0.15, 1.0, 0.4); monitor.rotation.y = Math.PI / 2; station.add(monitor);
+  const chairSeat = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.06, 20), getMat('chair', PALETTE.chair, { roughness: 0.7 }));
+  chairSeat.name = 'chairSeat'; chairSeat.position.set(0.9, 0.46, 0); station.add(chairSeat);
+  const chairBack = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.4, 0.4), getMat('chair', PALETTE.chair, { roughness: 0.7 }));
+  chairBack.name = 'chairBack'; chairBack.position.set(1.1, 0.7, 0); station.add(chairBack);
+  const chairPost = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.4, 10), getMat('chairMetal', 0x9aa3a5, { roughness: 0.4, metalness: 0.6 }));
+  chairPost.name = 'chairPost'; chairPost.position.set(0.9, 0.22, 0); station.add(chairPost);
+  ward.add(station);
+  return ward;
+}
+
+// ---------- marker + trail ----------
+const root = new THREE.Group();
+const marker = new THREE.Group(); marker.name = 'marker';
+const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.14, 0.42, 6, 12), new THREE.MeshStandardMaterial({ color: 0x16777a, roughness: 0.5, name: 'markerBody' }));
+body.name = 'markerBody'; body.position.y = 0.35; marker.add(body);
+const head = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), new THREE.MeshStandardMaterial({ color: 0x16777a, roughness: 0.5, name: 'markerHead' }));
+head.name = 'markerHead'; head.position.y = 0.67; marker.add(head);
+marker.visible = false;
+const trailMesh = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: 0x16777a, transparent: true, opacity: 0.55, name: 'trail' }));
+trailMesh.name = 'trailMesh'; trailMesh.visible = false;
+
+let currentWard = null, displayedWardId = null, lastVisitedSet = null;
+function selectWard(wardId) {
+  displayedWardId = wardId;
+  if (currentWard) root.remove(currentWard);
+  currentWard = buildWardArchitecture();
+  root.add(currentWard);
+  root.add(marker); root.add(trailMesh);
+  stage.setObject(root);
+  const w = WARD_BY_ID[wardId];
+  document.getElementById('ward-label').textContent = `Viewing ${w.id} — ${w.name} · ${FLOOR_LABELS[w.floor]}`;
+  refreshWardTiles(lastVisitedSet);
+}
+selectWard('1A');
+
+function updateTrail(points) {
+  if (points.length < 2) { trailMesh.visible = false; return; }
+  const curve = new THREE.CatmullRomCurve3(points, false, 'catmullrom', 0.1);
+  const geo = new THREE.TubeGeometry(curve, Math.max(8, points.length * 6), 0.03, 6, false);
+  trailMesh.geometry.dispose(); trailMesh.geometry = geo; trailMesh.visible = true;
+}
+
+// ---------- CSV parsing ----------
+function parseCSV(text) {
+  const rows = []; let row = [], field = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) { if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else inQ = false; } else field += c; }
+    else if (c === '"') inQ = true;
+    else if (c === ',') { row.push(field); field = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(field); field = ''; rows.push(row); row = []; }
+    else field += c;
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(r => !(r.length === 1 && r[0] === ''));
+}
+function parseTimeToMinutes(str) {
+  str = (str || '').trim();
+  let m = str.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if (m) return (+m[1]) * 60 + (+m[2]) + (m[3] ? (+m[3]) / 60 : 0);
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) return d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60;
+  return NaN;
+}
+function guessLocation(raw) {
+  const m = (raw || '').match(/([1-3][A-C])[^0-9]*(\d)/i);
+  if (m && WARD_BY_ID[m[1].toUpperCase()]) return { wardId: m[1].toUpperCase(), bedIndex: Math.max(0, Math.min(5, (+m[2]) - 1)) };
+  return null;
+}
+
+const ROLE_OPTIONS = ['Ignore', 'Time', 'Actor', 'Activity', 'Location', 'Attribute'];
+let csvHeaders = [], csvRows = [], colRoles = [], locMap = {};
+let DATASET = new Map(); // actor -> sorted resolved events
+
+const mappingArea = document.getElementById('mapping-area');
+const importStatus = document.getElementById('import-status');
+
+function autoDetectRole(h) {
+  const s = h.toLowerCase();
+  if (/time|timestamp/.test(s)) return 'Time';
+  if (/actor|physician|clinician|staff|nurse|user|provider/.test(s)) return 'Actor';
+  if (/activity|action|task|event/.test(s)) return 'Activity';
+  if (/location|ward|bed|room|place/.test(s)) return 'Location';
+  return 'Attribute';
+}
+
+function loadCSVText(text) {
+  const rows = parseCSV(text);
+  csvHeaders = rows[0]; csvRows = rows.slice(1);
+  colRoles = csvHeaders.map(autoDetectRole);
+  // ensure only one Time/Actor/Location — demote extras to Attribute
+  ['Time', 'Actor', 'Location'].forEach(role => {
+    let seen = false;
+    colRoles = colRoles.map(r => { if (r === role) { if (seen) return 'Attribute'; seen = true; } return r; });
+  });
+  locMap = {};
+  renderMappingUI();
+}
+
+function renderMappingUI() {
+  let html = '<table id="map-table"><tr><th>Column</th><th>Role</th></tr>';
+  csvHeaders.forEach((h, i) => {
+    html += `<tr><td>${h}</td><td><select data-col="${i}" class="role-select">${ROLE_OPTIONS.map(r => `<option value="${r}" ${r === colRoles[i] ? 'selected' : ''}>${r}</option>`).join('')}</select></td></tr>`;
+  });
+  html += '</table>';
+  const locIdx = colRoles.indexOf('Location');
+  if (locIdx >= 0) {
+    const distinct = [...new Set(csvRows.map(r => r[locIdx]))];
+    html += '<div style="font-size:10.5px;color:#5b6d72;margin-bottom:4px">Map location values to ward + bed</div><div id="loc-map-list">';
+    distinct.forEach(val => {
+      const guess = locMap[val] || guessLocation(val) || { wardId: WARDS[0].id, bedIndex: 0 };
+      locMap[val] = guess;
+      html += `<div class="loc-row"><span title="${val}">${val}</span>
+        <select class="loc-ward" data-val="${encodeURIComponent(val)}">${WARDS.map(w => `<option value="${w.id}" ${w.id === guess.wardId ? 'selected' : ''}>${w.id} ${w.name}</option>`).join('')}</select>
+        <select class="loc-bed" data-val="${encodeURIComponent(val)}">${BED_LOCAL.map((b, i) => `<option value="${i}" ${i === guess.bedIndex ? 'selected' : ''}>Bed ${i + 1}</option>`).join('')}<option value="none" ${guess.bedIndex == null ? 'selected' : ''}>Ward (general)</option></select>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  html += `<button class="btn" id="build-btn" style="width:100%">Build timeline</button>`;
+  mappingArea.innerHTML = html;
+
+  mappingArea.querySelectorAll('.role-select').forEach(sel => sel.addEventListener('change', (e) => {
+    const i = +e.target.dataset.col, val = e.target.value;
+    if (val === 'Time' || val === 'Actor' || val === 'Location') colRoles = colRoles.map((r, j) => (j !== i && r === val) ? 'Attribute' : r);
+    colRoles[i] = val;
+    renderMappingUI();
+  }));
+  mappingArea.querySelectorAll('.loc-ward').forEach(sel => sel.addEventListener('change', (e) => {
+    const val = decodeURIComponent(e.target.dataset.val);
+    locMap[val].wardId = e.target.value;
+  }));
+  mappingArea.querySelectorAll('.loc-bed').forEach(sel => sel.addEventListener('change', (e) => {
+    const val = decodeURIComponent(e.target.dataset.val);
+    locMap[val].bedIndex = e.target.value === 'none' ? null : +e.target.value;
+  }));
+  document.getElementById('build-btn').addEventListener('click', buildTimeline);
+  const valid = colRoles.includes('Time') && colRoles.includes('Actor') && colRoles.includes('Location');
+  document.getElementById('build-btn').disabled = !valid;
+}
+
+function buildTimeline() {
+  const timeIdx = colRoles.indexOf('Time'), actorIdx = colRoles.indexOf('Actor'), locIdx = colRoles.indexOf('Location');
+  const actIdx = colRoles.indexOf('Activity');
+  const attrIdxs = colRoles.map((r, i) => r === 'Attribute' ? i : -1).filter(i => i >= 0);
+  DATASET = new Map();
+  let skipped = 0, total = 0;
+  csvRows.forEach(row => {
+    if (!row[timeIdx]) return;
+    const t = parseTimeToMinutes(row[timeIdx]);
+    const actor = row[actorIdx];
+    const resolved = locMap[row[locIdx]];
+    if (isNaN(t) || !actor || !resolved) { skipped++; return; }
+    total++;
+    const attrs = {};
+    attrIdxs.forEach(i => { attrs[csvHeaders[i]] = row[i]; });
+    const ev = { time: t, activity: actIdx >= 0 ? row[actIdx] : 'Activity', wardId: resolved.wardId, bedIndex: resolved.bedIndex, attrs, pos: globalPos(resolved.wardId, resolved.bedIndex) };
+    if (!DATASET.has(actor)) DATASET.set(actor, []);
+    DATASET.get(actor).push(ev);
+  });
+  DATASET.forEach(list => list.sort((a, b) => a.time - b.time));
+  importStatus.textContent = `Imported ${total} events across ${DATASET.size} actor(s)${skipped ? `, skipped ${skipped} unresolved row(s)` : ''}.`;
+  const actorSelect = document.getElementById('actor-select');
+  actorSelect.disabled = false;
+  actorSelect.innerHTML = [...DATASET.keys()].map(a => `<option value="${a}">${a}</option>`).join('');
+  document.getElementById('empty-note').style.display = 'none';
+  selectActor([...DATASET.keys()][0]);
+}
+
+document.getElementById('csv-file').addEventListener('change', (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => loadCSVText(reader.result);
+  reader.readAsText(f);
+});
+
+const SAMPLE_CSV = `time,actor,activity,location,team,note
+07:00,Dr. Amara Okafor,Chart review,1A-Bed2,Cardiology,Reviewing overnight cardiac events
+07:20,Dr. Amara Okafor,Routine round,2B-Bed1,ICU,Standard ICU check-in
+07:35,Dr. Amara Okafor,Routine round,1C-Bed4,General Medicine,Stable patient follow-up
+08:00,Dr. Amara Okafor,Urgent call,3A-Bed2,Oncology,Called for acute pain management
+08:10,Dr. Amara Okafor,Consult,1A-Bed2,Cardiology,Cardiology team requests bedside discussion
+08:40,Dr. Amara Okafor,OT pre-check,2A-Bed3,Surgical,Pre-operative clearance
+09:00,Dr. Amara Okafor,Consult,1A-Bed2,Cardiology,Called back again — conflicting plan with oncology
+09:30,Dr. Amara Okafor,Medication order,3B-Bed1,Renal,Adjusting dialysis-related dosing
+10:00,Dr. Amara Okafor,Routine round,1B-Bed5,Nephrology,Weekly nephrology follow-up
+10:20,Dr. Amara Okafor,Family discussion,1A-Bed2,Cardiology,Third unscheduled visit — family meeting requested
+10:45,Dr. Amara Okafor,Routine round,2C-Bed2,Recovery,Post-op recovery check
+07:00,Nurse Diallo,Routine round,2B-Bed1,ICU,Morning vitals
+07:20,Nurse Diallo,Routine round,2B-Bed3,ICU,Morning vitals
+07:45,Nurse Diallo,Routine round,2C-Bed2,Recovery,Dressing change
+08:10,Nurse Diallo,Routine round,2B-Bed4,ICU,Morning vitals
+08:35,Nurse Diallo,Medication order,2B-Bed1,ICU,Administering medication
+09:10,Nurse Diallo,Routine round,2C-Bed1,Recovery,Check-in
+09:40,Nurse Diallo,Routine round,2B-Bed2,ICU,Morning vitals
+10:15,Nurse Diallo,Routine round,2B-Bed3,ICU,Follow-up check`;
+document.getElementById('sample-btn').addEventListener('click', () => loadCSVText(SAMPLE_CSV));
+
+// ---------- playback ----------
+let events = [], slider = document.getElementById('slider'), clockEl = document.getElementById('clock');
+const logPanel = document.getElementById('log-panel');
+let speed = 1.2;
+document.getElementById('speed-slider').addEventListener('input', (e) => { speed = +e.target.value; document.getElementById('speed-val').textContent = speed.toFixed(1) + ' m/s'; render(+slider.value); });
+
+document.getElementById('actor-select').addEventListener('change', (e) => selectActor(e.target.value));
+
+function minutesLabel(m) {
+  m = Math.round(m);
+  let h = Math.floor(m / 60), mm = m % 60;
+  const ampm = h >= 12 ? 'PM' : 'AM'; let h12 = h % 12; if (h12 === 0) h12 = 12;
+  return h12 + ':' + String(mm).padStart(2, '0') + ' ' + ampm;
+}
+function fmtDist(m) { return m >= 1000 ? (m / 1000).toFixed(2) + ' km' : Math.round(m) + ' m'; }
+function fmtTime(min) { return min >= 60 ? (min / 60).toFixed(1) + ' hr' : Math.round(min) + ' min'; }
+
+function selectActor(actor) {
+  events = DATASET.get(actor) || [];
+  slider.disabled = events.length === 0;
+  if (!events.length) return;
+  slider.min = events[0].time; slider.max = events[events.length - 1].time; slider.step = 1;
+  slider.value = events[0].time;
+  logPanel.innerHTML = '';
+  events.forEach((e, i) => {
+    const row = document.createElement('div'); row.className = 'log-item'; row.dataset.i = i;
+    const meta = Object.entries(e.attrs).map(([k, v]) => `${k}: ${v}`).join(' · ');
+    row.innerHTML = `<span class="log-time">${minutesLabel(e.time)}</span>${e.activity} — ${WARD_BY_ID[e.wardId].id} ${e.bedIndex != null ? 'Bed ' + (e.bedIndex + 1) : ''}<span class="log-meta">${meta}</span>`;
+    row.addEventListener('click', () => { slider.value = e.time; render(e.time); });
+    logPanel.appendChild(row);
+  });
+  render(+slider.value);
+}
+slider.addEventListener('input', () => render(+slider.value));
+
+function render(t) {
+  clockEl.textContent = minutesLabel(t);
+  let idx = -1;
+  for (let i = 0; i < events.length; i++) { if (events[i].time <= t) idx = i; else break; }
+  if (idx < 0) { marker.visible = false; trailMesh.visible = false; updateStats(-1, t); updateLog(-1); return; }
+  const ev = events[idx];
+  if (displayedWardId !== ev.wardId) selectWard(ev.wardId);
+  marker.position.copy(localMarkerPos(ev.bedIndex));
+  marker.visible = true;
+  let runStart = idx;
+  while (runStart > 0 && events[runStart - 1].wardId === ev.wardId) runStart--;
+  const pts = events.slice(runStart, idx + 1).map(e => localMarkerPos(e.bedIndex));
+  updateTrail(pts);
+  updateStats(idx, t);
+  updateLog(idx);
+  lastVisitedSet = new Set(events.slice(0, idx + 1).map(e => e.wardId));
+  refreshWardTiles(lastVisitedSet);
+}
+
+function updateStats(idx, t) {
+  let distNow = 0; for (let i = 1; i <= idx; i++) distNow += events[i - 1].pos.distanceTo(events[i].pos);
+  let distTotal = 0; for (let i = 1; i < events.length; i++) distTotal += events[i - 1].pos.distanceTo(events[i].pos);
+  const wardsNow = idx >= 0 ? new Set(events.slice(0, idx + 1).map(e => e.wardId)).size : 0;
+  let floorChanges = 0; for (let i = 1; i <= idx; i++) if (WARD_BY_ID[events[i].wardId].floor !== WARD_BY_ID[events[i - 1].wardId].floor) floorChanges++;
+  document.getElementById('stat-dist-now').textContent = fmtDist(distNow);
+  document.getElementById('stat-time-now').textContent = fmtTime(distNow / speed / 60);
+  document.getElementById('stat-dist-total').textContent = fmtDist(distTotal);
+  document.getElementById('stat-time-total').textContent = fmtTime(distTotal / speed / 60);
+  document.getElementById('stat-wards').textContent = wardsNow;
+  document.getElementById('stat-floors').textContent = floorChanges;
+}
+function updateLog(idx) {
+  [...logPanel.children].forEach((row, i) => { row.classList.toggle('done', i <= idx); row.classList.toggle('current', i === idx); });
+}
+
+let playing = false, rafId = null, lastTs = 0;
+const playBtn = document.getElementById('play-btn');
+function tick(ts) {
+  if (!playing) return;
+  const dt = (ts - lastTs) / 1000; lastTs = ts;
+  let t = +slider.value + dt * 18;
+  const max = +slider.max;
+  if (t >= max) { t = max; playing = false; playBtn.textContent = '▶'; }
+  slider.value = t; render(t);
+  if (playing) rafId = requestAnimationFrame(tick);
+}
+playBtn.addEventListener('click', () => {
+  if (!events.length) return;
+  playing = !playing; playBtn.textContent = playing ? '⏸' : '▶';
+  if (playing) { if (+slider.value >= +slider.max) slider.value = slider.min; lastTs = performance.now(); rafId = requestAnimationFrame(tick); }
+  else if (rafId) cancelAnimationFrame(rafId);
+});
+</script>
+</body>
+</html>
