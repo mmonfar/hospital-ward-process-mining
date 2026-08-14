@@ -1,0 +1,81 @@
+# Hospital ward process mining model
+
+Measuring motion waste and finding **MDT synchronisation opportunities** from
+hospital ward event logs.
+
+## The problem
+
+Ward rounds here are asynchronous. Each subspecialty rounds on its own schedule,
+so a patient under cardiology, renal and surgery is visited three times, hours
+apart, by three teams who never meet. The consequences are concrete: nursing
+workflow is interrupted unpredictably, information is scattered across three
+partial notes, continuity of care is not guaranteed, and clinicians walk the
+building in an order driven by their own list rather than by geography.
+
+The sharpest case: a surgical registrar physically walks past a ward containing
+one of their patients, and the joint review does not happen because nobody knew
+they were there. Detecting exactly that is `detect_opportunistic` in SPEC-002 —
+the highest-value output here, because acting on it needs a notification rather
+than an organisational change.
+
+## What it does
+
+| Capability | Spec |
+|---|---|
+| Ingest event logs into a canonical, pseudonymous stream | SPEC-001 |
+| Discover the real round process; detect MDT moments and missed opportunities | SPEC-002 |
+| Quantify motion waste over a routed travel graph, with uncertainty | SPEC-003 |
+| Produce a Pareto set of synchronised-MDT schedules | SPEC-004 |
+| Visualise it in 3D | SPEC-005 |
+| Audit the code and the method | SPEC-006 |
+
+## Quick start
+
+```bash
+pip install -e ".[dev]"
+python -m hwpm.cli govern graph -v
+```
+
+```bash
+python -m hwpm.cli govern budget --by-model
+```
+
+## How this project is run
+
+Built largely by autonomous agents under a spec-driven protocol:
+
+- **`orchestration/graph.yaml`** is the work graph — 18 nodes with dependencies,
+  an assigned model role, a token budget, and a gate. It is data: `hwpm govern
+  graph` reads it to decide what is runnable.
+- **`docs/specs/`** is normative. No implementation without a spec (ADR-0001).
+- **`docs/AUDIT-LOG.md`** is append-only: what was done, why, under what
+  authority, by which model.
+- **`docs/05-SELF-MANAGED-MODE.md`** defines the autonomous loop and the four
+  conditions under which an agent stops and asks.
+
+Agents read `CLAUDE.md` first.
+
+## Method
+
+Optimisation choices follow `refs/metaheuristics/SELECTION-GUIDE.md`, which maps
+each sub-problem to a specific algorithm from Sean Luke's *Essentials of
+Metaheuristics* and records what was rejected. Its Rule 0 governs everything:
+**metaheuristics are a last resort** — exact methods first, then greedy, and
+nothing is reportable until it beats random search.
+
+MDT scheduling is solved multi-objectively and delivered as a Pareto front, not
+a single answer. The trade-off between protecting nursing time and minimising
+clinician walking is a management decision, and scalarising it into a weight
+vector would hide that decision rather than make it (ADR-0004).
+
+## Data protection
+
+No identifiable data enters this repository or any model context. Raw logs live
+outside the repo under `HWPM_DATA_DIR`; development runs on synthetic fixtures;
+aggregates are suppressed below 5 patients and never attributed to a named
+clinician. See **ADR-0005**, which is a hard stop, not a guideline.
+
+## Status
+
+Foundation complete (N00). Next: `N01-synthetic-fixtures` and `N02-domain-core`.
+Run `hwpm govern graph` for the current state.

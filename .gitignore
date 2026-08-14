@@ -1,0 +1,47 @@
+# --- Data protection (ADR-0005) -------------------------------------------
+# Raw event logs are patient-identifiable by construction: bed + timestamp
+# identifies a person. Nothing resembling real data enters version control.
+data/
+artefacts/
+*.csv
+*.xes
+*.parquet
+*.sqlite
+.salt
+*.salt
+!tests/fixtures/**/*.csv          # synthetic only, no real people
+
+# --- Licensed reference material (refs/metaheuristics/README.md) -----------
+# Essentials of Metaheuristics is CC BY-ND: redistributing a transformed copy
+# is not permitted. Regenerate locally with tools/parse_reference_pdf.py.
+refs/metaheuristics/*.pdf
+refs/metaheuristics/essentials-of-metaheuristics.md
+refs/metaheuristics/*.rawtext
+
+# --- Python ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Native (ADR-0003) ----------------------------------------------------
+*.so
+*.dll
+*.dylib
+*.o
+*.obj
+
+# --- OS / editor ----------------------------------------------------------
+.DS_Store
+Thumbs.db
+.thumbnail
+.idea/
+.vscode/
