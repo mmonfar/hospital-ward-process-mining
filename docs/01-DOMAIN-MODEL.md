@@ -55,12 +55,17 @@ Site ─┬─ Building ─┬─ Floor ─┬─ Ward ─┬─ Bay ─┬─ B
 - `Clinician` — **entity**, identified by a pseudonymous `ClinicianId`. Carries
   `Role` (consultant, registrar, nurse, AHP…) and one or more `Specialty`
   values. Never carries a name in this repository.
-- `Patient` — **entity**, pseudonymous `PatientId`. Carries `acuity`,
-  `isolationStatus`, and a set of `RequiredSpecialty` — the latter is what makes
-  a patient an MDT candidate and is the single most important derived field in
-  the model. How it is derived (referrals? consult notes? problem list?) is a
-  data question resolved in SPEC-001, and it will be imperfect; the imperfection
-  must be surfaced as a confidence value, not hidden.
+- `Patient` — **entity**, pseudonymous `PatientId`. Carries `acuity` and
+  `isolationStatus`. **Amended 2026-08-14 (N02):** `RequiredSpecialty` is *not*
+  a `Patient` field. SPEC-001's later resolution (docs/AUDIT-LOG.md, "Resolved
+  N04 gate") made it a runtime-selectable analysis parameter — one of five
+  `RequiredSpecialtyStrategy` implementations computed over persisted evidence
+  (referrals, consult notes, problem list), not a value baked in at ingestion.
+  Putting a single derived set on `Patient` would silently pick one strategy at
+  the domain layer, contradicting "the ingestion stage persists the evidence
+  rather than the conclusion" (SPEC-001). It remains the single most important
+  *derived* quantity in the model — see N04 — and the imperfection in any one
+  strategy must be surfaced as a confidence value, not hidden.
 
 ### Time and observation
 
