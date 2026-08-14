@@ -139,16 +139,19 @@ nodes:
     budget_tokens: 150000
 
   - id: N04-required-specialty
-    title: Derivation of RequiredSpecialty with confidence
+    title: RequiredSpecialty strategies (all five) with confidence
     spec: SPEC-001
     agent: architect
     depends_on: [N03-ingestion]
-    gate: confirm
-    budget_tokens: 120000
+    gate: autonomous
+    budget_tokens: 180000
     rationale: >
-      Flagged in 01-DOMAIN-MODEL.md as the single most consequential derived
-      field. Its definition is a clinical judgement, not an engineering one, and
-      every MDT result inherits its error.
+      Gate resolved by the user 2026-08-14: the definition is a runtime choice
+      selectable in the front end, not a single fixed source. All five
+      strategies (referral, consult_note, problem_list, union, intersection)
+      are always computed; `referral` is the default. Budget raised from 120k
+      because this is now five implementations plus the artefact strategy-key
+      plumbing, not one derivation.
 
   - id: N05-mining
     title: Process discovery, conformance, bedside-episode derivation
@@ -232,13 +235,26 @@ nodes:
       Conditional node. Do not start unless the measured gate fires; adds a
       permanent build-toolchain and memory-safety burden.
 
+  - id: N14a-design-system
+    title: Front-end design system (palette, type scale, chart primitives)
+    spec: SPEC-005
+    agent: architect
+    depends_on: [N00-foundation]
+    gate: autonomous
+    budget_tokens: 150000
+    rationale: >
+      Split out of N14 and moved early. The design bar in SPEC-005 is normative,
+      and retrofitting a visual system onto built screens does not work -- it
+      produces a themed prototype rather than a coherent product. Depends only
+      on the foundation, so it can run in parallel with the analysis nodes.
+
   - id: N14-viewer
-    title: Ward viewer reads served artefacts; renders Pareto front
+    title: Ward viewer, strategy selector, Pareto front browser
     spec: SPEC-005
     agent: builder
-    depends_on: [N07-motion-analytics, N10-nsga2]
+    depends_on: [N07-motion-analytics, N10-nsga2, N14a-design-system]
     gate: autonomous
-    budget_tokens: 180000
+    budget_tokens: 220000
 
   - id: N15-auditor
     title: Automated code and method auditor
@@ -259,12 +275,27 @@ nodes:
       Success criterion 1 in 00-VISION.md. Requires real clinicians; an agent
       can prepare the materials but cannot perform or fake the review.
 
+  - id: N18-governance-view
+    title: Clinical Governance MDT coverage view
+    spec: SPEC-005
+    agent: architect
+    depends_on: [N14-viewer, N05-mining]
+    gate: autonomous
+    budget_tokens: 180000
+    decision: ADR-0006
+    rationale: >
+      Added 2026-08-14. Clinical Governance monitors MDT coverage as part of the
+      project, which makes the headline figure a governance measurement rather
+      than a study output. Architect rather than builder because the failure
+      mode is design drift toward a KPI dashboard -- big number, no interval --
+      which ADR-0006 exists to prevent.
+
   - id: N17-real-data
     title: First run against a real extract
     spec: none
     reason: Governance milestone, not an engineering task.
     agent: architect
-    depends_on: [N15-auditor, N16-face-validity]
+    depends_on: [N15-auditor, N16-face-validity, N18-governance-view]
     gate: hard-stop
     budget_tokens: 0
     rationale: >

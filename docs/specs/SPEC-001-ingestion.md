@@ -66,20 +66,64 @@ against what actually happened rather than against a previous run of itself.
 | Walking speed | 1.2 m/s | Literature value for adult indoor walking; calibrated later (P3). |
 | Round-window ordering by acuity | sickest first | Clinician-stated norm; validate against observed order in SPEC-002. |
 
-## `RequiredSpecialty` — the critical field (N04, `confirm` gate)
+## `RequiredSpecialty` — the critical field (N04)
+
+**Resolved 2026-08-14: the definition is a runtime choice, selectable in the
+front end, not a build-time constant.**
 
 `01-DOMAIN-MODEL.md` flags this as the most consequential derived field: every
-MDT result inherits its error. Candidate sources, none clean:
+MDT result inherits its error. The candidate sources, none clean:
 
-1. Active referral records — precise but often not closed when a team disengages.
-2. Consult notes authored in the stay — reflects real involvement; needs NLP.
-3. Problem list mapped to specialty — broad; over-triggers.
+| Strategy | Basis | Bias |
+|---|---|---|
+| `referral` | Active referral records | Precise, but teams disengage without closing the referral — over-counts |
+| `consult_note` | Consult notes authored during the stay | Reflects real involvement; needs NLP; under-counts verbal advice |
+| `problem_list` | Problem list mapped to specialty | Broad; over-triggers on historical comorbidity |
+| `union` / `intersection` | Combinations | Upper and lower bounds on the true set |
 
-**Decision deferred to the user.** The specification requirement is that whatever
-source is chosen, the field carries a **confidence** and is **validated against
-clinician review of a random sample of ≥50 patients** before any MDT result built
-on it is reported. Reporting an unvalidated MDT opportunity rate would be the
-project's most likely serious error.
+### Architectural consequence
+
+Making this selectable is not a UI feature — it changes the pipeline shape. The
+definition moves from a constant fixed at ingestion to a **parameter of every
+downstream analysis**, which means:
+
+1. `RequiredSpecialtyStrategy` is a Protocol with the implementations above,
+   resolved at analysis time rather than baked into the event store.
+2. **All artefacts are keyed by strategy.** `motion.json`, `front.json` and every
+   MDT figure carry the strategy that produced them. An artefact without a
+   strategy key is invalid and must fail to load.
+3. The ingestion stage persists the *evidence* (referrals, notes, problem list)
+   rather than the *conclusion*, so switching strategy does not require re-ingest.
+4. Analysis must be cheap enough to re-run per strategy, or pre-computed for all
+   of them. Pre-computing all is preferred — there are five, and it makes the
+   comparison in the next section free.
+
+### The incentive problem this creates
+
+A selectable definition means the definition that produces the most flattering
+number can be selected. With Clinical Governance monitoring MDT coverage as a
+performance measure (`SPEC-002`), there is now a live incentive to do exactly
+that — and it would happen through ordinary optimism, not bad faith.
+
+**Mitigations, all mandatory:**
+
+- **Every strategy is always computed, and the front end always displays the
+  spread**, not only the selected one. Selecting a strategy changes which is
+  emphasised, never which are available.
+- The **`union` and `intersection` strategies are always shown as bounds**, so
+  the plausible range is visible whatever is chosen.
+- Every exported figure and screenshot carries the strategy in its caption. A
+  number that can travel without its definition will.
+- The default is **`referral`** — the most conservative widely-available source —
+  so the flattering choice is an active decision, not the path of least
+  resistance.
+
+### Validation requirement (unchanged)
+
+Whatever strategy is chosen, the field carries a **confidence**, and the chosen
+strategy is **validated against clinician review of a random sample of ≥50
+patients** before any MDT result built on it is reported. Reporting an
+unvalidated MDT coverage rate remains the project's most likely serious error.
 
 ## Acceptance criteria
 
@@ -91,6 +135,9 @@ project's most likely serious error.
 6. No pseudonymised output contains any source identifier. — `test_pseudonymisation`
 7. Out-of-order and duplicate events are flagged and counted in an ingestion report, not silently fixed. — `test_ingest_report`
 8. `required_specialties` carries confidence; entries below threshold are excluded from MDT analysis and counted. — `test_required_specialty_confidence`
+9. All five `RequiredSpecialtyStrategy` implementations are computed for every run; none can be skipped. — `test_all_strategies_computed`
+10. Every artefact carries its strategy key; loading one without it raises. — `test_artefact_strategy_key`
+11. `intersection ⊆ any single strategy ⊆ union` holds for every patient. — `test_strategy_bounds`
 
 ## Test oracle
 
@@ -111,7 +158,13 @@ than against itself. Real-data behaviour has no oracle — hence N16 and N17.
 
 ## Open questions
 
-- **[blocking, user]** Which source defines `RequiredSpecialty`? (N04 gate.)
+- ~~**[blocking, user]** Which source defines `RequiredSpecialty`?~~ **Resolved
+  2026-08-14:** selectable at runtime in the front end, all strategies always
+  computed, `referral` as default. See above.
+- **[non-blocking]** Are referral records, consult notes and problem lists all
+  extractable? If only one is, the selector degrades to a single option and the
+  bounds cannot be shown — which weakens the mitigation above and should be
+  reported as a limitation rather than worked around.
 - **[non-blocking]** Is RTLS available, or is the event log EPR-derived only?
   Changes the noise model but not the interface.
 - **[non-blocking]** Real ward geometry: are floor plans available, or do we stay

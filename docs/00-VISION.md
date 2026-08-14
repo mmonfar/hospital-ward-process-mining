@@ -42,6 +42,48 @@ real event-log data, that can:
 - **Visualise it** so a non-analyst can see it — the existing three.js ward model
   in `web/` is the front end for exactly this.
 
+## The stated goal and its owner
+
+**Goal:** the *majority* of ward rounds for multi-specialty patients happen as
+synchronous MDT rounds.
+
+**Owner:** the **Clinical Governance department** (quality and patient safety)
+monitors this as part of the project.
+
+This is a significant commitment and it changes the project's nature. A tool that
+merely *analyses* rounds is an internal study. A tool whose output a governance
+department *monitors* is a measurement instrument in a quality-assurance system,
+and it inherits three obligations a study does not have:
+
+1. **Stability over time.** A metric that moves because we changed a parameter is
+   indistinguishable, to its audience, from one that moved because care changed.
+   Every published figure is versioned by method, and method changes are
+   announced with the back-series recomputed — never silently applied.
+2. **Resistance to gaming.** Any monitored number creates an incentive to move
+   the number rather than the thing it measures. The specific exposure here is
+   the selectable `RequiredSpecialty` definition (SPEC-001) — the denominator of
+   the coverage metric is a choice. Mitigations are specified there and are
+   mandatory, not advisory.
+3. **A defensible chain from figure to evidence.** Governance figures get
+   challenged, sometimes months later and sometimes by the clinicians they
+   describe. Every number must trace to the events that produced it (SPEC-006,
+   audit 3).
+
+**The headline metric** is *MDT coverage*: the proportion of multi-specialty
+patient-days on which the required specialties were co-present at the bedside.
+Defined in SPEC-002, reported with its uncertainty and its strategy key, never
+as a bare percentage.
+
+**One caution, stated once and on the record.** "Majority of MDT rounds" is a
+target, and targets applied to clinical process measures reliably produce
+gaming — usually by redefining the denominator, occasionally by recording
+co-presence that did not clinically occur. The defence is not exhortation; it is
+that the denominator definition is displayed alongside every figure, that all
+five definitions are always computed, and that co-presence is derived from
+observed events rather than self-report. If the metric is ever allowed to be
+self-reported, this defence is gone and the number becomes worthless. That is a
+design constraint, not a preference.
+
 ## What this project is not
 
 - **Not a rostering system.** We do not schedule staff. We analyse and propose.
