@@ -108,7 +108,7 @@ nodes:
     depends_on: []
     gate: autonomous
     budget_tokens: 250000
-    status: in_progress
+    status: completed
     artefacts: [docs/, orchestration/, src/hwpm/govern/, refs/metaheuristics/]
 
   - id: N01-synthetic-fixtures

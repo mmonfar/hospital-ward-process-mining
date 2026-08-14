@@ -26,7 +26,12 @@
       "Bash(python -m hwpm.cli govern audit \"Established spec-driven foundation: docs, ADRs, orchestration graph, governance tooling\" --why \"Brief items 1-7. A project intended to run largely autonomously across many sessions needs its intent, decisions and budget recorded outside the conversation, or each session re-derives them from code and drifts.\" --authority \"ADR-0001; graph node N00-foundation\" --node N00-foundation --model claude-opus-5 --artefact docs/ --artefact orchestration/graph.yaml --artefact src/hwpm/govern/ --artefact refs/metaheuristics/SELECTION-GUIDE.md --evidence \"20 passed\")",
       "Bash(python -m hwpm.cli govern audit \"Parsed Essentials of Metaheuristics to page-anchored markdown; indexed 139 algorithms\" --why \"Requested as the basis for optimiser selection. Parsed via a reproducible tool rather than by hand so the reference can be regenerated and audited. Full text is git-ignored: CC BY-ND forbids redistributing a transformed copy.\" --authority \"SELECTION-GUIDE.md; refs/metaheuristics/README.md\" --node N00-foundation --model claude-opus-5 --artefact tools/parse_reference_pdf.py --artefact refs/metaheuristics/ALGORITHM-INDEX.md --evidence \"pages=264 algorithms=139\")",
       "Bash(python -m hwpm.cli govern audit \"Recalibrated session token budget from 400k/700k to 2M/3M\" --why \"The guessed limits scored a healthy 83-turn session at 184% of the hard limit on the ledger's first real run. A budget that a normal session exceeds is one everyone learns to ignore, which would defeat the monitoring the brief asked for. Reset against the observation; re-calibrate once ~10 sessions of history exist rather than tuning on a sample of one.\" --authority \"docs/04-AGENT-ORCHESTRATION.md\" --node N00-foundation --model claude-opus-5 --artefact orchestration/graph.yaml --evidence \"observed: 1,284,873 weighted tokens for a healthy session\")",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(git -c commit.gpgsign=false commit -q -m 'N00: spec-driven foundation, orchestration graph, governance tooling *)",
+      "Bash(python -m pytest tests/ -q)",
+      "Bash(python -m hwpm.cli govern graph)",
+      "Bash(python -m hwpm.cli govern budget)",
+      "Bash(git -c commit.gpgsign=false commit -q -m 'Mark N00-foundation complete in the work graph *)"
     ]
   }
 }
