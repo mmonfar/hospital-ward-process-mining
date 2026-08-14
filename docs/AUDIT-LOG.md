@@ -110,3 +110,33 @@ as new entries referencing the original.
   ```
   billable 2,676,107 of 3,000,000 (89%) - action CONSOLIDATE
   ```
+
+## 2026-08-14 16:34:01Z — N02: implemented frozen domain core (Location, Event, Trajectory, Patient, Clinician, Visit, etc.)
+
+- **Why:** Substrate every later analysis reads; ADR-0001 requires the spec before the code, and SPEC-001 covers it
+- **Authority:** SPEC-001
+- **Graph node:** N02-domain-core
+- **Model:** claude-opus-5
+- **Actor:** marti
+- **Commit:** `c8b96f7`
+- **Artefacts:** `src/hwpm/domain/model.py`, `src/hwpm/domain/__init__.py`, `tests/test_domain.py`, `docs/01-DOMAIN-MODEL.md`
+- **Evidence:**
+
+  ```
+  ; ruff check src/hwpm/domain: clean; mypy src/hwpm/domain: clean; lint-imports: 2 kept, 0 broken; coverage domain/: 100%
+  ```
+
+## 2026-08-14 16:34:34Z — N01: implemented synthetic ward event-log generator with known ground truth
+
+- **Why:** ADR-0005 forbids agents touching real data; fixtures are the only substrate development can happen on until N03/N17
+- **Authority:** SPEC-001
+- **Graph node:** N01-synthetic-fixtures
+- **Model:** claude-opus-5
+- **Actor:** marti
+- **Commit:** `c8b96f7`
+- **Artefacts:** `src/hwpm/ingest/synthetic.py`, `tests/test_synthetic.py`
+- **Evidence:**
+
+  ```
+  .............                                                            [100%]; ruff check src/hwpm/ingest: clean; coverage ingest/synthetic.py: 99%; vulture: no findings; determinism: generate(config, Random(42)) equal across two runs, and with noise enabled
+  ```

@@ -118,6 +118,8 @@ nodes:
     depends_on: [N00-foundation]
     gate: autonomous
     budget_tokens: 120000
+    status: completed
+    artefacts: [src/hwpm/ingest/synthetic.py, tests/test_synthetic.py]
     rationale: >
       Must precede everything else — ADR-0005 forbids agents touching real data,
       so fixtures are the only substrate development can happen on.
@@ -129,6 +131,8 @@ nodes:
     depends_on: [N00-foundation]
     gate: autonomous
     budget_tokens: 150000
+    status: completed
+    artefacts: [src/hwpm/domain/model.py, src/hwpm/domain/__init__.py, tests/test_domain.py]
 
   - id: N03-ingestion
     title: Event-log ingestion and location mapping
