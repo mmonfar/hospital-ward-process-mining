@@ -37,7 +37,14 @@
       "Bash(python -m hwpm.cli govern audit \"Recorded Clinical Governance as monitoring stakeholder; added ADR-0006 and node N18\" --why \"User confirmed the goal is a majority of MDT rounds, monitored by Clinical Governance. This makes MDT coverage a governance measurement rather than a study output, inheriting obligations around method versioning, gaming resistance and provenance that a study does not have.\" --authority \"ADR-0006; 00-VISION.md\" --node N18-governance-view --model claude-opus-5 --artefact docs/adr/ADR-0006-governance-monitored-metric.md --artefact docs/00-VISION.md --evidence \"20 nodes, graph valid\")",
       "Bash(python -m hwpm.cli govern audit \"Raised the front-end design bar to normative; split out N14a-design-system\" --why \"User requires front-end quality matching the analysis. In a project whose output will be challenged by senior clinicians the interface is part of the evidence. Design system moved early because retrofitting a visual system onto built screens yields a themed prototype, not a coherent product.\" --authority \"SPEC-005\" --node N14a-design-system --model claude-opus-5 --artefact docs/specs/SPEC-005-visualisation.md --evidence \"8 normative design requirements, 11 acceptance criteria\")",
       "Bash(python -m hwpm.cli govern audit \"CONSOLIDATE: session ended at 89% of token budget\" --why \"Budget threshold 0.80 reached. Per docs/05-SELF-MANAGED-MODE.md, stop starting new nodes and end at a resumable boundary rather than risk running out mid-node and leaving half-built code. Next session starts fresh at N01/N02/N14a.\" --authority \"docs/05-SELF-MANAGED-MODE.md; orchestration/graph.yaml budget.thresholds\" --node N00-foundation --model claude-opus-5 --evidence \"billable 2,676,107 of 3,000,000 \\(89%\\) - action CONSOLIDATE\")",
-      "Bash(git -c commit.gpgsign=false commit -q -m 'Resolve N04 gate; add governance monitoring \\(ADR-0006\\); raise front-end design bar *)"
+      "Bash(git -c commit.gpgsign=false commit -q -m 'Resolve N04 gate; add governance monitoring \\(ADR-0006\\); raise front-end design bar *)",
+      "Bash(python -c \"import pm4py\")",
+      "Bash(PYTHONPATH=src python -m pytest tests/)",
+      "Bash(python -m pip install pm4py ortools)",
+      "Bash(PYTHONPATH=src python -m pytest tests/test_ingest.py -q)",
+      "Bash(PYTHONPATH=src python -m pytest tests/test_travel.py -q)",
+      "Bash(PYTHONPATH=src python -m pytest tests/ --collect-only -q)",
+      "Bash(python -m ruff check src/hwpm/ingest/ tests/test_ingest.py)"
     ]
   }
 }

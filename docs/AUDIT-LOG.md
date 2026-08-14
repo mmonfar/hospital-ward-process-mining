@@ -154,3 +154,62 @@ as new entries referencing the original.
   ```
   billable 2,510,903 of 3,000,000 (84%) - action CONSOLIDATE. Runnable and untouched: N03-ingestion, N06-travel-graph, N14a-design-system. Next session should start with N03-ingestion (unblocks the most downstream work: N04, N05).
   ```
+
+## 2026-08-14 16:55:56Z — N03-ingestion complete: readers, location mapper, pseudonymisation, ingestion report, evidence store
+
+- **Why:** SPEC-001 acceptance criteria 4-7. Location quarantine rather than guessing implements criterion 5, which guards the worst failure mode: silent mis-mapping corrupts every downstream distance while looking healthy. Evidence containers hold raw specialty_text rather than resolved Specialty so N04's five strategies share raw material and nothing about strategy selection is pre-decided.
+- **Authority:** SPEC-001
+- **Graph node:** N03-ingestion
+- **Model:** claude-sonnet-5
+- **Actor:** marti
+- **Commit:** `9e9699b`
+- **Artefacts:** `src/hwpm/ingest/`, `tests/test_ingest.py`
+- **Evidence:**
+
+  ```
+  56 tests passing; ruff clean; layering PASS
+  ```
+
+## 2026-08-14 16:55:57Z — N06-travel-graph complete: routed TravelGraph replaces Euclidean distance
+
+- **Why:** SPEC-003. Straight-line distance systematically understates inter-floor movement, which is exactly the movement asynchronous rounds generate, and would have biased the headline finding toward 'there is no problem'. Dijkstra weighted by seconds because that is what a clinician optimises when choosing lift versus stairs. Lift wait is a constructor parameter, not a constant, so calibration is a call-site change.
+- **Authority:** SPEC-003
+- **Graph node:** N06-travel-graph
+- **Model:** claude-sonnet-5
+- **Actor:** marti
+- **Commit:** `9e9699b`
+- **Artefacts:** `src/hwpm/domain/travel.py`, `tests/test_travel.py`
+- **Evidence:**
+
+  ```
+  test_interfloor_cost, test_metric_properties passing; 45s default lift wait flagged as unmeasured assumption
+  ```
+
+## 2026-08-14 16:55:57Z — SPEC-007 and ADR-0007: vector retrieval specced as two separate systems; nodes N19 and N20 added
+
+- **Why:** User asked for vectors for context efficiency. Two valid readings, both specced: repo retrieval (touches no patient data) and trace embeddings (touches nothing else). Kept physically separate with opposite governance profiles. fastembed + sqlite-vec chosen over sentence-transformers which pulls ~2.5GB of PyTorch for weekly work. Gated on measured retrieval quality per the ADR-0003 pattern: if grep already scores above 0.70 recall@5, nothing is built.
+- **Authority:** SPEC-007; ADR-0007
+- **Graph node:** N19-context-retrieval
+- **Model:** claude-opus-5
+- **Actor:** marti
+- **Commit:** `9e9699b`
+- **Artefacts:** `docs/specs/SPEC-007-vector-retrieval.md`, `docs/adr/ADR-0007-vector-context-retrieval.md`
+- **Evidence:**
+
+  ```
+  corpus measured at 1.12MB; size gate already met, quality gate unmeasured
+  ```
+
+## 2026-08-14 16:55:57Z — Environment: created project venv; global install of pm4py/ortools broke and then repaired scikit-learn
+
+- **Why:** Installing pm4py and ortools into global Python upgraded numpy 1.26->2.4 and pandas 2.2->3.0, breaking scikit-learn by binary incompatibility. Repaired by upgrading scikit-learn to 1.9.0. This should have been an isolated environment from the start; a project venv now exists so no future install can affect the user's other projects. Recorded because it is a real side effect on the user's machine, not only on this repository.
+- **Authority:** user decision 2026-08-14
+- **Graph node:** N00-foundation
+- **Model:** claude-opus-5
+- **Actor:** marti
+- **Commit:** `9e9699b`
+- **Evidence:**
+
+  ```
+  pandas 3.0.5 remains a major-version change affecting the user's other projects
+  ```

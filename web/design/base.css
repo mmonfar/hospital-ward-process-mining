@@ -1,0 +1,444 @@
+/* Ward viewer base layer -- SPEC-005 design bar.
+   Every value here is a token from tokens.css. A literal colour, size or
+   duration in this file is a defect and `test_design_tokens.py` fails on it.
+
+   Load order: tokens.css, then base.css, then nothing else. There is no
+   per-component stylesheet, because "one visual system, not a collection of
+   widgets" (design bar 1) survives exactly as long as that stays true. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--surface-page);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+  /* Tabular figures everywhere, not opt-in per component. Numbers are the
+     product; a column of them that does not align, or a clock that jitters as
+     it counts, is the interface undermining the analysis. (Design bar 3.) */
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+figure {
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------- type ---- */
+
+.t-title {
+  font-size: var(--t-title);
+  line-height: var(--lh-title);
+  letter-spacing: var(--track-title);
+  font-weight: var(--w-strong);
+  color: var(--ink-strong);
+}
+
+.t-label {
+  font-size: var(--t-micro);
+  line-height: var(--lh-micro);
+  letter-spacing: var(--track-micro);
+  font-weight: var(--w-strong);
+  text-transform: uppercase;
+  color: var(--ink-quiet);
+}
+
+.t-micro {
+  font-size: var(--t-micro);
+  line-height: var(--lh-micro);
+  color: var(--ink-quiet);
+}
+
+.t-figure {
+  font-size: var(--t-figure);
+  line-height: var(--lh-figure);
+  font-weight: var(--w-strong);
+  color: var(--ink-strong);
+}
+
+/* An interval printed beside its point estimate. Same size as the figure it
+   qualifies, never smaller: a 95% interval set in fine print is read as a
+   footnote, and design bar 5 exists because that is how a range becomes a
+   number. */
+.t-interval {
+  font-size: var(--t-body);
+  font-weight: var(--w-regular);
+  color: var(--ink-quiet);
+  white-space: nowrap;
+}
+
+/* -------------------------------------------------------------- surface ---- */
+
+.panel {
+  background: var(--surface-panel);
+  border-radius: var(--r-md);
+  box-shadow: var(--e-panel);
+  padding: var(--s-3);
+}
+
+/* Panels that sit on the page rather than over the 3D scene are not elevated
+   above anything, so they get a line instead of a shadow. */
+.panel--flat {
+  box-shadow: var(--e-flat);
+  border: 1px solid var(--line-hairline);
+}
+
+.well {
+  background: var(--surface-sunken);
+  border-radius: var(--r-sm);
+  padding: var(--s-2) var(--s-3);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* -------------------------------------------------------------- controls --- */
+
+.btn {
+  appearance: none;
+  font: inherit;
+  font-size: var(--t-micro);
+  font-weight: var(--w-strong);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  padding: var(--s-2) var(--s-3);
+  background: var(--accent);
+  color: var(--ink-inverse);
+  cursor: pointer;
+  transition: background var(--m-state) var(--ease-standard);
+}
+
+.btn:hover {
+  background: var(--accent-strong);
+}
+
+.btn--quiet {
+  background: var(--surface-panel);
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+.btn--quiet:hover {
+  background: var(--surface-sunken);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* One focus treatment for everything focusable, on every surface: an inset
+   ring in the surface colour and an outer ring in the focus colour, so it stays
+   visible on a panel, on the page, and over the 3D scene. */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* ------------------------------------------------------- strategy select --- */
+
+/* A radiogroup, not a dropdown. The whole point of this control (SPEC-005) is
+   that the reader sees all five definitions at once and watches the answer move
+   between them; a dropdown hides four of them and makes the fifth look like the
+   answer. */
+.segmented {
+  display: inline-flex;
+  background: var(--surface-sunken);
+  border-radius: var(--r-sm);
+  padding: var(--s-0);
+  gap: var(--s-0);
+}
+
+.segmented__option {
+  appearance: none;
+  font: inherit;
+  font-size: var(--t-micro);
+  font-weight: var(--w-strong);
+  border: none;
+  border-radius: var(--r-sm);
+  padding: var(--s-1) var(--s-2);
+  background: transparent;
+  color: var(--ink-quiet);
+  cursor: pointer;
+  transition:
+    background var(--m-state) var(--ease-standard),
+    color var(--m-state) var(--ease-standard);
+}
+
+.segmented__option[aria-checked="true"] {
+  background: var(--surface-panel);
+  color: var(--ink-strong);
+  box-shadow: var(--e-panel);
+}
+
+/* --------------------------------------------------------------- figure ---- */
+
+/* The screenshot unit. Everything a reader needs to interpret the figure is
+   inside this box: title, strategy key, method version, date range. Design bar
+   8 -- findings travel as screenshots, and a figure that only makes sense in
+   its surrounding chrome will be quoted without it. `figure-frame.js` refuses
+   to construct one of these without its provenance. */
+.figure {
+  background: var(--surface-panel);
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-hairline);
+  padding: var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.figure__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s-4);
+}
+
+.figure__subtitle {
+  font-size: var(--t-micro);
+  line-height: var(--lh-micro);
+  color: var(--ink-quiet);
+}
+
+.figure__body {
+  position: relative;
+  min-height: var(--s-7);
+}
+
+/* Provenance strip. Deliberately not styled away into invisibility: it is
+   evidence, and it is the difference between a figure that can be checked and
+   one that has to be trusted. */
+.figure__provenance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-4);
+  padding-top: var(--s-2);
+  border-top: 1px solid var(--line-hairline);
+  font-size: var(--t-micro);
+  line-height: var(--lh-micro);
+  color: var(--ink-quiet);
+}
+
+.figure__provenance dt {
+  display: inline;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+}
+
+.figure__provenance dd {
+  display: inline;
+  margin: 0 0 0 var(--s-1);
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------------- charts --- */
+
+.chart {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.chart text {
+  font-family: var(--font-sans);
+  font-size: var(--t-micro);
+  fill: var(--ink-quiet);
+}
+
+.chart .axis-line {
+  stroke: var(--data-axis);
+  stroke-width: 1;
+}
+
+.chart .grid-line {
+  stroke: var(--data-grid);
+  stroke-width: 1;
+}
+
+.chart .band {
+  fill: var(--data-band);
+}
+
+.chart .band-edge {
+  stroke: var(--data-band-edge);
+  stroke-width: 1;
+  fill: none;
+}
+
+.chart .series-line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: d var(--m-transition) var(--ease-emphasis);
+}
+
+/* An unselected strategy: present, readable, clearly not the emphasis. Kept as
+   a real line rather than a ghost -- the spread is the point. */
+.chart .series-line--context {
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+.chart .series-line--bound {
+  stroke-width: 1.5;
+  opacity: 0.8;
+}
+
+.chart .baseline-line {
+  fill: none;
+  stroke: var(--data-baseline);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 3;
+}
+
+.chart .mark {
+  transition: transform var(--m-state) var(--ease-standard);
+}
+
+.chart .mark--selected {
+  stroke: var(--surface-panel);
+  stroke-width: 2;
+}
+
+.chart .hit-target {
+  fill: transparent;
+  stroke: none;
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------- states --- */
+
+.state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--s-1);
+  min-height: var(--s-7);
+  padding: var(--s-4);
+  border-radius: var(--r-sm);
+  text-align: left;
+}
+
+/* An empty result is a finding, not a failure. "No MDT opportunities on this
+   ward-day" gets stated in words, on the same surface as data would have used,
+   with no error styling and no icon (design bar 7). */
+.state--empty {
+  background: var(--surface-sunken);
+  color: var(--ink);
+}
+
+.state__detail {
+  font-size: var(--t-micro);
+  color: var(--ink-quiet);
+}
+
+/* A loading placeholder must not look like data. No bars, no line, no axis --
+   a hatched field, which is not a shape this system uses for any value. */
+.state--loading {
+  background-color: var(--surface-sunken);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 6px,
+    var(--surface-panel) 6px 12px
+  );
+  color: var(--ink-quiet);
+  animation: hwpm-pulse var(--m-narrative) var(--ease-standard) infinite alternate;
+}
+
+@keyframes hwpm-pulse {
+  from {
+    opacity: 0.75;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Below the ADR-0005 disclosure floor. Says so, in place, in words. */
+.state--suppressed {
+  background-color: var(--surface-sunken);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0 5px,
+    var(--data-suppressed) 5px 6px
+  );
+  color: var(--ink-strong);
+}
+
+.state--suppressed .state__detail {
+  background: var(--surface-panel);
+  border-radius: var(--r-sm);
+  padding: var(--s-1) var(--s-2);
+  display: inline-block;
+}
+
+/* ---------------------------------------------------------------- legend --- */
+
+/* Colour is never alone: every legend row carries its shape swatch, and the
+   shape is what the chart draws (design bar 6). */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  font-size: var(--t-micro);
+  color: var(--ink);
+}
+
+.legend__swatch {
+  flex: none;
+  width: var(--s-4);
+  height: var(--s-4);
+}
+
+/* --------------------------------------------------------- reduced motion -- */
+
+/* Durations are neutralised in tokens.css, which covers every transition that
+   reads a token. Two things need saying here as well: a keyframe animation
+   that loops does not stop just because it got faster, and `d` interpolation on
+   a path has no duration to neutralise in some engines. */
+@media (prefers-reduced-motion: reduce) {
+  .state--loading {
+    animation: none;
+  }
+
+  .chart .series-line,
+  .chart .mark {
+    transition: none;
+  }
+}

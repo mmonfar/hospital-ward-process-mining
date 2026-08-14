@@ -23,6 +23,8 @@ flowchart TD
   N15-auditor["<b>N15-auditor</b><br/>Automated code and method auditor<br/><i>reviewer · opus-5</i>"]:::auto
   N16-face-validity["<b>N16-face-validity</b><br/>Clinician review of the discovered process model<br/><i>architect · opus-5</i>"]:::confirm
   N18-governance-view["<b>N18-governance-view</b><br/>Clinical Governance MDT coverage view<br/><i>architect · opus-5</i>"]:::auto
+  N19-context-retrieval["<b>N19-context-retrieval</b><br/>Hybrid lexical + vector retrieval over the repo corpus<br/><i>builder · sonnet-5</i>"]:::auto
+  N20-trace-embeddings["<b>N20-trace-embeddings</b><br/>Ward-day and trace embeddings for clustering and warm starts<br/><i>architect · opus-5</i>"]:::confirm
   N17-real-data["<b>N17-real-data</b><br/>First run against a real extract<br/><i>architect · opus-5</i>"]:::stop
 
   N00-foundation --> N01-synthetic-fixtures
@@ -52,6 +54,9 @@ flowchart TD
   N05-mining --> N16-face-validity
   N14-viewer --> N18-governance-view
   N05-mining --> N18-governance-view
+  N00-foundation --> N19-context-retrieval
+  N05-mining --> N20-trace-embeddings
+  N19-context-retrieval --> N20-trace-embeddings
   N15-auditor --> N17-real-data
   N16-face-validity --> N17-real-data
   N18-governance-view --> N17-real-data

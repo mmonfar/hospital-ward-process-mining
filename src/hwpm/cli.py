@@ -11,12 +11,15 @@ import argparse
 import sys
 from pathlib import Path
 
-from hwpm.govern import audit, graph as graph_mod, ledger
+from hwpm.design import colour, emit, tokens
+from hwpm.govern import audit, ledger
+from hwpm.govern import graph as graph_mod
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 GRAPH_PATH = REPO_ROOT / "orchestration" / "graph.yaml"
 MERMAID_PATH = REPO_ROOT / "orchestration" / "graph.mmd"
 AUDIT_PATH = REPO_ROOT / "docs" / "AUDIT-LOG.md"
+DESIGN_DIR = REPO_ROOT / "web" / "design"
 
 
 # Node-id column width. Kept ASCII-only throughout: this runs in a Windows
@@ -99,10 +102,13 @@ def cmd_graph(args: argparse.Namespace) -> int:
         print("  (none — every unblocked node is complete or gated)")
     for node in runnable:
         role = g.model_for(node)
-        gate = "" if node.gate == graph_mod.GATE_AUTONOMOUS else f"  [{node.gate.upper()}]"
+        gate = (
+            "" if node.gate == graph_mod.GATE_AUTONOMOUS else f"  [{node.gate.upper()}]"
+        )
         print(f"  {node.id:<{_W}}{node.title}")
         print(
-            f"  {'':<{_W}}{node.agent} | {role.get('model')} | effort={role.get('effort')}"
+            f"  {'':<{_W}}{node.agent} | {role.get('model')}"
+            f" | effort={role.get('effort')}"
             f" | budget={_fmt(node.budget_tokens)}{gate}"
         )
 
@@ -138,6 +144,60 @@ def cmd_audit(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_design_build(_args: argparse.Namespace) -> int:
+    for path in emit.write_all(DESIGN_DIR):
+        print(f"wrote {path.relative_to(REPO_ROOT)}")
+    return 0
+
+
+def cmd_design_check(_args: argparse.Namespace) -> int:
+    """Accessibility and drift checks, printed rather than only asserted.
+
+    The same checks run in `tests/test_design_tokens.py`. They are exposed here
+    because a designer changing a colour wants the failing ratio, not a pytest
+    traceback.
+    """
+    failures: list[str] = []
+
+    for problem in emit.drift(DESIGN_DIR):
+        failures.append(f"drift: {problem}")
+
+    print("Contrast (WCAG 2.1):")
+    for rule in tokens.CONTRAST_REQUIREMENTS:
+        ratio = colour.contrast_ratio(tokens.resolve(rule.fg), tokens.resolve(rule.bg))
+        ok = ratio >= rule.minimum
+        mark = "ok  " if ok else "FAIL"
+        print(
+            f"  {mark} {ratio:5.2f} (>= {rule.minimum:.1f})  "
+            f"{rule.fg} on {rule.bg} -- {rule.use}"
+        )
+        if not ok:
+            failures.append(f"contrast: {rule.fg} on {rule.bg} is {ratio:.2f}")
+
+    print("\nCategorical separation (CIE76, dichromat-simulated):")
+    for kind in ("none", *colour.CVD_KINDS):
+        shown = [
+            c if kind == "none" else colour.simulate_cvd(c, kind)
+            for c in tokens.series_colours()
+        ]
+        worst, pair = colour.min_separation(shown)
+        ok = worst >= tokens.SERIES_MIN_DELTA_E
+        print(
+            f"  {'ok  ' if ok else 'FAIL'} {worst:5.1f} "
+            f"(>= {tokens.SERIES_MIN_DELTA_E:.0f})  {kind:<13} {pair[0]} / {pair[1]}"
+        )
+        if not ok:
+            failures.append(f"separation: {kind} worst {worst:.1f}")
+
+    if failures:
+        print(f"\n{len(failures)} failure(s):", file=sys.stderr)
+        for failure in failures:
+            print(f"  - {failure}", file=sys.stderr)
+        return 1
+    print("\nDesign system checks passed.")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="hwpm")
     sub = parser.add_subparsers(dest="group", required=True)
@@ -164,6 +224,15 @@ def build_parser() -> argparse.ArgumentParser:
     audit_cmd.add_argument("--artefact", action="append")
     audit_cmd.add_argument("--evidence")
     audit_cmd.set_defaults(func=cmd_audit)
+
+    design = sub.add_parser("design", help="design-system tokens and checks")
+    dsub = design.add_subparsers(dest="command", required=True)
+
+    build = dsub.add_parser("build", help="regenerate web/design/tokens.{css,js}")
+    build.set_defaults(func=cmd_design_build)
+
+    check = dsub.add_parser("check", help="contrast, colour-vision and drift checks")
+    check.set_defaults(func=cmd_design_check)
 
     return parser
 

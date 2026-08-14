@@ -95,12 +95,12 @@ class Graph:
             if state.get(node_id) == 1:
                 return
             if state.get(node_id) == 0:
-                found.append(path[path.index(node_id) :] + [node_id])
+                found.append([*path[path.index(node_id) :], node_id])
                 return
             state[node_id] = 0
             for dep in self.nodes[node_id].depends_on:
                 if dep in self.nodes:
-                    visit(dep, path + [node_id])
+                    visit(dep, [*path, node_id])
             state[node_id] = 1
 
         for node_id in self.nodes:

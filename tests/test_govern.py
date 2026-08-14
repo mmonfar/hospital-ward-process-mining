@@ -12,7 +12,8 @@ from pathlib import Path
 
 import pytest
 
-from hwpm.govern import audit, graph as graph_mod, ledger
+from hwpm.govern import audit, ledger
+from hwpm.govern import graph as graph_mod
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 GRAPH_PATH = REPO_ROOT / "orchestration" / "graph.yaml"
@@ -50,7 +51,9 @@ def test_hard_stop_nodes_are_never_runnable(real_graph: graph_mod.Graph) -> None
     Enforced structurally in `runnable()` rather than by a check at each call
     site, so that omitting the check is not possible.
     """
-    stops = {n.id for n in real_graph.nodes.values() if n.gate == graph_mod.GATE_HARD_STOP}
+    stops = {
+        n.id for n in real_graph.nodes.values() if n.gate == graph_mod.GATE_HARD_STOP
+    }
     assert stops, "expected at least one hard-stop node (N17-real-data)"
     assert not stops & {n.id for n in real_graph.runnable()}
 
@@ -120,7 +123,9 @@ def _transcript(tmp_path: Path, *usages: dict, model: str = "claude-opus-5") -> 
     with path.open("w", encoding="utf-8") as handle:
         for usage in usages:
             handle.write(
-                json.dumps({"type": "assistant", "message": {"model": model, "usage": usage}})
+                json.dumps(
+                    {"type": "assistant", "message": {"model": model, "usage": usage}}
+                )
                 + "\n"
             )
     return path

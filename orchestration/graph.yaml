@@ -141,6 +141,8 @@ nodes:
     depends_on: [N02-domain-core, N01-synthetic-fixtures]
     gate: autonomous
     budget_tokens: 150000
+    status: completed
+    artefacts: [src/hwpm/ingest/reader.py, src/hwpm/ingest/location.py, src/hwpm/ingest/anonymise.py, src/hwpm/ingest/report.py, src/hwpm/ingest/evidence.py, tests/test_ingest.py]
 
   - id: N04-required-specialty
     title: RequiredSpecialty strategies (all five) with confidence
@@ -172,6 +174,8 @@ nodes:
     depends_on: [N02-domain-core]
     gate: autonomous
     budget_tokens: 120000
+    status: completed
+    artefacts: [src/hwpm/domain/travel.py, tests/test_travel.py]
 
   - id: N07-motion-analytics
     title: Motion waste quantification with uncertainty
@@ -293,6 +297,40 @@ nodes:
       than a study output. Architect rather than builder because the failure
       mode is design drift toward a KPI dashboard -- big number, no interval --
       which ADR-0006 exists to prevent.
+
+  - id: N19-context-retrieval
+    title: Hybrid lexical + vector retrieval over the repo corpus
+    spec: SPEC-007
+    agent: builder
+    depends_on: [N00-foundation]
+    gate: autonomous
+    budget_tokens: 150000
+    decision: ADR-0007
+    rationale: >
+      Part A of SPEC-007. Touches no patient data -- it indexes this repository's
+      own specs, ADRs, audit log and the parsed metaheuristics reference. This is
+      the mechanism that makes the budget.rules above cheap to obey rather than
+      merely mandated, so it pays for itself across every later node. Gated on a
+      measurement per ADR-0007: if lexical-only recall@5 already exceeds 0.70 on
+      the labelled query set, nothing is built.
+
+  - id: N20-trace-embeddings
+    title: Ward-day and trace embeddings for clustering and warm starts
+    spec: SPEC-007
+    agent: architect
+    depends_on: [N05-mining, N19-context-retrieval]
+    gate: confirm
+    budget_tokens: 180000
+    decision: ADR-0007
+    rationale: >
+      Part B of SPEC-007, and a different system from N19 despite the shared
+      embedding dependency -- this one touches nothing but patient-derived data.
+      Confirm gate because accepting an opaque representation anywhere near a
+      governance metric is the user's call, as with N13. An interpretable
+      feature vector is built first; a learned embedding only if it beats it
+      measurably. Embeddings may drive retrieval, clustering, anomaly triage and
+      optimiser warm starts, never a reported governance figure without an
+      interpretable derivation alongside (ADR-0006).
 
   - id: N17-real-data
     title: First run against a real extract

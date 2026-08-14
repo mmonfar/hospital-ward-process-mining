@@ -14,7 +14,7 @@ from __future__ import annotations
 import getpass
 import subprocess
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 HEADER = """# Audit log
@@ -53,7 +53,9 @@ class AuditEntry:
         if commit:
             lines.append(f"- **Commit:** `{commit}`")
         if self.artefacts:
-            lines.append(f"- **Artefacts:** {', '.join(f'`{a}`' for a in self.artefacts)}")
+            lines.append(
+                f"- **Artefacts:** {', '.join(f'`{a}`' for a in self.artefacts)}"
+            )
         if self.evidence:
             lines.append("- **Evidence:**")
             lines.append("")
@@ -91,7 +93,7 @@ def append(log_path: Path, entry: AuditEntry, *, repo: Path | None = None) -> No
         actor = "unknown"
 
     rendered = entry.render(
-        when=datetime.now(timezone.utc),
+        when=datetime.now(UTC),
         actor=actor,
         commit=_current_commit(repo),
     )

@@ -1,0 +1,126 @@
+/* GENERATED FILE -- do not edit.
+   Source: src/hwpm/design/tokens.py
+   Rebuild: python -m hwpm.cli design build
+   Verify:  python -m hwpm.cli design check
+   SPEC-005 design bar 1: one visual system, declared once. */
+
+:root {
+  /* Neutral ramp -- slate-green, not grey: it sits under a teal accent */
+  --c-neutral-0: #ffffff;
+  --c-neutral-50: #f7f9f8;
+  --c-neutral-100: #eef1f0;
+  --c-neutral-200: #e2e8e6;
+  --c-neutral-300: #ccd5d3;
+  --c-neutral-400: #a4b1b0;
+  --c-neutral-500: #8a9599;
+  --c-neutral-600: #54666b;
+  --c-neutral-700: #33454b;
+  --c-neutral-800: #26333a;
+  --c-neutral-900: #1c2b30;
+
+  /* Teal ramp -- extended from the prototype seed #16777a */
+  --c-teal-50: #f0f6f5;
+  --c-teal-100: #dcebea;
+  --c-teal-200: #b6d5d5;
+  --c-teal-300: #82b6b7;
+  --c-teal-400: #4d9698;
+  --c-teal-500: #16777a;
+  --c-teal-600: #106064;
+  --c-teal-700: #0d4d50;
+  --c-teal-800: #0a3c3f;
+  --c-teal-900: #06272a;
+
+  /* Surfaces, ink and lines -- components reference only these */
+  --surface-page: var(--c-neutral-100);
+  --surface-panel: var(--c-neutral-0);
+  --surface-sunken: var(--c-neutral-200);
+  --surface-scene: var(--c-neutral-100);
+  --ink-strong: var(--c-neutral-900);
+  --ink: var(--c-neutral-700);
+  --ink-quiet: var(--c-neutral-600);
+  --ink-inverse: var(--c-neutral-0);
+  --line-hairline: var(--c-neutral-300);
+  --line-strong: var(--c-neutral-600);
+  --accent: var(--c-teal-500);
+  --accent-strong: var(--c-teal-600);
+  --accent-quiet: var(--c-teal-100);
+  --focus: var(--c-teal-600);
+
+  /* Categorical series -- five slots, each with a shape and a pattern */
+  --series-s1: #16777a;
+  --series-s2: #2f3f86;
+  --series-s3: #78264a;
+  --series-s4: #a06a0c;
+  --series-s5: #43663a;
+  --series-other: #8a9599;
+
+  /* Data roles -- no green, no red: judgement belongs to the reader */
+  --data-observed: var(--c-teal-600);
+  --data-necessary: var(--c-neutral-700);
+  --data-waste: #a06a0c;
+  --data-waste-fill: rgba(160, 106, 12, 0.16);
+  --data-baseline: var(--c-neutral-700);
+  --data-infeasible: #78264a;
+  --data-band: rgba(22, 119, 122, 0.18);
+  --data-band-edge: var(--c-teal-300);
+  --data-suppressed: var(--c-neutral-600);
+  --data-grid: var(--c-neutral-300);
+  --data-axis: var(--c-neutral-600);
+
+  /* RequiredSpecialty strategies -- one hue, distinguished by dash */
+  --dash-referral: none;
+  --dash-consult-note: 5 3;
+  --dash-problem-list: 1 3;
+  --dash-union: 9 4;
+  --dash-intersection: 2 2 7 2;
+
+  /* Type -- four sizes, two weights */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --t-micro: 11px;
+  --t-body: 13px;
+  --t-title: 17px;
+  --t-figure: 30px;
+  --lh-micro: 1.35;
+  --lh-body: 1.5;
+  --lh-title: 1.3;
+  --lh-figure: 1.1;
+  --w-regular: 400;
+  --w-strong: 600;
+  --track-micro: 0.05em;
+  --track-title: -0.01em;
+
+  /* Space */
+  --s-0: 2px;
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 10px;
+
+  /* Elevation -- only where something is physically above */
+  --e-flat: none;
+  --e-panel: 0 1px 2px rgba(20, 40, 40, 0.06), 0 2px 12px rgba(20, 40, 40, 0.10);
+  --e-overlay: 0 6px 24px rgba(20, 40, 40, 0.18);
+
+  /* Motion -- explanatory only (design bar 4) */
+  --m-state: 90ms;
+  --m-transition: 240ms;
+  --m-narrative: 900ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasis: cubic-bezier(0.3, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --m-state: 0.01ms;
+    --m-transition: 0.01ms;
+    --m-narrative: 0.01ms;
+  }
+}
