@@ -80,44 +80,33 @@ class CsvEventReader:
                 )
 
 
-try:
-    import pm4py  # type: ignore[import-untyped]
-except ImportError:
-    pm4py = None  # type: ignore[assignment]
-
-
 class XesEventReader:
     """XES event reader.
 
-    TODO(SPEC-001, N03): SPEC-001 lists XES as in-scope alongside CSV, but
-    `pm4py` (the dependency that would parse it) is not installed in this
-    environment, and SPEC-001's "Failure modes" section warns against
-    "synthetic data too clean" pipelines that quietly grow a heavy
-    dependency nobody asked for. This class satisfies the `EventReader`
-    Protocol shape so callers can select a reader without an `isinstance`
-    branch, but `read` raises until `pm4py` is genuinely available.
+    TODO(SPEC-001, N03): SPEC-001 lists XES as in-scope alongside CSV. This
+    class satisfies the `EventReader` Protocol shape so callers can select a
+    reader without an `isinstance` branch, but `read` raises until it is
+    genuinely implemented.
 
-    When it is: use `pm4py.read_xes(str(path))` to get a pandas-like log,
-    then map each `<trace>`'s `<event>` to `hwpm.domain.Event` the same way
-    `CsvEventReader.read` does — `concept:name` -> `activity`,
-    `time:timestamp` -> `timestamp`, plus whatever XES extension the export
-    uses for subject and location, which needs confirming against a real
-    (never a checked-in) export before it is written. Do not import
-    `pm4py` at module scope until this is done; the module-level try/except
-    above exists only to make availability checkable without forcing the
-    dependency on every install.
+    When implementing it, do NOT reach for `pm4py.read_xes`. ADR-0008 confines
+    pm4py — which is AGPL v3 — to `hwpm.mining._pm4py_adapter`, and an
+    import-linter contract fails the build if any other module imports it.
+    XES is plain XML, so parse it directly (`lxml` is already an indirect
+    dependency) and map each `<trace>`'s `<event>` the way `CsvEventReader.read`
+    does: `concept:name` -> `activity`, `time:timestamp` -> `timestamp`, plus
+    whatever extension the export uses for subject and location. Parsing it
+    ourselves keeps the AGPL surface at exactly one module instead of spreading
+    it into the ingestion layer, which is the cheaper long-term position
+    whichever way the ADR-0008 licensing question is answered.
+
+    The mapping must be confirmed against a real export — never a checked-in
+    one (ADR-0005) — before this is written.
     """
 
     def read(self, path: Path) -> Iterator[Event]:
-        del path  # unused: both branches raise; kept for the `EventReader` shape
-        if pm4py is None:
-            raise NotImplementedError(
-                "XES ingestion needs the optional 'pm4py' dependency, which is "
-                "not installed (see hwpm[analysis] in pyproject.toml). SPEC-001 "
-                "lists XES as in-scope; see the TODO on "
-                "hwpm.ingest.reader.XesEventReader for what is left to wire up."
-            )
+        del path  # unused: raises; kept for the `EventReader` shape
         raise NotImplementedError(
-            "pm4py is installed but XesEventReader.read is not yet implemented; "
-            "see the TODO on hwpm.ingest.reader.XesEventReader."
+            "XesEventReader.read is not yet implemented. SPEC-001 lists XES as "
+            "in-scope; see the TODO on hwpm.ingest.reader.XesEventReader, and "
+            "note ADR-0008 forbids importing pm4py from this layer."
         )

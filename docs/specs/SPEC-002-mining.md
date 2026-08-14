@@ -25,6 +25,17 @@ measure how far reality departs from the intended process.
 - Writing our own discovery algorithm. We use `pm4py`; our contribution is the
   ward-motion layer.
 
+## Licence constraint (ADR-0008)
+
+**`pm4py` is AGPL v3.** All pm4py imports must live in exactly one adapter
+module, `src/hwpm/mining/_pm4py_adapter.py`, behind the `ProcessDiscovery` and
+`ConformanceChecker` Protocols. Nothing else may import it; an import-linter
+`forbidden` contract enforces this.
+
+Until the licensing question in ADR-0008 is answered by the organisation,
+discovery and conformance run **offline as batch analysis producing static
+artefacts** — no network-served deployment of anything downstream of pm4py.
+
 ## Interface
 
 ```python

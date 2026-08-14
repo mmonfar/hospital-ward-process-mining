@@ -79,6 +79,8 @@ ignore_names = ["evaluate_reference"]
 # only documented decays one import at a time.
 [tool.importlinter]
 root_package = "hwpm"
+# Required so the ADR-0008 contract can name pm4py, an external package.
+include_external_packages = true
 
 [[tool.importlinter.contracts]]
 name = "Domain depends on nothing"
@@ -96,3 +98,20 @@ forbidden_modules = [
 name = "Layers point inward"
 type = "layers"
 layers = ["hwpm.cli", "hwpm.optimize", "hwpm.mining", "hwpm.ingest", "hwpm.domain"]
+
+# ADR-0008: pm4py is AGPL v3. Confining it to one adapter keeps the dependency
+# swappable at a known, small cost while the organisation answers the licensing
+# question. A Protocol boundary is not a legal firewall -- it buys optionality.
+[[tool.importlinter.contracts]]
+name = "pm4py confined to its adapter (AGPL -- ADR-0008)"
+type = "forbidden"
+source_modules = [
+    "hwpm.domain",
+    "hwpm.ingest",
+    "hwpm.optimize",
+    "hwpm.govern",
+    "hwpm.design",
+    "hwpm.cli",
+]
+forbidden_modules = ["pm4py"]
+unmatched_ignore_imports_alerting = "none"

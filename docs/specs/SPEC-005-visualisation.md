@@ -204,6 +204,9 @@ directly from that ADR and are not negotiable at implementation time:
   audience? Likely answer: 3D for the ward/motion view where geometry is the
   point, 2D for the governance view where trend and interval are the point.
   Decide with users at N16 rather than by assertion.
-- **[non-blocking]** Does the governance view need to be shareable (hosted)?
-  That would change the data-governance posture entirely and requires its own
-  ADR before any work starts.
+- **[BLOCKING]** Does the governance view need to be shareable (hosted)? This is
+  now blocked on **ADR-0008**: `pm4py` is AGPL v3, and AGPL §13 extends copyleft
+  to network interaction, so hosting anything downstream of the discovery step
+  may oblige the organisation to publish the source of this application. It also
+  changes the data-governance posture entirely. No hosted deployment until both
+  questions are answered.

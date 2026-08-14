@@ -61,6 +61,7 @@ export function dashFor(key) {
  * @param {string} [spec.label]
  */
 export function strategySelector({ selected, onSelect, label = "Required-specialty definition" }) {
+  let current = selected;
   const root = document.createElement("div");
   root.className = "segmented";
   root.setAttribute("role", "radiogroup");
@@ -111,7 +112,6 @@ export function strategySelector({ selected, onSelect, label = "Required-special
     select(next, true);
   });
 
-  let current = selected;
   paint(current);
   return root;
 }

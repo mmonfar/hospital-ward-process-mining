@@ -213,3 +213,32 @@ as new entries referencing the original.
   ```
   pandas 3.0.5 remains a major-version change affecting the user's other projects
   ```
+
+## 2026-08-14 17:03:10Z — ADR-0008: pm4py is AGPL v3; confined to one adapter and kept off the network
+
+- **Why:** Discovered on install, after the dependency was already chosen and recommended to the user - a licence check should have preceded selection. AGPL section 13 extends copyleft to network interaction, and SPEC-005 contemplates hosting the governance view, so this sits directly on the project's likely deployment path. Mitigation is optionality, not a legal firewall: an import-linter contract confines pm4py to hwpm.mining._pm4py_adapter so swapping it is a one-file change. Hosting anything downstream of discovery is blocked until the organisation answers.
+- **Authority:** ADR-0008
+- **Graph node:** N05-mining
+- **Model:** claude-opus-5
+- **Actor:** marti
+- **Commit:** `d573a81`
+- **Artefacts:** `docs/adr/ADR-0008-pm4py-agpl-isolation.md`, `pyproject.toml`
+- **Evidence:**
+
+  ```
+  contract caught a real violation on first run: hwpm.ingest.reader imported pm4py; removed. 3 contracts kept, 0 broken
+  ```
+
+## 2026-08-14 17:03:10Z — Project venv created and verified; dependency licences now recorded at selection time
+
+- **Why:** The venv build succeeded; the reported failure was an error in the verification command, which checked for scikit-learn - not a dependency of this project and correctly absent. 56 tests pass inside the venv. Licence review is now a required part of dependency selection, per ADR-0008 consequences.
+- **Authority:** ADR-0008; user decision 2026-08-14
+- **Graph node:** N00-foundation
+- **Model:** claude-opus-5
+- **Actor:** marti
+- **Commit:** `d573a81`
+- **Evidence:**
+
+  ```
+  pm4py AGPL-3.0; ortools Apache-2.0; 56 tests pass in .venv
+  ```
