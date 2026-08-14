@@ -140,3 +140,17 @@ as new entries referencing the original.
   ```
   .............                                                            [100%]; ruff check src/hwpm/ingest: clean; coverage ingest/synthetic.py: 99%; vulture: no findings; determinism: generate(config, Random(42)) equal across two runs, and with noise enabled
   ```
+
+## 2026-08-14 16:53:18Z — CONSOLIDATE: session ended at 84% of token budget, no node started
+
+- **Why:** Budget threshold 0.80 reached immediately after N01/N02 landed, before any new node could be selected. Per docs/05-SELF-MANAGED-MODE.md, do not start a new node past this threshold -- end at a resumable boundary instead of burning the remaining ~490k mid-node.
+- **Authority:** docs/05-SELF-MANAGED-MODE.md; orchestration/graph.yaml budget.thresholds
+- **Graph node:** N00-foundation
+- **Model:** claude-opus-5
+- **Actor:** marti
+- **Commit:** `7ff8d59`
+- **Evidence:**
+
+  ```
+  billable 2,510,903 of 3,000,000 (84%) - action CONSOLIDATE. Runnable and untouched: N03-ingestion, N06-travel-graph, N14a-design-system. Next session should start with N03-ingestion (unblocks the most downstream work: N04, N05).
+  ```
