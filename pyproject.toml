@@ -93,6 +93,7 @@ forbidden_modules = [
     "hwpm.govern",
     "hwpm.design",
     "hwpm.artefact",
+    "hwpm.retrieve",
     "hwpm.cli",
 ]
 
@@ -102,12 +103,19 @@ type = "layers"
 # hwpm.artefact sits between ingest and domain: every stage above it writes a
 # strategy-keyed envelope (SPEC-001 criterion 10, ADR-0006 section 2), and it
 # knows only the domain types the envelope carries. N04.
+# hwpm.retrieve sits alongside it, same level: an adapter over repo text
+# (SPEC-007 Part A) that touches no patient data and does not depend on, or
+# get depended on by, hwpm.artefact -- the sub-list marks them independent so
+# neither may import the other. N19.
 layers = [
     "hwpm.cli",
     "hwpm.optimize",
     "hwpm.mining",
     "hwpm.ingest",
-    "hwpm.artefact",
+    # import-linter 2.x spells "independent siblings at one level" as a single
+    # string joined by `|`; a TOML sub-list raises `'list' object has no
+    # attribute 'strip'` and takes gate 6 down for every node. Corrected N04.
+    "hwpm.artefact | hwpm.retrieve",
     "hwpm.domain",
 ]
 
@@ -124,6 +132,7 @@ source_modules = [
     "hwpm.govern",
     "hwpm.design",
     "hwpm.artefact",
+    "hwpm.retrieve",
     "hwpm.cli",
     # hwpm.mining itself must be listed too -- ADR-0008 says "nothing else in
     # the codebase", which includes _pm4py_adapter.py's siblings within this

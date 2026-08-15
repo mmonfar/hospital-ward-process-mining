@@ -1,0 +1,218 @@
+# Labelled query set for SPEC-007 / ADR-0007's G2/G3 gate.
+#
+# How this was built, honestly: drafted by the N19-context-retrieval builder
+# agent (Sonnet 5) from having just read every doc/spec/ADR in the corpus in
+# full, then locating each answer's line range afterwards with grep/read
+# rather than writing the query to match a remembered wording. SPEC-007 flags
+# this as a real limitation ("architect-written queries risk encoding what the
+# architect already knows the repository says") and there is no way to fully
+# escape it for a single-session build — the mitigation here is a deliberate
+# mix, not a single style of query:
+#
+#   - ~8 queries name an exact identifier, symbol or page anchor (SPEC-007's
+#     own worked examples: "derive_episodes", "ADR-0005", "page 143"). These
+#     are queries where lexical search is *expected* to win outright — SPEC-007
+#     itself says grep must stay strictly better here, and a query set that
+#     hid this class to flatter a vector index would be rigged in the other
+#     direction.
+#   - ~28 queries are phrased the way an agent actually wonders something —
+#     paraphrased, not copying the document's own words — which is precisely
+#     the case SPEC-007's "why this is not just grep" section argues lexical
+#     search struggles with.
+#
+# Written once, before any retriever beyond a rough lexical prototype existed,
+# and versioned here so a later session cannot quietly relabel it to move the
+# number (SPEC-007, Test oracle). `relevant` entries mark a line range in a
+# repo-relative file path; a retrieved chunk counts as a hit on a query if its
+# own line range overlaps any marked span for that file.
+
+queries:
+  - id: q01
+    query: "What is MDT coverage and how is it defined?"
+    relevant:
+      - {path: docs/00-VISION.md, start_line: 72, end_line: 75}
+
+  - id: q02
+    query: "Why did the project reject PHP as a language?"
+    relevant:
+      - {path: docs/adr/ADR-0002-language-selection.md, start_line: 15, end_line: 35}
+
+  - id: q03
+    query: "How do we handle noisy fitness during calibration?"
+    relevant:
+      - {path: docs/specs/SPEC-004-optimisation.md, start_line: 108, end_line: 116}
+      - {path: refs/metaheuristics/SELECTION-GUIDE.md, start_line: 144, end_line: 149}
+
+  - id: q04
+    query: "Who decides the RequiredSpecialty denominator and how was it resolved?"
+    note: "line range re-checked 2026-08-15 after N04-required-specialty (a concurrent agent in this same working tree) grew this file from 171 to 374 lines"
+    relevant:
+      - {path: docs/specs/SPEC-001-ingestion.md, start_line: 132, end_line: 139}
+
+  - id: q05
+    query: "What happens to a work session when token spend crosses 80 percent of budget?"
+    relevant:
+      - {path: docs/04-AGENT-ORCHESTRATION.md, start_line: 97, end_line: 105}
+
+  - id: q06
+    query: "derive_episodes function signature"
+    note: "exact symbol — lexical-favouring by design, see SPEC-007's own table"
+    relevant:
+      - {path: docs/specs/SPEC-002-mining.md, start_line: 48, end_line: 48}
+
+  - id: q07
+    query: "ADR-0005 data handling decision"
+    note: "exact identifier — lexical-favouring by design"
+    relevant:
+      - {path: docs/adr/ADR-0005-data-handling.md, start_line: 17, end_line: 36}
+
+  - id: q08
+    query: "what is on page 143 of the metaheuristics reference"
+    note: "exact page anchor — lexical-favouring by design"
+    relevant:
+      - {path: refs/metaheuristics/essentials-of-metaheuristics.md, start_line: 8837, end_line: 8908}
+
+  - id: q09
+    query: "under what conditions does the project write a C kernel instead of staying in Python"
+    relevant:
+      - {path: docs/adr/ADR-0003-c-kernel-profile-gate.md, start_line: 18, end_line: 33}
+
+  - id: q10
+    query: "what is the minimum number of patients allowed in a reported governance output cell"
+    relevant:
+      - {path: docs/adr/ADR-0005-data-handling.md, start_line: 29, end_line: 31}
+
+  - id: q11
+    query: "how is a clinician's schedule represented inside the optimiser"
+    relevant:
+      - {path: docs/specs/SPEC-004-optimisation.md, start_line: 92, end_line: 96}
+
+  - id: q12
+    query: "why does the project produce a Pareto front instead of one recommended schedule"
+    relevant:
+      - {path: docs/adr/ADR-0004-multiobjective-not-scalarised.md, start_line: 14, end_line: 38}
+
+  - id: q13
+    query: "what walking speed does the simulation assume"
+    note: "near-exact value lookup — lexical-favouring by design; line re-checked 2026-08-15, see q04"
+    relevant:
+      - {path: docs/specs/SPEC-001-ingestion.md, start_line: 129, end_line: 129}
+
+  - id: q14
+    query: "how many pages and algorithms were indexed from the metaheuristics book"
+    relevant:
+      - {path: docs/AUDIT-LOG.md, start_line: 25, end_line: 39}
+
+  - id: q15
+    query: "why is pm4py kept behind a single adapter module"
+    relevant:
+      - {path: docs/adr/ADR-0008-pm4py-agpl-isolation.md, start_line: 44, end_line: 66}
+
+  - id: q16
+    query: "what counts as a bedside episode"
+    relevant:
+      - {path: docs/01-DOMAIN-MODEL.md, start_line: 79, end_line: 82}
+
+  - id: q17
+    query: "what makes something an MDT moment rather than a coincidence"
+    relevant:
+      - {path: docs/01-DOMAIN-MODEL.md, start_line: 83, end_line: 85}
+
+  - id: q18
+    query: "why must the necessary-metres figure come from a proven bound rather than a heuristic tour"
+    relevant:
+      - {path: docs/specs/SPEC-003-motion.md, start_line: 99, end_line: 104}
+
+  - id: q19
+    query: "what is the realistic benchmark instance the C kernel gate is measured against"
+    relevant:
+      - {path: docs/adr/ADR-0003-c-kernel-profile-gate.md, start_line: 30, end_line: 33}
+
+  - id: q20
+    query: "does the project ever nest one metaheuristic inside another to tune it"
+    relevant:
+      - {path: refs/metaheuristics/SELECTION-GUIDE.md, start_line: 166, end_line: 173}
+
+  - id: q21
+    query: "what is the opportunistic MDT detection case about the passing surgeon"
+    relevant:
+      - {path: docs/specs/SPEC-002-mining.md, start_line: 64, end_line: 81}
+
+  - id: q22
+    query: "why was ant colony optimisation chosen over a genetic algorithm for visit routing"
+    relevant:
+      - {path: refs/metaheuristics/SELECTION-GUIDE.md, start_line: 110, end_line: 117}
+
+  - id: q23
+    query: "what suppresses a small ward-day cluster from being shown"
+    relevant:
+      - {path: docs/specs/SPEC-007-vector-retrieval.md, start_line: 355, end_line: 357}
+
+  - id: q24
+    query: "what does every agent action that changes the repository have to be recorded in"
+    note: "near-exact identifier (AUDIT-LOG.md) — lexical-favouring by design"
+    relevant:
+      - {path: docs/adr/ADR-0001-spec-driven-development.md, start_line: 33, end_line: 35}
+
+  - id: q25
+    query: "what has to be true before the hybrid retrieval index gets built at all"
+    relevant:
+      - {path: docs/adr/ADR-0007-vector-context-retrieval.md, start_line: 61, end_line: 75}
+
+  - id: q26
+    query: "which RequiredSpecialty source is the default and why that one"
+    note: "line range re-checked 2026-08-15, see q04"
+    relevant:
+      - {path: docs/specs/SPEC-001-ingestion.md, start_line: 180, end_line: 182}
+
+  - id: q27
+    query: "why is straight-line distance the wrong way to measure travel between two beds on different floors"
+    relevant:
+      - {path: docs/specs/SPEC-003-motion.md, start_line: 44, end_line: 53}
+
+  - id: q28
+    query: "which embedding model and how many dimensions would the vector half use"
+    note: "near-exact identifier (model name) — lexical-favouring by design"
+    relevant:
+      - {path: docs/specs/SPEC-007-vector-retrieval.md, start_line: 249, end_line: 254}
+
+  - id: q29
+    query: "why is reciprocal rank fusion used instead of a tuned blend weight between lexical and vector scores"
+    relevant:
+      - {path: docs/specs/SPEC-007-vector-retrieval.md, start_line: 115, end_line: 120}
+      - {path: docs/specs/SPEC-007-vector-retrieval.md, start_line: 408, end_line: 409}
+
+  - id: q30
+    query: "what does the layering rule say about what the domain package is allowed to import"
+    relevant:
+      - {path: docs/02-ARCHITECTURE.md, start_line: 31, end_line: 32}
+
+  - id: q31
+    query: "which algorithm is used to calibrate the simulation's parameters"
+    relevant:
+      - {path: refs/metaheuristics/SELECTION-GUIDE.md, start_line: 129, end_line: 142}
+
+  - id: q32
+    query: "why check a JIT compiler before reaching for a compiled kernel"
+    relevant:
+      - {path: docs/02-ARCHITECTURE.md, start_line: 67, end_line: 68}
+
+  - id: q33
+    query: "what must every piece of stochastic code accept as a parameter so results are reproducible"
+    relevant:
+      - {path: docs/06-QA-AND-DEADCODE.md, start_line: 29, end_line: 33}
+
+  - id: q34
+    query: "what is the risk of the opportunistic-review detector crying wolf"
+    relevant:
+      - {path: docs/specs/SPEC-002-mining.md, start_line: 114, end_line: 116}
+
+  - id: q35
+    query: "how was the labelled retrieval query set kept from being written to favour one retriever"
+    relevant:
+      - {path: docs/specs/SPEC-007-vector-retrieval.md, start_line: 474, end_line: 480}
+
+  - id: q36
+    query: "why can't an agent perform the clinician face-validity review itself"
+    relevant:
+      - {path: docs/04-AGENT-ORCHESTRATION.md, start_line: 45, end_line: 46}

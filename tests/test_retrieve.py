@@ -1,0 +1,429 @@
+"""Tests for SPEC-007 Part A, lexical-only ship (N19-context-retrieval).
+
+ADR-0007's G2 measurement came back with lexical-only recall@5 = 0.75 on the
+labelled query set in `tests/fixtures/retrieval_queries.yaml` -- above the
+0.70 stop threshold -- so this node ships the lexical retriever, the query
+set and this measurement harness, and nothing else. There is no vector half
+to test: `fastembed`/`sqlite-vec` are not dependencies of this repository.
+
+Acceptance criteria covered (numbering from SPEC-007): 1 (page-anchor
+chunking), 2 (citations resolve), 3 (verbatim, bounded by k), 4 (eval reports
+lexical), 6 (query set well-formed), 8 (lexical-only needs no optional dep),
+9 (govern imports without retrieve deps -- trivially true, retrieve has none
+yet), 12 (index artefact git-ignored). Criteria 5, 7, 10, 11 and 13-20 are
+Part A-vector or Part B and do not apply to what was actually built; noted
+rather than silently skipped.
+"""
+
+from __future__ import annotations
+
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+import yaml
+
+from hwpm.retrieve.chunk import Chunk, chunk_file, chunk_python, chunk_reference
+from hwpm.retrieve.corpus import CorpusSafetyError, build_chunks, iter_corpus_files
+from hwpm.retrieve.eval import evaluate, load_queries
+from hwpm.retrieve.index import DEFAULT_INDEX_PATH
+from hwpm.retrieve.lexical import LexicalIndex
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+QUERIES_PATH = REPO_ROOT / "tests" / "fixtures" / "retrieval_queries.yaml"
+REFERENCE_PATH = REPO_ROOT / "refs" / "metaheuristics" / "essentials-of-metaheuristics.md"
+
+
+@pytest.fixture(scope="module")
+def corpus_chunks() -> list[Chunk]:
+    return build_chunks(REPO_ROOT)
+
+
+# --------------------------------------------------------------------------
+# Criterion 1 -- page-anchor chunking
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.skipif(
+    not REFERENCE_PATH.exists(), reason="reference is git-ignored, parsed locally"
+)
+def test_chunks_respect_page_anchors() -> None:
+    """No chunk of the parsed reference spans a `<!-- page N -->` anchor."""
+    text = REFERENCE_PATH.read_text(encoding="utf-8")
+    chunks = chunk_reference("refs/metaheuristics/essentials-of-metaheuristics.md", text)
+    assert chunks, "expected the reference to produce chunks"
+
+    lines = text.splitlines()
+    anchor_lines = {
+        i
+        for i, line in enumerate(lines, start=1)
+        if re.match(r"^<!--\s*page\s+\d+\s*-->\s*$", line.strip())
+    }
+    for chunk in chunks:
+        crossed = {n for n in anchor_lines if chunk.start_line < n <= chunk.end_line}
+        assert not crossed, f"chunk {chunk.id} crosses page anchor(s) at {crossed}"
+
+
+# --------------------------------------------------------------------------
+# Criterion 2 -- citations resolve
+# --------------------------------------------------------------------------
+
+
+def test_citations_resolve(corpus_chunks: list[Chunk]) -> None:
+    """Every chunk's line range, read back off disk, hashes to `chunk.sha256`."""
+    import hashlib
+
+    # Sampling the full corpus would re-read every file once per chunk; check
+    # a deterministic, evenly-spaced sample plus the first/last chunk of each
+    # file so this stays fast without losing whole-corpus coverage over time.
+    by_path: dict[str, list[Chunk]] = {}
+    for c in corpus_chunks:
+        by_path.setdefault(c.path, []).append(c)
+
+    checked = 0
+    for path, chunks in by_path.items():
+        text = (REPO_ROOT / path).read_text(encoding="utf-8")
+        lines = text.splitlines()
+        for chunk in chunks:
+            slice_text = "\n".join(lines[chunk.start_line - 1 : chunk.end_line])
+            assert slice_text == chunk.text, f"{chunk.id}: text does not match disk"
+            assert hashlib.sha256(slice_text.encode("utf-8")).hexdigest() == chunk.sha256
+            checked += 1
+    assert checked == len(corpus_chunks)
+
+
+# --------------------------------------------------------------------------
+# Criterion 3 -- search returns at most k, verbatim, chunks
+# --------------------------------------------------------------------------
+
+
+def test_search_returns_verbatim_passages(corpus_chunks: list[Chunk]) -> None:
+    idx = LexicalIndex.build(corpus_chunks)
+    results = idx.search("why does the project reject PHP", k=5)
+    assert 0 < len(results) <= 5
+    for chunk, _score in results:
+        on_disk = (REPO_ROOT / chunk.path).read_text(encoding="utf-8").splitlines()
+        assert "\n".join(on_disk[chunk.start_line - 1 : chunk.end_line]) == chunk.text
+
+
+# --------------------------------------------------------------------------
+# Criterion 4 -- eval reports lexical (hybrid absent: not built)
+# --------------------------------------------------------------------------
+
+
+def test_eval_reports_lexical_baseline(corpus_chunks: list[Chunk]) -> None:
+    scores = evaluate(QUERIES_PATH, REPO_ROOT, chunks=corpus_chunks)
+    assert "lexical" in scores
+    assert 0.0 <= scores["lexical"].recall_at_5 <= 1.0
+    assert scores["lexical"].n_queries == len(load_queries(QUERIES_PATH))
+    # Hybrid was never built -- SPEC-007's own gate says do not build it, and
+    # this asserts the honest consequence: no hybrid score exists to report.
+    assert "hybrid" not in scores
+
+
+# --------------------------------------------------------------------------
+# Criterion 5 / G2 -- the gate itself, recorded as a regression floor
+# --------------------------------------------------------------------------
+
+
+def test_lexical_recall_gate(corpus_chunks: list[Chunk]) -> None:
+    """ADR-0007 G2: lexical-only recall@5 > 0.70 means stop, don't build the
+    vector half. Measured 2026-08-15 at 0.75. This is a regression floor, not
+    a target -- if it drifts back at or below 0.70, that is a real signal
+    that N19's vector half should be reopened, not a test to raise the bar
+    on by relabelling queries."""
+    scores = evaluate(QUERIES_PATH, REPO_ROOT, chunks=corpus_chunks)
+    assert scores["lexical"].recall_at_5 > 0.70
+
+
+# --------------------------------------------------------------------------
+# Criterion 6 -- query set well-formed
+# --------------------------------------------------------------------------
+
+
+def test_query_set_wellformed() -> None:
+    queries = load_queries(QUERIES_PATH)
+    assert len(queries) >= 30
+    corpus_paths = {c.path for c in build_chunks(REPO_ROOT)}
+    for q in queries:
+        assert q.relevant, f"{q.id} has no marked-relevant passage"
+        for span in q.relevant:
+            assert span.path in corpus_paths, (
+                f"{q.id} marks {span.path}, which is not in the indexed corpus"
+            )
+            assert span.start_line <= span.end_line
+
+
+# --------------------------------------------------------------------------
+# Criterion 8 -- lexical-only needs no optional dependency
+# --------------------------------------------------------------------------
+
+
+def test_lexical_only_needs_no_optional_deps() -> None:
+    """`hwpm.retrieve` imports cleanly with neither `fastembed` nor
+    `sqlite-vec` on `sys.modules` / installed -- true today because neither
+    is a dependency of this repository at all (the vector half was not
+    built)."""
+    for mod in ("fastembed", "sqlite_vec"):
+        assert mod not in sys.modules
+    import importlib
+
+    import hwpm.retrieve
+
+    importlib.reload(hwpm.retrieve)
+
+
+# --------------------------------------------------------------------------
+# Criterion 9 -- hwpm govern is unaffected
+# --------------------------------------------------------------------------
+
+
+def test_govern_imports_without_retrieve_deps() -> None:
+    result = subprocess.run(
+        [sys.executable, "-c", "from hwpm.govern import audit, ledger, graph"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+
+
+# --------------------------------------------------------------------------
+# Criterion 12 -- index artefact untracked
+# --------------------------------------------------------------------------
+
+
+def test_index_artefact_is_gitignored() -> None:
+    gitignore = (REPO_ROOT / ".gitignore").read_text(encoding="utf-8")
+    assert str(DEFAULT_INDEX_PATH.parts[0]) + "/" in gitignore or ".hwpm" in gitignore
+
+
+def test_index_artefact_not_tracked_by_git() -> None:
+    result = subprocess.run(
+        ["git", "ls-files", str(DEFAULT_INDEX_PATH.parts[0])],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.stdout.strip() == ""
+
+
+# --------------------------------------------------------------------------
+# Corpus safety -- ADR-0005 / rule 2, this node touches no patient data
+# --------------------------------------------------------------------------
+
+
+def test_corpus_excludes_data_dir(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """If `HWPM_DATA_DIR` were ever pointed inside a would-be corpus root,
+    building the corpus must refuse rather than silently index it."""
+    data_dir = tmp_path / "patient_data"
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    data_dir.mkdir()
+    (data_dir / "leaked.md").write_text("# should never be indexed\n", encoding="utf-8")
+    monkeypatch.setenv("HWPM_DATA_DIR", str(data_dir))
+
+    from hwpm.retrieve.corpus import _guard_not_data_dir
+
+    with pytest.raises(CorpusSafetyError):
+        _guard_not_data_dir(data_dir / "leaked.md")
+
+
+def test_iter_corpus_files_never_under_data_dir() -> None:
+    """The real corpus, indexed against the real `HWPM_DATA_DIR` if one is
+    configured for this machine, never yields a file under it."""
+    import os
+
+    data_dir = os.environ.get("HWPM_DATA_DIR")
+    if not data_dir:
+        pytest.skip("HWPM_DATA_DIR not configured on this machine")
+    resolved = Path(data_dir).resolve()
+    for f in iter_corpus_files(REPO_ROOT):
+        assert resolved not in f.resolve().parents
+
+
+# --------------------------------------------------------------------------
+# Determinism -- gate 8
+# --------------------------------------------------------------------------
+
+
+def test_chunking_is_deterministic(tmp_path: Path) -> None:
+    """Same corpus in, same chunks out.
+
+    Deliberately built against a private `tmp_path` corpus rather than
+    re-scanning the live repo twice: two other agents (N04, N05) are writing
+    files under `docs/` and `src/hwpm/` in this same working tree during this
+    session, so two `build_chunks(REPO_ROOT)` calls a few lines apart are not
+    guaranteed to see the same filesystem -- that is a fact about concurrent
+    editing, not non-determinism in the chunker being tested here.
+    """
+    docs_dir = tmp_path / "docs"
+    src_dir = tmp_path / "src" / "hwpm" / "pkg"
+    docs_dir.mkdir(parents=True)
+    src_dir.mkdir(parents=True)
+    (docs_dir / "NOTE.md").write_text(
+        "# Title\n\n## Section one\n\nSome text.\n\n## Section two\n\nMore text.\n",
+        encoding="utf-8",
+    )
+    (src_dir / "mod.py").write_text(
+        '"""Module doc."""\n\n\ndef fn(x: int) -> int:\n    """Doc."""\n    return x\n',
+        encoding="utf-8",
+    )
+
+    first = build_chunks(tmp_path)
+    second = build_chunks(tmp_path)
+    assert first, "expected the fixture corpus to produce chunks"
+    assert [c.id for c in first] == [c.id for c in second]
+    assert [c.sha256 for c in first] == [c.sha256 for c in second]
+
+
+def test_search_is_deterministic(corpus_chunks: list[Chunk]) -> None:
+    idx = LexicalIndex.build(corpus_chunks)
+    first = idx.search("why does the project reject PHP", k=5)
+    second = idx.search("why does the project reject PHP", k=5)
+    assert [c.id for c, _ in first] == [c.id for c, _ in second]
+    assert [round(s, 9) for _, s in first] == [round(s, 9) for _, s in second]
+
+
+# --------------------------------------------------------------------------
+# Python chunking: signature + docstring, never the body
+# --------------------------------------------------------------------------
+
+
+def test_python_chunk_excludes_function_body() -> None:
+    source = '''"""Module doc."""
+
+
+def add(a: int, b: int) -> int:
+    """Add two numbers."""
+    total = a + b
+    return total
+'''
+    chunks = chunk_python("example.py", source, "example")
+    fn_chunks = [c for c in chunks if c.heading_path == "example.add"]
+    assert len(fn_chunks) == 1
+    assert "total = a + b" not in fn_chunks[0].text
+    assert "def add" in fn_chunks[0].text
+    assert "Add two numbers." in fn_chunks[0].text
+
+
+def test_audit_log_chunks_one_per_entry() -> None:
+    from hwpm.retrieve.chunk import chunk_audit_log
+
+    text = (
+        "# Audit log\n\npreamble text\n\n"
+        "## 2026-01-01T00:00:00Z — First entry\n\nbody one\n\n"
+        "## 2026-01-02T00:00:00Z — Second entry\n\nbody two\n"
+    )
+    chunks = chunk_audit_log("docs/AUDIT-LOG.md", text)
+    headings = [c.heading_path for c in chunks]
+    assert "2026-01-01T00:00:00Z — First entry" in headings
+    assert "2026-01-02T00:00:00Z — Second entry" in headings
+    for c in chunks:
+        # No entry chunk should contain another entry's heading text.
+        others = [h for h in headings if h != c.heading_path and h != "preamble"]
+        for other in others:
+            assert other not in c.text
+
+
+def test_chunk_file_dispatches_by_name(tmp_path: Path) -> None:
+    md = tmp_path / "NOTE.md"
+    md.write_text("# Title\n\nSome content here that is short.\n", encoding="utf-8")
+    chunks = chunk_file(md, repo_relative="NOTE.md")
+    assert chunks and all(c.path == "NOTE.md" for c in chunks)
+
+
+def test_load_queries_roundtrip() -> None:
+    raw = yaml.safe_load(QUERIES_PATH.read_text(encoding="utf-8"))
+    assert isinstance(raw, dict)
+    assert len(raw["queries"]) == len(load_queries(QUERIES_PATH))
+
+
+# --------------------------------------------------------------------------
+# The persisted index: build, load, search (index.py)
+# --------------------------------------------------------------------------
+
+
+def test_build_index_persists_stats_and_chunks(tmp_path: Path) -> None:
+    from hwpm.retrieve.index import build_index, load_chunks, load_stats
+
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    (docs_dir / "NOTE.md").write_text("# Title\n\nSome content.\n", encoding="utf-8")
+    out = tmp_path / ".hwpm" / "context-index.json"
+
+    stats = build_index([tmp_path], out)
+    assert out.exists()
+    assert stats.model == "lexical-bm25"
+    assert stats.n_chunks > 0
+    assert stats.build_seconds >= 0.0
+
+    reloaded_stats = load_stats(out)
+    assert reloaded_stats == stats
+
+    chunks = load_chunks(out)
+    assert len(chunks) == stats.n_chunks
+    assert chunks[0].path == "docs/NOTE.md"
+
+
+def test_search_uses_persisted_index_when_present(tmp_path: Path) -> None:
+    from hwpm.retrieve.index import DEFAULT_INDEX_PATH, build_index, search
+
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    (docs_dir / "NOTE.md").write_text(
+        "# Title\n\nWhy was PHP rejected? Because of runtime duplication.\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / DEFAULT_INDEX_PATH
+    build_index([tmp_path], out)
+
+    hits = search("why was PHP rejected", k=3, index_path=out, repo_root=tmp_path)
+    assert hits
+    assert hits[0].chunk.path == "docs/NOTE.md"
+    assert hits[0].lexical_rank == 1
+    assert hits[0].vector_rank is None
+    assert hits[0].citation() == hits[0].chunk.citation()
+
+
+def test_search_falls_back_to_live_corpus_when_no_index(tmp_path: Path) -> None:
+    from hwpm.retrieve.index import search
+
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    (docs_dir / "NOTE.md").write_text(
+        "# Title\n\nSome unique zzyzx content.\n", encoding="utf-8"
+    )
+    missing_index = tmp_path / ".hwpm" / "does-not-exist.json"
+
+    hits = search("zzyzx", k=3, index_path=missing_index, repo_root=tmp_path)
+    assert hits
+    assert hits[0].chunk.path == "docs/NOTE.md"
+
+
+# --------------------------------------------------------------------------
+# CLI smoke test
+# --------------------------------------------------------------------------
+
+
+def test_cli_context_eval_reports_lexical() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "hwpm.cli", "context", "eval"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    import json as _json
+
+    payload = _json.loads(result.stdout)
+    assert "lexical" in payload
+    assert "hybrid" not in payload
+    assert payload["lexical"]["n_queries"] >= 30

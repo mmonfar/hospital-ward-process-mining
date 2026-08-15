@@ -198,6 +198,63 @@ def cmd_design_check(_args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_context_index(_args: argparse.Namespace) -> int:
+    """Build/refresh the lexical index (SPEC-007 Part A, `hwpm context index`).
+
+    Lexical only: the G2 measurement (ADR-0007) came back with lexical-only
+    recall@5 above the 0.70 stop threshold, so the vector half was never
+    built. `IndexStats.model` reports `lexical-bm25`, not an embedding model.
+    """
+    from hwpm.retrieve.index import DEFAULT_INDEX_PATH, build_index
+
+    out = REPO_ROOT / DEFAULT_INDEX_PATH
+    stats = build_index([REPO_ROOT], out)
+    print(f"wrote {out.relative_to(REPO_ROOT)}")
+    print(f"files={stats.n_files} chunks={stats.n_chunks} bytes={stats.bytes_indexed:,}")
+    print(f"model={stats.model} build_seconds={stats.build_seconds:.2f}")
+    return 0
+
+
+def cmd_context_search(args: argparse.Namespace) -> int:
+    """Ranked passages with `path:start-end` citations. Never a paraphrase:
+    what is printed is the verbatim chunk text (SPEC-007 criterion 3)."""
+    from hwpm.retrieve.index import DEFAULT_INDEX_PATH, search
+
+    hits = search(
+        args.query,
+        k=args.k,
+        lexical_only=args.lexical_only,
+        index_path=REPO_ROOT / DEFAULT_INDEX_PATH,
+        repo_root=REPO_ROOT,
+    )
+    if not hits:
+        print("No results.")
+        return 0
+    for hit in hits:
+        retriever = "lexical" if hit.vector_rank is None else "vector"
+        print(f"\n{hit.citation()}  [{retriever}]  score={hit.score:.2f}")
+        print(f"  {hit.chunk.heading_path}")
+        for line in hit.chunk.text.splitlines():
+            print(f"  | {line}")
+    return 0
+
+
+def cmd_context_eval(_args: argparse.Namespace) -> int:
+    """The G2/G3 measurement (ADR-0007), JSON out."""
+    import json as _json
+
+    from hwpm.retrieve.eval import evaluate
+
+    queries_path = REPO_ROOT / "tests" / "fixtures" / "retrieval_queries.yaml"
+    scores = evaluate(queries_path, REPO_ROOT)
+    out = {
+        name: {"recall_at_5": s.recall_at_5, "mrr": s.mrr, "n_queries": s.n_queries}
+        for name, s in scores.items()
+    }
+    print(_json.dumps(out, indent=2))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="hwpm")
     sub = parser.add_subparsers(dest="group", required=True)
@@ -233,6 +290,23 @@ def build_parser() -> argparse.ArgumentParser:
 
     check = dsub.add_parser("check", help="contrast, colour-vision and drift checks")
     check.set_defaults(func=cmd_design_check)
+
+    context = sub.add_parser("context", help="repo context retrieval (SPEC-007 Part A)")
+    csub = context.add_subparsers(dest="command", required=True)
+
+    ctx_index = csub.add_parser("index", help="build/refresh the lexical index")
+    ctx_index.set_defaults(func=cmd_context_index)
+
+    ctx_search = csub.add_parser(
+        "search", help="ranked passages with file:line citations"
+    )
+    ctx_search.add_argument("query")
+    ctx_search.add_argument("-k", type=int, default=8)
+    ctx_search.add_argument("--lexical-only", action="store_true")
+    ctx_search.set_defaults(func=cmd_context_search)
+
+    ctx_eval = csub.add_parser("eval", help="the G2/G3 retrieval-quality measurement")
+    ctx_eval.set_defaults(func=cmd_context_eval)
 
     return parser
 
