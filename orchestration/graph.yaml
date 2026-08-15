@@ -213,6 +213,7 @@ nodes:
       Rule 0 of SELECTION-GUIDE.md. If this is tractable at ward scale, the
       metaheuristic is demoted to a cross-check and a large amount of planned
       work disappears. Sequenced before the optimiser deliberately.
+    status: completed
 
   - id: N09-baseline-gate
     title: Random search and hill-climbing baselines

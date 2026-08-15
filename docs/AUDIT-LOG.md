@@ -361,3 +361,21 @@ as new entries referencing the original.
   ```
   245 passed, 11 skipped; 16 cpsat correctness tests green; benchmark in progress
   ```
+
+## 2026-08-15 17:50:41Z — Completed N08-exact-baseline (SPEC-004): CP-SAT exact scheduler (hwpm.optimize) with a routing formulation (AddCircuit per clinician over depot+served-patients), all five SPEC-004 objectives via evaluate()/Objectives, epsilon-constraint Pareto front extraction with proven-optimal flag, and Schedule/Constraint hierarchy (hwpm.domain.schedule) with hard-constraint violations raising ConstraintViolationError. This work already existed uncommitted in the working tree (from a concurrent session discovered mid-turn) with its own tests (tests/test_optimize_cpsat.py, tests/bench/test_cpsat_scale.py); this entry closes it after independent verification: fixed the hwpm.analytics import-linter layering (motion.py's uncertainty model reads hwpm.mining.EpisodeParams, so analytics had to move above mining rather than sit beside artefact/retrieve), fixed lint (exception naming, itertools.pairwise, unused import/arg, ClassVar), reformatted, and reran the full gate suite.
+
+- **Why:** N08-exact-baseline was runnable and unblocks N09/N10 toward N14-viewer; found substantially implemented but uncommitted and with a broken import-linter contract
+- **Authority:** SPEC-004
+- **Graph node:** N08-exact-baseline
+- **Model:** claude-sonnet-5
+- **Actor:** marti
+- **Commit:** `cd12091`
+- **Artefacts:** `src/hwpm/optimize/,src/hwpm/domain/schedule.py`
+- **Evidence:**
+
+  ```
+  sssssss.........................................ss.s.................... [ 28%]
+  ........................................................................ [ 56%]
+  ........................................................................ [ 84%]
+  ........s...............................                                 [100%]; lint-imports 3 kept 0 broken; ruff format/check clean; mypy clean on hwpm.domain; coverage overall 90%
+  ```
