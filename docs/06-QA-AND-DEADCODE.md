@@ -18,7 +18,7 @@ order so failures surface cheaply.
 | 5 | Coverage | `pytest --cov=hwpm` | ≥85% on `domain/`, ≥70% overall |
 | 6 | Layering | `import-linter` | `domain/` imports nothing from outer layers |
 | 7 | Dead code | `vulture --min-confidence 80` | no findings, or each whitelisted with a reason |
-| 8 | Determinism | `tests/test_determinism.py` | same seed ⇒ same output |
+| 8 | Determinism | `test_determinism*` in each stochastic module's test file | same seed ⇒ same output |
 | 9 | Baseline gate | `tests/test_baseline_gate.py` | metaheuristics beat Alg 9 / Alg 10 |
 
 Gates 6, 8 and 9 are the project-specific ones and are where the real risk is.
@@ -31,6 +31,21 @@ in `SELECTION-GUIDE.md` is stochastic. Without seeded, reproducible runs, no
 result can be re-derived by an auditor and no regression can be distinguished
 from variance. Every stochastic component takes an explicit `rng` — never
 module-level `random`.
+
+This table originally named a single `tests/test_determinism.py`, which was
+never created; the checks live beside the code they cover instead
+(`test_synthetic.py`, `test_required_specialty.py`, `test_retrieve.py`,
+`test_motion.py`). Corrected 2026-08-15 rather than creating the named file:
+a determinism check belongs next to the seeded component it constrains, where
+whoever changes that component will see it, and collecting them into one file
+would put them where nobody looks. The gate is unchanged — what it points at
+is now what exists.
+
+The consequence to watch is that the gate has no single entry point, so a new
+stochastic module can be added with no determinism test at all and nothing
+will fail. Until the auditor (N15) can check that directly, this is a review
+obligation rather than an enforced one, and saying so is better than implying
+a coverage the tooling does not have.
 
 **Gate 9 (baseline)** encodes Rule 0: if NSGA-II cannot beat random restarts on
 the same evaluation budget, the representation or the fitness function is wrong.
