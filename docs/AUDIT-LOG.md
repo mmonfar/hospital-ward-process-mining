@@ -331,3 +331,33 @@ as new entries referencing the original.
   ```
   commit 455f1a6; recall@5 0.75 mrr 0.53 n=36, re-run independently by the orchestrator; 95% Wilson CI [0.589, 0.862]; full suite 210 passed 4 skipped; ruff/mypy/vulture clean on the retrieve package; lint-imports 3 kept 0 broken; grep confirms no fastembed or sqlite-vec import anywhere and no new dependency in pyproject. SPEC-007 describes only the hybrid end state, so the lexical-only shipped shape (model=lexical-bm25, model_sha empty) is an undocumented judgement call and a spec gap to amend.
   ```
+
+## 2026-08-15 17:12:25Z — Implemented hwpm.analytics.motion (MotionReport, analyse) per SPEC-003: routed observed_m from TravelGraph leg costs, necessary_m as exact brute-force optimum (n<=8) or MST proven lower bound (n>8), bootstrap+confidence-jitter ci95, ADR-0005 suppression floor (>=5 patients, >1 clinician). Added hwpm.analytics as a new independent-sibling import-linter layer alongside artefact/retrieve.
+
+- **Why:** N07-motion-analytics was runnable (N05, N06 satisfied); user asked to build the governed path toward N14-viewer
+- **Authority:** SPEC-003
+- **Graph node:** N07-motion-analytics
+- **Model:** claude-sonnet-5
+- **Actor:** marti
+- **Commit:** `1ea8f0b`
+- **Artefacts:** `src/hwpm/analytics/motion.py`
+- **Evidence:**
+
+  ```
+  .............                                                            [100%]
+  ```
+
+## 2026-08-15 17:47:53Z — N08 CP-SAT scheduler built; realistic-instance benchmark still running
+
+- **Why:** Both N07 and N08 agents were terminated mid-run by an API session limit, leaving uncommitted work. Assessed rather than discarded: N07 is complete and green, N08's model, epsilon-constraint sweep and bench harness are built and its 16 correctness tests pass, but the realistic-instance measurement - the whole point of the node under Rule 0 - had not been run. Committing the code now so a second interruption cannot lose it; the Rule 0 decision stays open until the benchmark reports.
+- **Authority:** SPEC-004; SELECTION-GUIDE.md Rule 0
+- **Graph node:** N08-exact-baseline
+- **Model:** claude-opus-5
+- **Actor:** marti
+- **Commit:** `a3ace80`
+- **Artefacts:** `src/hwpm/optimize/`, `tests/bench/test_cpsat_scale.py`
+- **Evidence:**
+
+  ```
+  245 passed, 11 skipped; 16 cpsat correctness tests green; benchmark in progress
+  ```

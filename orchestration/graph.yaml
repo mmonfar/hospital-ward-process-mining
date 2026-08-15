@@ -200,6 +200,7 @@ nodes:
     depends_on: [N05-mining, N06-travel-graph]
     gate: autonomous
     budget_tokens: 180000
+    status: completed
 
   - id: N08-exact-baseline
     title: CP-SAT exact scheduler for the single-ward instance

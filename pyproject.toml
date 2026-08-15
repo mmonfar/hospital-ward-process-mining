@@ -48,6 +48,14 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "ARG", "PTH", "RUF"]
 
+[tool.ruff.lint.per-file-ignores]
+# A throwaway demo generator, not part of the governed SPEC-001 pipeline: its
+# own docstring says so, it produces no ground truth, and nothing in
+# orchestration/graph.yaml depends on it. Exempted from line length rather than
+# reformatted, so the file stays as its author wrote it. If it ever becomes a
+# real fixture source, delete this entry and bring it up to standard first.
+"tools/generate_rfid_demo_log.py" = ["E501"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --strict-markers"
@@ -94,6 +102,7 @@ forbidden_modules = [
     "hwpm.design",
     "hwpm.artefact",
     "hwpm.retrieve",
+    "hwpm.analytics",
     "hwpm.cli",
 ]
 
@@ -107,9 +116,15 @@ type = "layers"
 # (SPEC-007 Part A) that touches no patient data and does not depend on, or
 # get depended on by, hwpm.artefact -- the sub-list marks them independent so
 # neither may import the other. N19.
+# hwpm.analytics sits above hwpm.mining, not beside artefact/retrieve: its
+# uncertainty model (SPEC-003 "Uncertainty" source 1, episode-derivation
+# parameter sensitivity) reads SPEC-002's EpisodeParams sweep from
+# hwpm.mining, so it needs to be a layer that is *allowed* to import mining,
+# not a sibling of the artefact/retrieve pair that only needs hwpm.domain.
 layers = [
     "hwpm.cli",
     "hwpm.optimize",
+    "hwpm.analytics",
     "hwpm.mining",
     "hwpm.ingest",
     # import-linter 2.x spells "independent siblings at one level" as a single
@@ -133,6 +148,7 @@ source_modules = [
     "hwpm.design",
     "hwpm.artefact",
     "hwpm.retrieve",
+    "hwpm.analytics",
     "hwpm.cli",
     # hwpm.mining itself must be listed too -- ADR-0008 says "nothing else in
     # the codebase", which includes _pm4py_adapter.py's siblings within this
