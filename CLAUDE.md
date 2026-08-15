@@ -53,6 +53,7 @@ the record; that is what they exist for.
 | `orchestration/graph.yaml` | The work graph — data, not documentation |
 | `refs/metaheuristics/SELECTION-GUIDE.md` | Which algorithm for which sub-problem, normative |
 | `web/` | Existing three.js prototype |
+| `web/design/` | The design system — tokens, primitives, `gallery.html`. Generated from `src/hwpm/design/tokens.py`; never hand-edit `tokens.css`/`tokens.js` |
 
 ## Working style
 

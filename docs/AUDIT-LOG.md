@@ -257,3 +257,18 @@ as new entries referencing the original.
   ```
   105 passed, 3 skipped; negative checks confirm .sort(/sortBy(/orderBy(/.reverse() still caught and comment text ignored
   ```
+
+## 2026-08-15 07:54:52Z — N14a: front-end design system -- tokens, accessibility gates, chart primitives
+
+- **Why:** SPEC-005's design bar is normative and retrofitting a visual system onto built screens yields a themed prototype rather than a coherent product. Palette derived numerically rather than by eye: five categorical slots chosen by maximin separation under simulated protanopia/deuteranopia/tritanopia subject to a contrast floor, worst pair dE76 18.7. Accessibility is asserted, not reviewed. The provenance, interval, spread-bounds and baseline rules are enforced by the primitives themselves -- a constructor that throws holds indefinitely where a review checklist holds for a month.
+- **Authority:** SPEC-005
+- **Graph node:** N14a-design-system
+- **Model:** claude-opus-5
+- **Actor:** marti
+- **Commit:** `8e67512`
+- **Artefacts:** `src/hwpm/design/`, `web/design/`, `tests/test_design_tokens.py`, `docs/specs/SPEC-005-visualisation.md`
+- **Evidence:**
+
+  ```
+  gates: ruff format/check clean; mypy clean (22 files); vulture clean; import-linter 3 contracts kept; pytest 108 passed 3 skipped; coverage domain 99% overall 83%; hwpm design check 21 contrast rules ok, dE floor 15 met at 18.7 worst. Gates 8-9 (determinism, baseline) have no test files yet -- they arrive with the stochastic nodes; nothing in N14a is stochastic. D6 in SPEC-005 is a presence check, not behavioural: the JS guards are asserted to exist, not asserted to fire. Gallery verified in a browser (DOM, keyboard, strategy transition, no console errors); no visual screenshot was taken.
+  ```

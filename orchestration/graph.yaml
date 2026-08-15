@@ -250,6 +250,14 @@ nodes:
     depends_on: [N00-foundation]
     gate: autonomous
     budget_tokens: 150000
+    status: completed
+    artefacts:
+      [
+        src/hwpm/design/,
+        web/design/,
+        tests/test_design_tokens.py,
+        docs/specs/SPEC-005-visualisation.md,
+      ]
     rationale: >
       Split out of N14 and moved early. The design bar in SPEC-005 is normative,
       and retrofitting a visual system onto built screens does not work -- it

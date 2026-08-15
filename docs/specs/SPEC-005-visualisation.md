@@ -1,7 +1,8 @@
 # SPEC-005 — Front end: ward visualisation, strategy selection, governance view
 
-**Status:** accepted · **Nodes:** N14, N18 · **Owner role:** architect (design), builder (implementation)
-**Depends on:** SPEC-001, SPEC-003, SPEC-004 · **Last revised:** 2026-08-14
+**Status:** accepted · **Nodes:** N14a, N14, N18 · **Owner role:** architect (design), builder (implementation)
+**Depends on:** SPEC-001, SPEC-003, SPEC-004 · **Last revised:** 2026-08-15
+(2026-08-15: design-system section and criteria D1–D6 added at N14a.)
 
 ## Problem
 
@@ -91,6 +92,111 @@ than form state, and adding React here would be complexity for its own sake —
 `02-ARCHITECTURE.md`'s standing test. Charts are hand-built SVG (D3 for scales
 and shapes only, not for DOM management); the chart types needed are few and
 specific, and a general charting library would fight the design system.
+
+---
+
+## The design system (N14a) — normative
+
+Built at N14a, ahead of any screen. What follows records the decisions the
+design bar left open, so that N14 and N18 inherit a system rather than
+re-deciding it per view.
+
+### Where it lives
+
+| Path | Status |
+|---|---|
+| `src/hwpm/design/tokens.py` | **Source of truth.** Palette, type, space, elevation, motion, and the normative contrast table |
+| `src/hwpm/design/colour.py` | Contrast, CIELAB, dichromat simulation — the maths the checks run on |
+| `web/design/tokens.css`, `tokens.js` | **Generated.** Never hand-edited; `hwpm design check` fails on drift |
+| `web/design/base.css` | The only stylesheet. There are no per-component stylesheets |
+| `web/design/*.js` | Primitives: `svg`, `scale`, `motion`, `figure`, `states`, `legend`, `strategy`, `series-chart`, `parallel` |
+| `web/design/gallery.html` | The review surface: every token, primitive and state on one page |
+
+The palette is defined in Python rather than in CSS because design bar 6 makes
+accessibility a correctness property, and a correctness property has to be
+testable. `python -m hwpm.cli design check` prints the ratios; `hwpm design
+build` regenerates the CSS and JS.
+
+### Decisions
+
+1. **Colour is declared once.** `tokens.py` emits the CSS and JS; components
+   reference semantic tokens (`--ink-quiet`, `--data-observed`), never ramp
+   steps and never literals. A literal colour anywhere in `web/design/` fails
+   `test_no_literal_colours_outside_the_generated_tokens`. The first hard-coded
+   shade is never the problem — it is the precedent.
+
+2. **Categorical colour is capped at five, plus an `other` bucket.** Under the
+   AA contrast floor the usable lightness range is about thirty L\* units, and
+   past five categories colour stops being decodable — particularly for readers
+   with a colour vision deficiency. The five were chosen by maximin search over
+   muted in-gamut candidates under simulated protanopia, deuteranopia and
+   tritanopia, with the prototype's teal held fixed. Floor: ΔE76 ≥ 15 under
+   every simulation; achieved 18.7. A view needing more distinctions uses
+   position or small multiples, not more hues.
+
+3. **Every series carries a shape and a fill pattern**, not colour alone. This
+   is stronger than WCAG requires and is the reason the legend primitive draws
+   the mark the chart draws.
+
+4. **The RequiredSpecialty strategies share one hue and differ by dash.** They
+   are a definitional axis with union and intersection as outer bounds
+   (SPEC-001), not five categories. Five hues would say "five alternatives, pick
+   one"; one hue with the selection emphasised says "one quantity, defined five
+   ways", which is what is true.
+
+5. **There is no success-green and no alarm-red in the semantic palette.**
+   Enforced by `test_no_traffic_light_colour_in_the_semantic_set`. The strongest
+   failure mode in this spec is the governance view drifting into a KPI
+   dashboard; a palette with no "good" colour cannot make that judgement for the
+   reader, which leaves the interval as the thing to read.
+
+6. **Three durations, reduced motion handled at the token layer.**
+   `prefers-reduced-motion` neutralises the duration custom properties in
+   `tokens.css`, so components written later inherit it without knowing it
+   exists; `motion.js` mirrors it for JS-driven animation. Reduced motion always
+   arrives at the same final state — never a different result.
+
+7. **The rules are enforced by the primitives, not by review.** `figure()`
+   throws without strategy, method version and date range. `statistic()` throws
+   on a point estimate unless `exact: true` is passed deliberately.
+   `timeSeries()` throws on a series without an interval, and on a spread
+   missing its bounding strategies. `paretoFront()` throws without a baseline
+   and contains no ordering call. Criteria 3 and 4 hold for a month if they are
+   a checklist; they hold indefinitely if the constructor refuses.
+
+8. **D3 is not used.** The spec permits it for scales and shapes; the five chart
+   types here need linear and band scales and a tick generator, which is
+   `scale.js` at ninety lines, against a CDN dependency with an integrity pin to
+   maintain on a machine that may be offline inside a hospital network. Recorded
+   as a decision rather than left as an omission.
+
+9. **Criterion 2's boundary.** "The front end computes none" means *statistics*
+   — a total, a mean, a distance, an interval. Mapping a value to a pixel is
+   rendering. `web/design/scale.js` is the declared exception and the only place
+   arithmetic on data values is allowed; the test that lands with N14 exempts it
+   by name.
+
+10. **A defect in the prototype was fixed rather than inherited.** The
+    prototype's muted label colour `#8a9599` is 2.7:1 on the page and fails AA
+    outright. It survives as a decorative-separator token only; label text moved
+    to a darkened neutral (`#54666b`, 5.29:1). Anything set in the old tone in
+    `web/hospital-ward.html` is a known defect to be corrected at N14.
+
+### Design-system acceptance criteria
+
+| # | Criterion | Test |
+|---|---|---|
+| D1 | Every declared foreground/background pair clears its WCAG floor | `test_contrast_ratios` |
+| D2 | The five categorical slots stay ≥ ΔE 15 apart under all three dichromat simulations | `test_series_separable_under_colour_vision_deficiency` |
+| D3 | No meaning is carried by colour alone — every series has a distinct shape, every strategy a distinct dash | `test_no_colour_only_encoding`, `test_strategies_are_distinguished_without_colour` |
+| D4 | The generated CSS and JS match `tokens.py`, and no other file declares a colour | `test_generated_files_match_their_source`, `test_no_literal_colours_outside_the_generated_tokens` |
+| D5 | No literal durations; reduced motion neutralises every one and stops loops | `test_motion_durations_come_from_tokens`, `test_reduced_motion_is_honoured_by_the_token_layer`, `test_looping_animation_is_stopped_not_merely_shortened` |
+| D6 | The provenance, interval, bounds and baseline guards are still in the primitives | `test_figure_frame_still_requires_provenance` and the three beside it |
+
+D6 is a presence check, not a behavioural one: it asserts the guard is in the
+file, not that it fires. The behavioural test needs a DOM and a JS runner and
+belongs with N14, where more than four assertions justify a headless browser.
+Named this way so the coverage is not read as stronger than it is.
 
 ---
 
