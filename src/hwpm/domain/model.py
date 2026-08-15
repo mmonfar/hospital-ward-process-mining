@@ -4,11 +4,19 @@ Scope note (N02): SPEC-001's interface block names `LocationId`, `Location`,
 `Event` and `Trajectory` explicitly; `Point`, `LocationKind`, `SubjectId`,
 `ClinicianId`, `PatientId`, `Role`, `Specialty`, `Acuity`, `IsolationStatus`,
 `Clinician`, `Patient`, `Transition` and `Visit` are added because
-`hwpm.ingest.synthetic.GroundTruth` (also SPEC-001) needs them. `BedsideEpisode`,
-`MDTMoment`, `Schedule` and `Constraint` are described in 01-DOMAIN-MODEL.md but
-belong to SPEC-002 / SPEC-004 nodes (N05, N08-N11) and are deliberately not
-built here — implementing them now would be building ahead of the spec that
-constrains them.
+`hwpm.ingest.synthetic.GroundTruth` (also SPEC-001) needs them. `Schedule` and
+`Constraint` are described in 01-DOMAIN-MODEL.md but belong to SPEC-004 nodes
+(N08-N11) and are deliberately not built here — implementing them now would be
+building ahead of the spec that constrains them.
+
+Scope note (N05): `BedsideEpisode`, `Round` and `MDTMoment` were the other
+three deferred by the note above, to SPEC-002 / N05. SPEC-002 is now accepted
+and N05 is the node that builds them, so they are added here rather than in
+`hwpm.mining` — 01-DOMAIN-MODEL.md's "Entities" section describes them as
+domain vocabulary (ubiquitous language table: "Bedside episode", "MDT moment"),
+and `hwpm.mining` (SPEC-002's derivation/discovery/conformance functions)
+depends on them rather than owning them, the same relationship `hwpm.mining`
+has with `Event` and `Trajectory`.
 
 Rule 1 of 01-DOMAIN-MODEL.md: frozen by default. Rule 2: no I/O. This module
 imports nothing outside the standard library; import-linter enforces the rest
@@ -20,7 +28,7 @@ from __future__ import annotations
 import math
 from collections.abc import Iterator
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from enum import Enum, IntEnum
 from itertools import pairwise
 
@@ -267,3 +275,97 @@ class Visit:
     patient_id: PatientId
     start_slot: datetime
     duration: timedelta
+
+
+# ---------------------------------------------------------------------------
+# Derived entities (SPEC-002, N05-mining). See the N05 scope note at the top
+# of this module for why these live here rather than in `hwpm.mining`.
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class BedsideEpisode:
+    """A contiguous period a clinician spends at one location
+    (01-DOMAIN-MODEL.md, "Bedside episode"). Derivation from raw events
+    (dwell-time thresholds, sensor noise) is SPEC-002's job and is explicitly
+    a modelling assumption with a tunable parameter, not a fact — see
+    `hwpm.mining.EpisodeParams`.
+
+    `patient` and `clinician_specialties` are **not** filled in by derivation
+    itself: a clinician's raw trajectory names a location, not who occupied
+    it, and bed occupancy is a separate feed even in the synthetic generator
+    (`hwpm.ingest.synthetic` never emits a patient-location event). They stay
+    `None` / empty until an explicit join (`hwpm.mining.attach_patients`,
+    `attach_clinician_specialties`) runs, rather than being guessed at, so
+    that "not yet known" is never silently indistinguishable from "known and
+    empty" — 01-DOMAIN-MODEL.md rule 4: every derived entity carries
+    provenance.
+    """
+
+    clinician: ClinicianId
+    bed: LocationId
+    start: datetime
+    end: datetime
+    confidence: float
+    source_events: tuple[Event, ...]
+    patient: PatientId | None = None
+    clinician_specialties: frozenset[Specialty] = frozenset()
+
+    def __post_init__(self) -> None:
+        if self.end < self.start:
+            raise ValueError(f"episode end {self.end!r} precedes start {self.start!r}")
+        if not 0.0 <= self.confidence <= 1.0:
+            raise ValueError(f"confidence must be in [0, 1], got {self.confidence!r}")
+
+    @property
+    def duration(self) -> timedelta:
+        return self.end - self.start
+
+
+@dataclass(frozen=True)
+class Round:
+    """One clinician's ordered sweep of bedside episodes on one day
+    (01-DOMAIN-MODEL.md, "Round"). `episodes` is ordered by start time —
+    producing that order is `hwpm.mining.reconstruct_rounds`'s job; this type
+    only carries the result."""
+
+    clinician: ClinicianId
+    day: date
+    episodes: tuple[BedsideEpisode, ...]
+
+
+@dataclass(frozen=True)
+class MDTMoment:
+    """>=2 required specialties co-present at one bedside (01-DOMAIN-MODEL.md,
+    "MDT moment"). `satisfied_specialties` is the subset of
+    `present_specialties` that intersects the patient's required specialties.
+
+    01-DOMAIN-MODEL.md is explicit: "A `MDTMoment` that satisfies nothing is
+    not an MDT moment; it is two people who happened to collide." Read
+    together with the ubiquitous-language table's "≥2 required specialties
+    co-present", that means fewer than two satisfied specialties does not
+    just make a weak MDT moment — it makes something that is not one at all.
+    Constructing one with fewer than two is therefore a `ValueError`, not a
+    caller convention to remember.
+    """
+
+    bed: LocationId
+    patient: PatientId
+    start: datetime
+    end: datetime
+    present_specialties: frozenset[Specialty]
+    satisfied_specialties: frozenset[Specialty]
+
+    def __post_init__(self) -> None:
+        if self.end < self.start:
+            raise ValueError(f"moment end {self.end!r} precedes start {self.start!r}")
+        if not self.satisfied_specialties <= self.present_specialties:
+            raise ValueError(
+                "satisfied_specialties must be a subset of present_specialties"
+            )
+        if len(self.satisfied_specialties) < 2:
+            got = sorted(s.value for s in self.satisfied_specialties)
+            raise ValueError(
+                "an MDTMoment needs >=2 satisfied required specialties co-present "
+                f"(01-DOMAIN-MODEL.md); got {got}"
+            )

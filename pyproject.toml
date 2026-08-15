@@ -125,6 +125,16 @@ source_modules = [
     "hwpm.design",
     "hwpm.artefact",
     "hwpm.cli",
+    # hwpm.mining itself must be listed too -- ADR-0008 says "nothing else in
+    # the codebase", which includes _pm4py_adapter.py's siblings within this
+    # same package, not just the outer layers. Without this line the contract
+    # only fenced pm4py out of the *other* layers and would pass with a stray
+    # `import pm4py` sitting right next to the adapter (N05, verified: an
+    # `import pm4py` added to a sibling file under src/hwpm/mining/ was NOT
+    # caught before this line was added, and is caught after it).
+    "hwpm.mining",
 ]
 forbidden_modules = ["pm4py"]
+# The adapter is the one sanctioned place pm4py is imported (ADR-0008 part 1).
+ignore_imports = ["hwpm.mining._pm4py_adapter -> pm4py"]
 unmatched_ignore_imports_alerting = "none"
