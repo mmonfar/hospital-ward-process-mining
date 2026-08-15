@@ -151,6 +151,15 @@ nodes:
     depends_on: [N03-ingestion]
     gate: autonomous
     budget_tokens: 180000
+    status: completed
+    artefacts:
+      [
+        src/hwpm/domain/specialty.py,
+        src/hwpm/artefact/,
+        src/hwpm/ingest/specialty.py,
+        tests/test_required_specialty.py,
+        docs/specs/SPEC-001-ingestion.md,
+      ]
     rationale: >
       Gate resolved by the user 2026-08-14: the definition is a runtime choice
       selectable in the front end, not a single fixed source. All five
@@ -166,6 +175,13 @@ nodes:
     depends_on: [N03-ingestion]
     gate: autonomous
     budget_tokens: 180000
+    status: completed
+    artefacts:
+      [
+        src/hwpm/mining/,
+        src/hwpm/domain/model.py,
+        tests/test_mining.py,
+      ]
 
   - id: N06-travel-graph
     title: Replace Euclidean distance with a routed travel graph
@@ -314,6 +330,20 @@ nodes:
     gate: autonomous
     budget_tokens: 150000
     decision: ADR-0007
+    status: completed
+    artefacts:
+      [
+        src/hwpm/retrieve/,
+        tests/fixtures/retrieval_queries.yaml,
+        tests/test_retrieve.py,
+      ]
+    outcome: >
+      Gate stopped the build. Lexical-only recall@5 = 0.75 (27/36) against the
+      0.70 threshold, so the vector half was NOT built and no embedding
+      dependency was added. The margin is two queries wide and the 95% Wilson
+      interval [0.589, 0.862] straddles 0.70, so the supportable claim is that
+      lexical was not shown to be inadequate -- not that it is adequate. See
+      AUDIT-LOG 2026-08-15 and the ADR-0007 amendment note.
     rationale: >
       Part A of SPEC-007. Touches no patient data -- it indexes this repository's
       own specs, ADRs, audit log and the parsed metaheuristics reference. This is
