@@ -24,6 +24,29 @@ bedside — and quantify what that costs.
 - Real-time re-planning.
 - Nested metaheuristics (P5 in the selection guide: random search + racing only).
 
+## Rule 0 outcome — measured 2026-08-15 (N08)
+
+CP-SAT solves the realistic single-ward instance to **proven optimality on all
+five objectives**, and the epsilon-constraint sweep returns a **proven-optimal
+6-point Pareto front in 441s**. Full numbers in `SELECTION-GUIDE.md`.
+
+**N10 (NSGA-II) is therefore demoted to a cross-check** at this scale, its
+budget cut and its gate raised to `confirm`. **N21** measures the multi-ward,
+multi-day instance before any assumption is made about hospital scale, where
+the 30→40 bed cliff says CP-SAT does not obviously reach.
+
+One finding worth stating separately, because it is the project's actual
+question and it will be quoted: on the Pareto front, the point achieving
+**89% MDT co-presence sits at exactly the same routed distance (1398.87 m) as
+the motion-minimising point**, which achieves only 11% co-presence. On this
+instance, synchronising nearly all multi-specialty patients cost **no additional
+walking at all** — it is a coordination gain, not a trade-off purchased with
+clinician time.
+
+**This is synthetic data.** It demonstrates the method answers the question and
+that the answer is not foreclosed by geometry. It says nothing yet about any
+real ward, and must not be reported as if it did (N16, N17).
+
 ## Order of work — non-negotiable
 
 Rule 0 of the selection guide, enforced by the graph's dependency edges:

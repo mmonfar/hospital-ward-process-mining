@@ -209,10 +209,17 @@ nodes:
     depends_on: [N06-travel-graph, N04-required-specialty]
     gate: autonomous
     budget_tokens: 200000
+    status: completed
+    artefacts: [src/hwpm/optimize/cpsat.py, src/hwpm/optimize/evaluate.py, src/hwpm/optimize/instances.py, src/hwpm/optimize/types.py, tests/bench/test_cpsat_scale.py]
     rationale: >
-      Rule 0 of SELECTION-GUIDE.md. If this is tractable at ward scale, the
-      metaheuristic is demoted to a cross-check and a large amount of planned
-      work disappears. Sequenced before the optimiser deliberately.
+      Rule 0 of SELECTION-GUIDE.md. MEASURED 2026-08-15 and Rule 0 FIRED: the
+      realistic single-ward instance (30 beds, 8 clinicians, 3h at 5-min slots)
+      solves to PROVEN optimality on all five objectives, and the full
+      epsilon-constraint sweep produced a proven-optimal 6-point Pareto front in
+      441s -- inside the 10-minute batch threshold. The metaheuristic is
+      therefore demoted to a cross-check. Scaling cliff between 30 and 40 beds:
+      40 beds did not prove optimal in 300s, so this result does NOT extend to
+      hospital scale.
     status: completed
 
   - id: N09-baseline-gate
@@ -225,12 +232,38 @@ nodes:
     rationale: Alg 9/10. Nothing fancier is reportable until it beats these.
 
   - id: N10-nsga2
-    title: NSGA-II MDT scheduler
+    title: NSGA-II MDT scheduler (DEMOTED to cross-check by Rule 0)
     spec: SPEC-004
     agent: architect
     depends_on: [N09-baseline-gate]
+    gate: confirm
+    budget_tokens: 120000
+    decision: N08 benchmark, 2026-08-15
+    rationale: >
+      DEMOTED. N08 proved the single-ward instance exactly in 441s, so under
+      Rule 0 the metaheuristic is no longer the product for this scale -- it is
+      a cross-check whose value is agreeing with a known optimum. Budget cut
+      from 250k to 120k accordingly, and the gate raised to `confirm` because
+      building it at all is now a discretionary spend rather than a planned one.
+      The genuine case for NSGA-II reappears at hospital scale (9 wards,
+      multi-day, stochastic durations), where N08 showed CP-SAT does not reach:
+      see N21.
+
+  - id: N21-multiward-scale-gate
+    title: Measure CP-SAT at hospital scale; re-decide Rule 0
+    spec: SPEC-004
+    agent: architect
+    depends_on: [N08-exact-baseline]
     gate: autonomous
-    budget_tokens: 250000
+    budget_tokens: 150000
+    decision: N08 benchmark, 2026-08-15
+    rationale: >
+      N08's scaling curve was 0.88s at 10 beds, 2.21s at 20, 124.6s proven at
+      30, and NOT proven within 300s at 40. The single-ward answer therefore
+      says nothing about the multi-ward, multi-day problem. This node measures
+      that instance before anyone assumes either way -- the same discipline that
+      made N08 worth running. If CP-SAT fails here, N10 is reinstated with a
+      real justification rather than a presumed one.
 
   - id: N11-acs-routing
     title: Ant Colony System visit routing

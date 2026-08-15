@@ -37,6 +37,44 @@ CP-SAT to win outright for a single ward**, and metaheuristics to become
 necessary only at hospital scale (9 wards, multi-day, stochastic durations) or
 when we need a *Pareto set* rather than one optimum. Do not skip step 1.
 
+### MEASURED 2026-08-15 (node N08) — Rule 0 fired
+
+The expectation above was correct, and it was measured rather than assumed.
+Instance seed 20260814, solver seed 2026, `workers=1`, reproducible via
+`pytest tests/bench/test_cpsat_scale.py --bench`.
+
+Realistic instance — 30 patients, 8 clinicians (9 multi-specialty), 36 slots
+of 300s. Single-objective payoff table, **all five proven optimal**:
+
+| Objective | Result | Wall |
+|---|---|---|
+| copresence | OPTIMAL | 3.91s |
+| motion_m | OPTIMAL | 5.31s |
+| disruption | OPTIMAL | 3.17s |
+| continuity | OPTIMAL | 3.33s |
+| makespan_s | OPTIMAL | 122.38s |
+
+Epsilon-constraint sweep: **21 solves, 441s wall, every solve proven optimal**,
+6 provably-empty boxes, front size 6. That is inside the 10-minute batch
+threshold with room to spare.
+
+**Consequence: NSGA-II (N10) is demoted to a cross-check** for the single-ward
+problem. It is no longer the product; its value is agreeing with a known
+optimum. This is the outcome Rule 0 exists to produce, and it removes a large
+block of planned work.
+
+**Scaling cliff — the result does not generalise.** Makespan, the hardest
+objective, scaled 0.88s (10 beds) → 2.21s (20) → 124.6s proven (30) → *not
+proven in 300s* (40). So exactness is established for one ward and nothing
+larger. The genuine case for a metaheuristic reappears at hospital scale
+(9 wards, multi-day, stochastic durations) and is measured at **N21** before
+anyone assumes it either way. Do not read "CP-SAT won" as "CP-SAT wins".
+
+Caveat on the 54-bed row, which returned INFEASIBLE in 3.75s: that instance is
+over-subscribed by construction, not a solver limit. The generator can emit
+infeasible instances on some seeds — a known defect, tracked separately — and
+until it is fixed an INFEASIBLE result must never be read as a timing.
+
 ---
 
 ## P1 — MDT synchronisation scheduling *(the core problem)*

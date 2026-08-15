@@ -267,7 +267,7 @@ def _protected_slots(inst: Instance) -> frozenset[int]:
     return frozenset(out)
 
 
-def _acuity(inst: Instance) -> dict[PatientId, Acuity]:
+def acuity_of(inst: Instance) -> dict[PatientId, Acuity]:
     """Acuity per patient, taken from an `AcuityOrdering` constraint if one is
     present and from `Patient.acuity` otherwise.
 
@@ -275,6 +275,11 @@ def _acuity(inst: Instance) -> dict[PatientId, Acuity]:
     `Schedule.validate` will be checked against, and a solver optimising
     against a different ordering than the validator enforces is the exact shape
     of a bug that only shows up in production.
+
+    Public (not `_acuity`): `hwpm.optimize.baselines`' candidate construction
+    needs the same reading of "acuity" the CP-SAT encoding uses, and a second,
+    private copy of this logic would be the two-statements-of-one-fact problem
+    this module's docstring warns about elsewhere.
     """
     for constraint in inst.constraints:
         if isinstance(constraint, AcuityOrdering):
@@ -282,7 +287,9 @@ def _acuity(inst: Instance) -> dict[PatientId, Acuity]:
     return {p.id: p.acuity for p in inst.patients}
 
 
-def _isolated(inst: Instance) -> dict[PatientId, bool]:
+def isolated_of(inst: Instance) -> dict[PatientId, bool]:
+    """Public for the same reason as `acuity_of`: shared with
+    `hwpm.optimize.baselines`."""
     for constraint in inst.constraints:
         if isinstance(constraint, IsolationLast):
             return {
@@ -293,7 +300,9 @@ def _isolated(inst: Instance) -> dict[PatientId, bool]:
     return {p.id: p.isolation_status is not IsolationStatus.NONE for p in inst.patients}
 
 
-def _ordering_active(inst: Instance) -> tuple[bool, bool]:
+def ordering_active(inst: Instance) -> tuple[bool, bool]:
+    """Public for the same reason as `acuity_of`: shared with
+    `hwpm.optimize.baselines`."""
     return (
         any(isinstance(c, AcuityOrdering) for c in inst.constraints),
         any(isinstance(c, IsolationLast) for c in inst.constraints),
@@ -389,9 +398,9 @@ def build_model(inst: Instance) -> _Encoding:
     specialties = inst.specialties
     candidates = candidate_clinicians(inst)
     starts = allowed_starts(inst)
-    acuity = _acuity(inst)
-    isolated = _isolated(inst)
-    acuity_active, isolation_active = _ordering_active(inst)
+    acuity = acuity_of(inst)
+    isolated = isolated_of(inst)
+    acuity_active, isolation_active = ordering_active(inst)
     protected = _protected_slots(inst)
 
     presence: dict[tuple[str, str], cp_model.IntVar] = {}

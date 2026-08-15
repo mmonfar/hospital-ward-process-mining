@@ -379,3 +379,18 @@ as new entries referencing the original.
   ........................................................................ [ 84%]
   ........s...............................                                 [100%]; lint-imports 3 kept 0 broken; ruff format/check clean; mypy clean on hwpm.domain; coverage overall 90%
   ```
+
+## 2026-08-15 18:14:38Z — N08 complete: Rule 0 fired; CP-SAT proves the single-ward instance, NSGA-II demoted to cross-check
+
+- **Why:** Measured rather than assumed. All five objectives proven optimal on the realistic instance (30 beds, 8 clinicians, 36 slots); epsilon-constraint sweep produced a proven-optimal 6-point Pareto front in 441s, inside the 10-minute batch threshold. Under Rule 0 of SELECTION-GUIDE.md the metaheuristic is no longer the product at this scale. Explicitly NOT generalised: makespan scaled 0.88s/2.21s/124.6s proven at 10/20/30 beds and failed to prove within 300s at 40, so hospital scale is re-measured at the new node N21 before anything is assumed.
+- **Authority:** SELECTION-GUIDE.md Rule 0; SPEC-004
+- **Graph node:** N08-exact-baseline
+- **Model:** claude-opus-5
+- **Actor:** marti
+- **Commit:** `ba4df2c`
+- **Artefacts:** `src/hwpm/optimize/`, `refs/metaheuristics/SELECTION-GUIDE.md`, `docs/specs/SPEC-004-optimisation.md`
+- **Evidence:**
+
+  ```
+  payoff table 138.11s all OPTIMAL; sweep 21 solves 441.21s all_proven_optimal=True front size 6; scaling 10:0.88s 20:2.21s 30:124.62s proven, 40:299.97s NOT proven
+  ```
