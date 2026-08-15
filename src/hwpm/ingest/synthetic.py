@@ -51,6 +51,12 @@ from hwpm.domain import (
     Specialty,
     Visit,
 )
+from hwpm.ingest.evidence import (
+    ConsultNote,
+    ProblemListEntry,
+    Referral,
+    RequiredSpecialtyEvidence,
+)
 
 # ---------------------------------------------------------------------------
 # Reference geometry — mirrors web/hospital-ward.html's WARDS / BED_LOCAL.
@@ -335,3 +341,144 @@ def _events_for_round(
                     )
                 )
     return events
+
+
+# ---------------------------------------------------------------------------
+# RequiredSpecialty evidence (SPEC-001 node N04)
+#
+# The oracle for the five strategies. `GroundTruth.required_specialties` is what
+# is really required; this turns that into the three imperfect source types a
+# hospital actually records, with each source's SPEC-001 bias as an explicit,
+# tunable rate. At the defaults (perfect recall, no spurious entries, no
+# unrecognisable text) all five strategies must recover the ground truth
+# exactly, which is what makes the noisy cases interpretable.
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class EvidenceConfig:
+    """Rates, not counts, for the same reason `SynthConfig` is: a generator
+    parameterised by wall-clock or file-system values is not an oracle.
+
+    The defaults are the *clean* case (everything recorded, nothing spurious).
+    Each non-default rate corresponds to one row of SPEC-001's bias column:
+
+    - `referral_stale_rate` — "teams disengage without closing the referral";
+    - `consult_note_recall` below 1.0 — "under-counts verbal advice";
+    - `problem_list_comorbidity_rate` — "over-triggers on historical
+      comorbidity".
+    """
+
+    recorded_at: datetime = field(default=datetime(2026, 1, 5, 8, 0, 0))
+    referral_recall: float = 1.0
+    consult_note_recall: float = 1.0
+    problem_list_recall: float = 1.0
+    referral_stale_rate: float = 0.0
+    problem_list_comorbidity_rate: float = 0.0
+    unrecognised_text_rate: float = 0.0
+
+    def __post_init__(self) -> None:
+        for name in (
+            "referral_recall",
+            "consult_note_recall",
+            "problem_list_recall",
+            "referral_stale_rate",
+            "problem_list_comorbidity_rate",
+            "unrecognised_text_rate",
+        ):
+            rate = getattr(self, name)
+            if not 0.0 <= rate <= 1.0:
+                raise ValueError(f"{name} must be in [0, 1], got {rate!r}")
+
+
+_EVIDENCE_SOURCE_NAMES = {
+    "referral": "synthetic:referral",
+    "consult_note": "synthetic:consult_note",
+    "problem_list": "synthetic:problem_list",
+}
+
+
+def generate_evidence(
+    truth: GroundTruth, config: EvidenceConfig, rng: Random
+) -> RequiredSpecialtyEvidence:
+    """Turn known required specialties into the three imperfect evidence sources.
+
+    Deterministic: patients are visited in id order and specialties in
+    `Specialty` declaration order, so `generate_evidence(t, c, Random(42))` is
+    reproducible (acceptance criterion 3, gate 8). Every draw comes from `rng`.
+    """
+    referrals: list[Referral] = []
+    consult_notes: list[ConsultNote] = []
+    problem_list: list[ProblemListEntry] = []
+    all_specialties = list(Specialty)
+    unrecognised_counter = 0
+
+    def text_for(specialty: Specialty) -> str:
+        nonlocal unrecognised_counter
+        if rng.random() < config.unrecognised_text_rate:
+            unrecognised_counter += 1
+            # Free text no mapper should ever resolve — the point is that it is
+            # quarantined and counted, not guessed at (criterion 5's rule).
+            return f"?? unmapped clinical text {unrecognised_counter}"
+        return specialty.value
+
+    for patient in sorted(truth.required_specialties, key=lambda pid: pid.value):
+        required = truth.required_specialties[patient]
+        for specialty in all_specialties:
+            if specialty not in required:
+                continue
+            if rng.random() < config.referral_recall:
+                referrals.append(
+                    Referral(
+                        patient=patient,
+                        specialty_text=text_for(specialty),
+                        recorded_at=config.recorded_at,
+                        source=_EVIDENCE_SOURCE_NAMES["referral"],
+                    )
+                )
+            if rng.random() < config.consult_note_recall:
+                consult_notes.append(
+                    ConsultNote(
+                        patient=patient,
+                        specialty_text=text_for(specialty),
+                        recorded_at=config.recorded_at,
+                        source=_EVIDENCE_SOURCE_NAMES["consult_note"],
+                    )
+                )
+            if rng.random() < config.problem_list_recall:
+                problem_list.append(
+                    ProblemListEntry(
+                        patient=patient,
+                        specialty_text=text_for(specialty),
+                        recorded_at=config.recorded_at,
+                        source=_EVIDENCE_SOURCE_NAMES["problem_list"],
+                    )
+                )
+
+        for specialty in all_specialties:
+            if specialty in required:
+                continue
+            if rng.random() < config.referral_stale_rate:
+                referrals.append(
+                    Referral(
+                        patient=patient,
+                        specialty_text=text_for(specialty),
+                        recorded_at=config.recorded_at,
+                        source=_EVIDENCE_SOURCE_NAMES["referral"],
+                    )
+                )
+            if rng.random() < config.problem_list_comorbidity_rate:
+                problem_list.append(
+                    ProblemListEntry(
+                        patient=patient,
+                        specialty_text=text_for(specialty),
+                        recorded_at=config.recorded_at,
+                        source=_EVIDENCE_SOURCE_NAMES["problem_list"],
+                    )
+                )
+
+    return RequiredSpecialtyEvidence(
+        referrals=tuple(referrals),
+        consult_notes=tuple(consult_notes),
+        problem_list=tuple(problem_list),
+    )

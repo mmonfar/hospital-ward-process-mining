@@ -92,13 +92,24 @@ forbidden_modules = [
     "hwpm.optimize",
     "hwpm.govern",
     "hwpm.design",
+    "hwpm.artefact",
     "hwpm.cli",
 ]
 
 [[tool.importlinter.contracts]]
 name = "Layers point inward"
 type = "layers"
-layers = ["hwpm.cli", "hwpm.optimize", "hwpm.mining", "hwpm.ingest", "hwpm.domain"]
+# hwpm.artefact sits between ingest and domain: every stage above it writes a
+# strategy-keyed envelope (SPEC-001 criterion 10, ADR-0006 section 2), and it
+# knows only the domain types the envelope carries. N04.
+layers = [
+    "hwpm.cli",
+    "hwpm.optimize",
+    "hwpm.mining",
+    "hwpm.ingest",
+    "hwpm.artefact",
+    "hwpm.domain",
+]
 
 # ADR-0008: pm4py is AGPL v3. Confining it to one adapter keeps the dependency
 # swappable at a known, small cost while the organisation answers the licensing
@@ -112,6 +123,7 @@ source_modules = [
     "hwpm.optimize",
     "hwpm.govern",
     "hwpm.design",
+    "hwpm.artefact",
     "hwpm.cli",
 ]
 forbidden_modules = ["pm4py"]
