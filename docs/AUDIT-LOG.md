@@ -394,3 +394,18 @@ as new entries referencing the original.
   ```
   payoff table 138.11s all OPTIMAL; sweep 21 solves 441.21s all_proven_optimal=True front size 6; scaling 10:0.88s 20:2.21s 30:124.62s proven, 40:299.97s NOT proven
   ```
+
+## 2026-08-15 18:16:35Z — ADR-0007 G2 gate reopened: lexical recall fell to 0.667; added N19b to build the vector half
+
+- **Why:** The corpus grew by the optimisation package, SPEC-007, ADR-0008 and the N08 results, and lexical-only recall@5 fell from 0.75 to 0.667, below the 0.70 stop threshold. test_lexical_recall_gate is red, which is precisely the signal it was written to give - its docstring says a drift below 0.70 means reopening the vector half, not relabelling queries. The test is left failing until N19b lands rather than weakened. Recording separately that this failing test was committed in 06dfac4: I had been piping pytest through tail, so the shell chain took tail's exit code and the gate never gated. Corrected in practice by capturing the exit code.
+- **Authority:** ADR-0007 G2; SPEC-007
+- **Graph node:** N19b-vector-retrieval
+- **Model:** claude-opus-5
+- **Actor:** marti
+- **Commit:** `06dfac4`
+- **Artefacts:** `orchestration/graph.yaml`
+- **Evidence:**
+
+  ```
+  recall_at_5=0.6667 mrr=0.4557 n_queries=36; threshold 0.70; pytest exit code 1
+  ```

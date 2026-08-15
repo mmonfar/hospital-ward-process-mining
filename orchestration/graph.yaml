@@ -387,6 +387,25 @@ nodes:
       measurement per ADR-0007: if lexical-only recall@5 already exceeds 0.70 on
       the labelled query set, nothing is built.
 
+  - id: N19b-vector-retrieval
+    title: Vector half of hybrid retrieval (ADR-0007 G2 gate reopened)
+    spec: SPEC-007
+    agent: builder
+    depends_on: [N19-context-retrieval]
+    gate: autonomous
+    budget_tokens: 150000
+    decision: ADR-0007 G2, re-measured 2026-08-15
+    rationale: >
+      REOPENED BY MEASUREMENT. N19 shipped lexical-only because ADR-0007's G2
+      gate measured lexical recall@5 at 0.75, above the 0.70 stop threshold.
+      The corpus has since grown by the whole optimisation package, SPEC-007,
+      ADR-0008 and the N08 results, and recall has fallen to 0.667 --
+      `tests/test_retrieve.py::test_lexical_recall_gate` is red, which is the
+      signal it was written to give. Build the vector half and the RRF hybrid
+      per SPEC-007 Part A. The user approved the ~130MB local model download on
+      2026-08-14; nothing leaves the machine (ADR-0005). Do NOT relabel queries
+      or lower the threshold to make the test green -- the gate is the point.
+
   - id: N20-trace-embeddings
     title: Ward-day and trace embeddings for clustering and warm starts
     spec: SPEC-007
