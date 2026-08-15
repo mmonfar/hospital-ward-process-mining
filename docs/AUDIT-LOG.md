@@ -272,3 +272,17 @@ as new entries referencing the original.
   ```
   gates: ruff format/check clean; mypy clean (22 files); vulture clean; import-linter 3 contracts kept; pytest 108 passed 3 skipped; coverage domain 99% overall 83%; hwpm design check 21 contrast rules ok, dE floor 15 met at 18.7 worst. Gates 8-9 (determinism, baseline) have no test files yet -- they arrive with the stochastic nodes; nothing in N14a is stochastic. D6 in SPEC-005 is a presence check, not behavioural: the JS guards are asserted to exist, not asserted to fire. Gallery verified in a browser (DOM, keyboard, strategy transition, no console errors); no visual screenshot was taken.
   ```
+
+## 2026-08-15 07:55:27Z — HANDOVER: N14a complete; session B at budget HALT
+
+- **Why:** Ledger reports 131% of the 3,000,000 hard limit for this session, so per docs/05-SELF-MANAGED-MODE.md work stops at a node boundary rather than starting anything new. N14a is finished and committed, so nothing is in flight.
+- **Authority:** docs/05-SELF-MANAGED-MODE.md; orchestration/graph.yaml budget.thresholds
+- **Graph node:** N14a-design-system
+- **Model:** claude-opus-5
+- **Actor:** marti
+- **Commit:** `4b37e6a`
+- **Evidence:**
+
+  ```
+  DONE: design system complete -- src/hwpm/design (tokens, colour maths, emitters), web/design (base.css, 9 primitives, gallery.html), tests/test_design_tokens.py, SPEC-005 design-system section with criteria D1-D6, hwpm design build/check CLI, graph status completed. NOT DONE, and deliberately deferred to N14: behavioural JS tests for the primitive guards (needs a DOM and a JS runner); the prototype web/hospital-ward.html still uses the pre-system palette including the #8a9599 label tone that fails AA -- it is a known defect recorded in SPEC-005 decision 10, not yet corrected. NEXT CONCRETE ACTION: N14-viewer remains blocked on N07 and N10; runnable now are N04, N05, N19. OPEN QUESTION: the design system caps categorical colour at five specialties plus an aggregate bucket -- if a real ward round routinely involves more than five distinguished specialties, that cap needs a decision at N16 about encoding by position or small multiples instead.
+  ```
