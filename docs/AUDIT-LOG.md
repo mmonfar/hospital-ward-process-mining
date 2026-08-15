@@ -242,3 +242,18 @@ as new entries referencing the original.
   ```
   pm4py AGPL-3.0; ortools Apache-2.0; 56 tests pass in .venv
   ```
+
+## 2026-08-15 07:51:55Z — Fixed two failing design-system tests that grepped prose rather than code
+
+- **Why:** Both failures were test defects, not code defects. test_typography asserted against split('body {')[1], which reads the CSS reset block and never sees the themed one that does set tabular-nums. test_front_browser grepped the raw source for 'sort' and failed on the comment explaining why sorting is forbidden. Tests that grep source text including comments break precisely when someone documents the rule they enforce. Rewrote both to strip comments and match code, and verified with negative checks that they still catch real violations - which found a bug in the first replacement regex before it was committed.
+- **Authority:** SPEC-005; docs/06-QA-AND-DEADCODE.md
+- **Graph node:** N14a-design-system
+- **Model:** claude-opus-5
+- **Actor:** marti
+- **Commit:** `65c7854`
+- **Artefacts:** `tests/test_design_tokens.py`
+- **Evidence:**
+
+  ```
+  105 passed, 3 skipped; negative checks confirm .sort(/sortBy(/orderBy(/.reverse() still caught and comment text ignored
+  ```

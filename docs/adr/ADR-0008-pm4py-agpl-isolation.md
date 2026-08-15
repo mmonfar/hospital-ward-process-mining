@@ -51,6 +51,8 @@ behind our own Protocols declared in `hwpm.mining`:
 ```python
 class ProcessDiscovery(Protocol):
     def discover(self, log: EventLog) -> ProcessModel: ...
+
+
 class ConformanceChecker(Protocol):
     def check(self, log: EventLog, model: ProcessModel) -> ConformanceReport: ...
 ```

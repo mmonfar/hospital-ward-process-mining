@@ -174,36 +174,50 @@ they determine what a citation can point at.
 # hwpm.retrieve  — adapter layer, optional dependency, imports only from domain
 @dataclass(frozen=True)
 class Chunk:
-    id: str                 # stable: f"{path}:{start_line}-{end_line}"
-    path: Path              # repo-relative
+    id: str  # stable: f"{path}:{start_line}-{end_line}"
+    path: Path  # repo-relative
     start_line: int
     end_line: int
-    page_anchor: int | None # set only for the parsed reference
+    page_anchor: int | None  # set only for the parsed reference
     heading_path: str
     text: str
     sha256: str
 
+
 @dataclass(frozen=True)
 class Hit:
     chunk: Chunk
-    score: float            # fused (RRF)
+    score: float  # fused (RRF)
     lexical_rank: int | None
     vector_rank: int | None
-    def citation(self) -> str: ...     # "docs/specs/SPEC-004-optimisation.md:101-112"
+
+    def citation(self) -> str: ...  # "docs/specs/SPEC-004-optimisation.md:101-112"
+
 
 @dataclass(frozen=True)
 class IndexStats:
-    n_files: int; n_chunks: int; bytes_indexed: int
-    build_seconds: float; model: str; model_sha: str; built_at: datetime
+    n_files: int
+    n_chunks: int
+    bytes_indexed: int
+    build_seconds: float
+    model: str
+    model_sha: str
+    built_at: datetime
+
 
 def chunk_file(path: Path, max_tokens: int = 400, overlap: int = 60) -> list[Chunk]: ...
 def build_index(roots: list[Path], out: Path, model: str) -> IndexStats: ...
 def search(q: str, k: int = 8, lexical_only: bool = False) -> list[Hit]: ...
 
+
 @dataclass(frozen=True)
 class RetrievalScore:
-    recall_at_5: float; mrr: float; n_queries: int
-def evaluate(queries: Path) -> dict[str, RetrievalScore]:   # {"lexical":…, "hybrid":…}
+    recall_at_5: float
+    mrr: float
+    n_queries: int
+
+
+def evaluate(queries: Path) -> dict[str, RetrievalScore]:  # {"lexical":…, "hybrid":…}
     ...
 ```
 
@@ -352,19 +366,26 @@ outcome for every downstream audience.
 # hwpm.mining.embed
 @dataclass(frozen=True)
 class WardDayVector:
-    day: date; ward: LocationId
-    features: dict[str, float]     # interpretable, named, unit-carrying — always present
-    embedding: tuple[float, ...] | None   # populated only if the Part B gate fired
+    day: date
+    ward: LocationId
+    features: dict[str, float]  # interpretable, named, unit-carrying — always present
+    embedding: tuple[float, ...] | None  # populated only if the Part B gate fired
 
-def encode_ward_day(episodes: list[BedsideEpisode], rounds: list[Round]) -> WardDayVector: ...
+
+def encode_ward_day(
+    episodes: list[BedsideEpisode], rounds: list[Round]
+) -> WardDayVector: ...
 def cluster_ward_days(
     vectors: list[WardDayVector], k: int, rng: Random, use_embedding: bool = False
 ) -> ClusterAssignment: ...
 def atypicality(v: WardDayVector, model: ClusterAssignment) -> float: ...
 def neighbours(v: WardDayVector, k: int = 5) -> list[tuple[date, float]]: ...
 
+
 # hwpm.optimize
-def seed_population(inst: Instance, neighbours: list[Schedule], rng: Random) -> list[Schedule]: ...
+def seed_population(
+    inst: Instance, neighbours: list[Schedule], rng: Random
+) -> list[Schedule]: ...
 ```
 
 `features` is never `None`. `embedding` may be. Any consumer that cannot work

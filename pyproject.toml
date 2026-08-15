@@ -91,6 +91,7 @@ forbidden_modules = [
     "hwpm.mining",
     "hwpm.optimize",
     "hwpm.govern",
+    "hwpm.design",
     "hwpm.cli",
 ]
 

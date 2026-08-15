@@ -31,7 +31,9 @@ GENERATED = {"tokens.css", "tokens.js"}
 # --------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("rule", tokens.CONTRAST_REQUIREMENTS, ids=lambda r: f"{r.fg}-on-{r.bg}")
+@pytest.mark.parametrize(
+    "rule", tokens.CONTRAST_REQUIREMENTS, ids=lambda r: f"{r.fg}-on-{r.bg}"
+)
 def test_contrast_ratios(rule: tokens.ContrastRule) -> None:
     """Every pair the system puts on screen clears its WCAG floor."""
     ratio = colour.contrast_ratio(tokens.resolve(rule.fg), tokens.resolve(rule.bg))
@@ -173,7 +175,8 @@ def test_motion_durations_come_from_tokens(path: Path) -> None:
     if path.name in GENERATED:
         pytest.skip("the generated file is where the duration tokens are defined")
     offenders = [
-        line.strip() for line in path.read_text(encoding="utf-8").splitlines()
+        line.strip()
+        for line in path.read_text(encoding="utf-8").splitlines()
         if DURATION_LITERAL.search(line)
     ]
     assert not offenders, f"{path.name} hard-codes a duration: {offenders[:3]}"
@@ -224,16 +227,43 @@ def test_series_chart_still_requires_the_bounding_strategies() -> None:
     assert "BOUND_KEYS" in source
 
 
+def _strip_comments(source: str) -> str:
+    """Remove /* block */ and // line comments.
+
+    Assertions about behaviour must look at code, not prose. Grepping raw source
+    means a test fails the moment someone documents the very rule it enforces --
+    which is exactly how both assertions below first broke: `parallel.js` has no
+    sort call, but its comment explaining why sorting is forbidden contains the
+    word "sorts".
+    """
+    without_blocks = re.sub(r"/\*.*?\*/", "", source, flags=re.DOTALL)
+    return re.sub(r"^\s*//.*$", "", without_blocks, flags=re.MULTILINE)
+
+
 def test_front_browser_still_requires_a_baseline() -> None:
+    """ADR-0004: showing a ranked front re-scalarises the decision in the UI."""
     source = (DESIGN_DIR / "parallel.js").read_text(encoding="utf-8")
     assert "a baseline is required" in source
-    assert "sort" not in source.lower().split("no sort control")[0].replace(
-        "unsorted", ""
-    ), "the front browser must not sort the front (ADR-0004)"
+
+    code = _strip_comments(source)
+    # Any actual ordering call, however it is spelled. `.sort(`, `sortBy(`,
+    # `orderBy(` and `.reverse()` all reintroduce a ranking.
+    offenders = re.findall(r"\b\w*(?:sort|orderBy)\w*\s*\(|\.reverse\s*\(", code)
+    assert not offenders, (
+        f"the front browser must not order the front (ADR-0004); found {offenders}"
+    )
 
 
 def test_typography_is_tabular_by_default() -> None:
     """Design bar 3: numbers are the product, so they align without opting in."""
     base = (DESIGN_DIR / "base.css").read_text(encoding="utf-8")
-    body = base.split("body {")[1].split("}")[0]
-    assert "font-variant-numeric: tabular-nums" in body
+    # base.css legitimately declares `body` more than once -- a reset block and
+    # a themed block. Checking only the first silently tested the reset.
+    # The negative lookbehind keeps `.figure__body {` and friends out; matching
+    # on `[^}]*` rather than a preceding `}` means every block is found
+    # regardless of what surrounds it.
+    body_blocks = re.findall(r"(?<![\w.\-])body\s*\{([^}]*)\}", base)
+    assert body_blocks, "no body block found in base.css"
+    assert any("font-variant-numeric: tabular-nums" in b for b in body_blocks), (
+        "body must set tabular-nums so figures align without per-component opt-in"
+    )
