@@ -456,3 +456,18 @@ as new entries referencing the original.
   being written. `orchestration/graph.yaml`'s N09-baseline-gate node carries
   one coherent `status: completed` block, not two, so the graph itself is not
   affected by the log duplication.
+
+## 2026-08-16 10:01:45Z — Built AcsRoutingScheduler (Ant Colony System, Alg 112 p.159) implementing SPEC-004's Scheduler for visit routing per SELECTION-GUIDE.md P2: coverage drawn the same random way N09's baselines draw it, per-clinician visit order decided by pheromone-guided construction over a shared bed-to-bed edge table segmented into isolation/acuity precedence classes, internal fitness is motion_m alone (never a scalarisation, ADR-0004), returned result is pareto_front() over everything evaluated. Measured on three 12-bed/24-slot instances (seeds 17,41,99) under equal Budget(max_seconds=15): ACS best-motion beats or matches both RandomSearchScheduler and HillClimbingScheduler on every instance (190.46 vs 201.57m, 144.06 vs 147.47m, 181.51 vs 233.51m), median-motion beats or ties both on every instance. All QA gates green: ruff format/check clean, mypy clean on acs.py (cpsat.py's pre-existing 59 ortools-stub errors unchanged, confirmed additive-only diff), vulture clean, import-linter 3 kept/0 broken, full suite 274 passed/27 skipped/0 failed, coverage 91% overall / acs.py 97%.
+
+- **Why:** SPEC-004 node N11, algorithm binding table row 'Routing | Ant Colony System | Alg 112, p.159'
+- **Authority:** SPEC-004
+- **Graph node:** N11-acs-routing
+- **Model:** claude-sonnet-5
+- **Actor:** marti
+- **Commit:** `c84b78e`
+- **Artefacts:** `src/hwpm/optimize/acs.py,tests/test_optimize_acs.py,orchestration/graph.yaml`
+- **Evidence:**
+
+  ```
+  ...........                                                              [100%]
+  ```
