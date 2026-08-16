@@ -435,7 +435,7 @@ as new entries referencing the original.
 - **Graph node:** N09-baseline-gate
 - **Model:** claude-sonnet-5
 - **Actor:** marti
-- **Commit:** `2a9a0bd`
+- **Commit:** `c72a013` (recorded as `2a9a0bd` by the `govern audit` invocation above, which stamped the then-current HEAD before this entry's own commit existed; corrected here rather than by amending)
 - **Artefacts:** `src/hwpm/optimize/baselines.py`, `tests/test_optimize_baselines.py`, `tests/bench/test_baseline_vs_exact.py`, `orchestration/graph.yaml`
 - **Evidence:**
 
@@ -445,3 +445,14 @@ as new entries referencing the original.
   ........................................................................ [ 79%]
   .......................s...............................                  [100%]; 259 passed, 12 skipped, 0 failed full suite; ruff format/check clean; lint-imports 3 kept 0 broken; vulture no findings; mypy: baselines.py 0 errors (cpsat.py's 56 pre-existing ortools-stub errors unchanged, confirmed via git stash diff); N09-specific tests (feasibility, non-domination, determinism via max_evaluations not wall-clock, time and evaluation budget discipline, InfeasibleInstanceError parity with N08) all green
   ```
+
+- **Note on duplication:** this entry and the one immediately above it
+  ("Verified N09-baseline-gate...") were written independently by two agent
+  sessions sharing one working tree at the same time, each unaware of the
+  other's audit-log write in flight; both describe the same underlying
+  completion of N09-baseline-gate. Left as two entries rather than deleting
+  either, per this project's log convention (amendment by addition, ADR-style)
+  and because neither session could safely edit content it did not witness
+  being written. `orchestration/graph.yaml`'s N09-baseline-gate node carries
+  one coherent `status: completed` block, not two, so the graph itself is not
+  affected by the log duplication.
