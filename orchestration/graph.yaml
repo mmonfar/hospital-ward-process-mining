@@ -251,6 +251,49 @@ nodes:
     gate: autonomous
     budget_tokens: 250000
     decision: N21 benchmark, 2026-08-16
+    status: completed
+    artefacts:
+      [
+        src/hwpm/optimize/nsga2.py,
+        tests/test_optimize_nsga2.py,
+        tests/bench/test_nsga2_vs_baselines.py,
+      ]
+    outcome: >
+      BUILT AND MEASURED 2026-08-16. NSGA-II (Alg 104, p.143) over a
+      fixed-length genome of one (clinician, preferred slot) gene per
+      (patient, specialty) requirement; ranks by non-dominated sorting (Alg
+      101), ties by range-normalised crowding distance (Alg 102), selection by
+      lexicographic tournament (Alg 103), elitist archive per Alg 104 lines
+      10-17. Nothing is scalarised anywhere (ADR-0004): NSGA-II is the one
+      algorithm in SELECTION-GUIDE.md that needs no scalar fitness at all.
+      Phenotype is a deterministic function of the genome, unlike N09's
+      re-randomising materialisation -- without that a child inherits none of
+      its parents' timing and crossover transmits nothing.
+      GATE RESULT vs N09 (equal 60s Budget, roster scaled by teams_for_beds):
+      at 36 beds NSGA-II returns a 202-point front and at 54 beds a 114-point
+      front, while RandomSearchScheduler and HillClimbingScheduler return
+      NOTHING at either size. The gate is cleared, but the reason is
+      representation rather than search: N09 draws coverage uniformly and
+      discards what is illegal, and at hospital scale essentially every draw
+      is illegal -- measured 0 of 50 uniform draws feasible at 48 beds, and 0
+      of 20 repaired even given 200 rounds. NSGA-II needed a greedy-randomised
+      seeded population (Rule 0 step 2 used as a seeder, not as the answer)
+      plus a conflict-targeted repair operator to get off the ground at all.
+      NOT A WIN OVER CP-SAT, recorded because N21 warned against exactly this
+      overclaim: at 36 beds with 300s each the two fronts are MUTUALLY
+      INCOMPARABLE -- NSGA-II dominates 0 of the CP-SAT sweep's 5 points and
+      the sweep dominates 0 of NSGA-II's 271. CP-SAT still proves MOTION
+      optimal in 4.75s at 1129.61 m against NSGA-II's best 1250.42 m (10.7%
+      better), and no NSGA-II point dominates that incumbent. On makespan
+      CP-SAT reproduces N21 exactly (FEASIBLE, 92.3% gap) and 14 of NSGA-II's
+      271 points dominate it. What NSGA-II supplies is the FRONT ADR-0004
+      requires and CP-SAT can no longer produce at usable density above one
+      ward -- 271 browsable options against 5 in 127.22s -- reaching
+      copresence 1.000 and continuity 1.000 where the single-objective CP-SAT
+      incumbents reach 0.273 and 0.545. Both halves are true; neither cancels
+      the other.
+      NOT DELIVERED: SPEC-004 criterion 6, the SPEA2 cross-check, is not built
+      by this node and remains outstanding. It has no graph node of its own.
     rationale: >
       REINSTATED, with the measured justification N08 said it lacked. History,
       because the reversal is the point: N08 (2026-08-15) proved the single-ward
