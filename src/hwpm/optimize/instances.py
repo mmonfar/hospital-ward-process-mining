@@ -30,6 +30,7 @@ metaheuristic.
 
 from __future__ import annotations
 
+import math
 from datetime import datetime
 from random import Random
 
@@ -121,6 +122,54 @@ def _clinicians(
     )
 
 
+def team_mix(
+    n_teams: int,
+) -> tuple[tuple[Role, tuple[Specialty, ...]], ...]:
+    """`_REALISTIC_MIX` repeated `n_teams` times — the roster of a hospital
+    running `n_teams` ward teams in parallel. Node N21.
+
+    Whole teams, not individual clinicians, because `_REALISTIC_MIX`'s
+    composition is load-bearing: its comment records that no specialty may have
+    exactly one holder, or the per-route acuity/isolation ordering rules can
+    render the instance infeasible for reasons that measure the generator
+    rather than the solver. Adding staff one at a time would break that
+    invariant on most counts; adding a whole team preserves it by construction
+    and keeps the specialty *proportions* identical to the instance N08 proved,
+    which is what makes the two measurements comparable.
+    """
+    if n_teams < 1:
+        raise ValueError(f"n_teams must be >= 1, got {n_teams!r}")
+    return _REALISTIC_MIX * n_teams
+
+
+#: Beds per clinician on the instance N08 proved optimal (30 beds, 8
+#: clinicians). `teams_for_beds` holds this ratio as the hospital grows, so
+#: that the N21 scaling curve varies *size* rather than *saturation* — see that
+#: function's docstring for why the distinction decides what the curve means.
+PROVEN_BEDS_PER_CLINICIAN = 30 / 8
+
+
+def teams_for_beds(n_beds: int) -> int:
+    """How many 8-clinician teams a `n_beds` hospital is rostered with, holding
+    the proven instance's staffing ratio. Node N21.
+
+    Why a rule rather than a number per row of the sweep: with the roster held
+    at 8, the instance stops being *feasible* — not merely hard — somewhere
+    between 42 and 48 beds, because a handful of specialties have two holders
+    each and a 3-hour window only holds so many visits. A scaling curve run on
+    a fixed roster therefore measures the ward filling up, and its late points
+    say nothing about the solver at all. Scaling staff with beds is what makes
+    "does CP-SAT still prove optimality as the hospital grows" a question about
+    CP-SAT.
+
+    Rounded *up*: understaffing reintroduces the saturation this exists to
+    remove, so the safe direction is a slightly generous roster.
+    """
+    if n_beds < 1:
+        raise ValueError(f"n_beds must be >= 1, got {n_beds!r}")
+    return max(1, math.ceil(n_beds / PROVEN_BEDS_PER_CLINICIAN / len(_REALISTIC_MIX)))
+
+
 def realistic_single_ward(
     rng: Random,
     *,
@@ -128,13 +177,22 @@ def realistic_single_ward(
     n_slots: int = 36,
     slot_seconds: int = 300,
     start: datetime | None = None,
+    n_teams: int = 1,
 ) -> Instance:
     """SPEC-004's realistic instance: one 30-bed ward, 8 clinicians, a 3-hour
     round window at 5-minute resolution.
 
     The defaults *are* the spec's instance; the parameters exist so a scaling
     curve can be measured without a second generator drifting away from this
-    one.
+    one. `n_teams` (N21) repeats the 8-clinician roster so that hospital-scale
+    bed counts can be staffed at hospital-scale ratios; see `teams_for_beds`.
+
+    Note that `n_teams` changes the instance *only* by enlarging the roster —
+    the patients, their beds, their required specialties and their off-ward
+    episodes are all drawn before the roster is consulted, so the same seed
+    gives the same patients at every team count. Yesterday's clinician is the
+    one exception and necessarily so: it is drawn from the holders of a
+    required specialty, and there are more of those.
     """
     if n_beds > len(BED_IDS):
         raise ValueError(
@@ -145,7 +203,7 @@ def realistic_single_ward(
         slot_seconds=slot_seconds,
         n_slots=n_slots,
     )
-    clinicians = _clinicians(_REALISTIC_MIX)
+    clinicians = _clinicians(team_mix(n_teams))
     holders = {
         specialty: tuple(c.id for c in clinicians if specialty in c.specialties)
         for specialty in _SPECIALTY_POOL

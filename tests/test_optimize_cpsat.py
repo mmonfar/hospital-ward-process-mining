@@ -47,6 +47,7 @@ from hwpm.optimize.cpsat import (
     OBJECTIVE_KEYS,
     CpSatScheduler,
     InfeasibleInstanceError,
+    SolveOutcome,
     allowed_starts,
     candidate_clinicians,
     payoff_table,
@@ -57,7 +58,10 @@ from hwpm.optimize.cpsat import (
 from hwpm.optimize.evaluate import dominates, evaluate
 from hwpm.optimize.instances import (
     BED_IDS,
+    PROVEN_BEDS_PER_CLINICIAN,
     realistic_single_ward,
+    team_mix,
+    teams_for_beds,
     tiny_instance,
 )
 from hwpm.optimize.types import Budget, Instance, Objectives, SlotGrid
@@ -422,3 +426,106 @@ def test_realistic_instance_is_reproducible_from_its_seed() -> None:
     assert a.required == b.required
     assert a.beds == b.beds
     assert a.previous_day == b.previous_day
+
+
+# ---------------------------------------------------------------------------
+# N21 — hospital-scale rostering
+# ---------------------------------------------------------------------------
+
+
+def test_relative_gap_distinguishes_proven_from_merely_feasible() -> None:
+    """N21 added the MIP gap because "not proven within the cap" collapses two
+    different answers into one word.
+
+    A proven solve reports a gap of exactly zero. The `None` cases are the ones
+    that matter: no solution, and an incumbent of zero. Reporting 0.0 for either
+    would read as "proven", which is the distinction the field exists to keep.
+    """
+    inst = tiny_instance(Random(3))
+    proven = solve_single(inst, "makespan_s", seconds=30.0, seed=1, workers=1)
+    assert proven.proven_optimal
+    assert proven.relative_gap == 0.0
+
+    unsolved = SolveOutcome(
+        objective="makespan_s",
+        schedule=None,
+        objectives=None,
+        status="UNKNOWN",
+        proven_optimal=False,
+        wall_seconds=1.0,
+    )
+    assert unsolved.relative_gap is None
+
+    zero_incumbent = SolveOutcome(
+        objective="motion_m",
+        schedule=None,
+        objectives=None,
+        status="FEASIBLE",
+        proven_optimal=False,
+        wall_seconds=1.0,
+        objective_value=0.0,
+        best_bound=0.0,
+    )
+    assert zero_incumbent.relative_gap is None
+
+    open_solve = SolveOutcome(
+        objective="makespan_s",
+        schedule=None,
+        objectives=None,
+        status="FEASIBLE",
+        proven_optimal=False,
+        wall_seconds=1.0,
+        objective_value=20.0,
+        best_bound=15.0,
+    )
+    assert open_solve.relative_gap == pytest.approx(0.25)
+
+
+def test_teams_for_beds_holds_the_proven_staffing_ratio() -> None:
+    """N21's scaling rule must never leave the hospital thinner-staffed than the
+    30-bed/8-clinician instance N08 proved.
+
+    That ratio is the whole point: with the roster pinned, the instance stops
+    being feasible somewhere between 42 and 48 beds, and a scaling curve run
+    past that point measures the ward filling up rather than the solver.
+    """
+    for n_beds in range(1, len(BED_IDS) + 1):
+        clinicians = 8 * teams_for_beds(n_beds)
+        assert n_beds / clinicians <= PROVEN_BEDS_PER_CLINICIAN
+    assert teams_for_beds(30) == 1  # the anchor is the spec's own instance
+    assert teams_for_beds(31) == 2
+    with pytest.raises(ValueError, match="n_beds must be >= 1"):
+        teams_for_beds(0)
+
+
+def test_team_mix_repeats_whole_teams_and_keeps_the_specialty_proportions() -> None:
+    """Whole teams, because `_REALISTIC_MIX`'s composition carries the "no
+    specialty has exactly one holder" invariant that keeps the acuity/isolation
+    ordering rules from making instances infeasible for generator reasons."""
+    one, three = team_mix(1), team_mix(3)
+    assert len(three) == 3 * len(one)
+    assert three == one * 3
+    with pytest.raises(ValueError, match="n_teams must be >= 1"):
+        team_mix(0)
+
+
+def test_extra_teams_enlarge_the_roster_without_changing_the_patients() -> None:
+    """The N21 curve varies one thing at a time. `n_teams` may only add staff:
+    if it perturbed the patients as well, no two rows of the curve would be
+    measuring the same hospital.
+
+    `previous_day` is the stated exception -- it is drawn from the holders of a
+    required specialty, and a bigger roster has more of those.
+    """
+    one = realistic_single_ward(Random(7), n_beds=24, n_teams=1)
+    two = realistic_single_ward(Random(7), n_beds=24, n_teams=2)
+    assert len(two.clinicians) == 2 * len(one.clinicians)
+    assert len({c.id for c in two.clinicians}) == len(two.clinicians)
+    assert two.patients == one.patients
+    assert two.required == one.required
+    assert two.beds == one.beds
+    # Every patient is still coverable: the doubled roster is a superset of the
+    # specialties the single team held.
+    held = frozenset().union(*(c.specialties for c in two.clinicians))
+    for required in two.required.values():
+        assert required <= held

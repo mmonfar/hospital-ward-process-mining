@@ -147,10 +147,35 @@ class SolveOutcome:
     proven_optimal: bool
     wall_seconds: float
     epsilon: tuple[tuple[str, int], ...] = ()
+    #: The solver's incumbent objective value and its proof bound, both in the
+    #: native integer units at the top of this module. `None` when no solution
+    #: was found. Added by N21: "not proven within the cap" is not one answer
+    #: but two very different ones -- a solve sitting 1% from its bound needs a
+    #: bigger budget, while one sitting 40% away is telling you the exact method
+    #: has stopped working -- and Rule 0 cannot be re-decided without knowing
+    #: which. See `relative_gap`.
+    objective_value: float | None = None
+    best_bound: float | None = None
 
     @property
     def feasible(self) -> bool:
         return self.schedule is not None
+
+    @property
+    def relative_gap(self) -> float | None:
+        """`|incumbent - bound| / |incumbent|`, or `None` if it is not defined.
+
+        The standard MIP relative gap, with the incumbent as denominator. A
+        proven-optimal solve is 0.0 by construction. `None` covers both "no
+        solution" and an incumbent of exactly zero, where the ratio has no
+        meaning -- returning 0.0 there would read as "proven", which is the one
+        thing this field exists to distinguish.
+        """
+        if self.objective_value is None or self.best_bound is None:
+            return None
+        if self.objective_value == 0:
+            return None
+        return abs(self.objective_value - self.best_bound) / abs(self.objective_value)
 
 
 @dataclass(frozen=True)
@@ -709,9 +734,13 @@ def solve_single(
 
     schedule: Schedule | None = None
     objectives: Objectives | None = None
+    value: float | None = None
+    bound: float | None = None
     if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
         schedule = _extract(encoding, solver)
         objectives = quantise(evaluate(schedule, inst))
+        value = solver.ObjectiveValue()
+        bound = solver.BestObjectiveBound()
     return SolveOutcome(
         objective=objective,
         schedule=schedule,
@@ -720,6 +749,8 @@ def solve_single(
         proven_optimal=status == cp_model.OPTIMAL,
         wall_seconds=elapsed,
         epsilon=tuple(sorted((epsilon or {}).items())),
+        objective_value=value,
+        best_bound=bound,
     )
 
 

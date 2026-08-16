@@ -244,22 +244,29 @@ nodes:
       concrete numbers Rule 0 asks them to beat.
 
   - id: N10-nsga2
-    title: NSGA-II MDT scheduler (DEMOTED to cross-check by Rule 0)
+    title: NSGA-II MDT scheduler (REINSTATED for hospital scale by N21)
     spec: SPEC-004
     agent: architect
     depends_on: [N09-baseline-gate]
-    gate: confirm
-    budget_tokens: 120000
-    decision: N08 benchmark, 2026-08-15
+    gate: autonomous
+    budget_tokens: 250000
+    decision: N21 benchmark, 2026-08-16
     rationale: >
-      DEMOTED. N08 proved the single-ward instance exactly in 441s, so under
-      Rule 0 the metaheuristic is no longer the product for this scale -- it is
-      a cross-check whose value is agreeing with a known optimum. Budget cut
-      from 250k to 120k accordingly, and the gate raised to `confirm` because
-      building it at all is now a discretionary spend rather than a planned one.
-      The genuine case for NSGA-II reappears at hospital scale (9 wards,
-      multi-day, stochastic durations), where N08 showed CP-SAT does not reach:
-      see N21.
+      REINSTATED, with the measured justification N08 said it lacked. History,
+      because the reversal is the point: N08 (2026-08-15) proved the single-ward
+      instance exactly in 441s and demoted this node to a `confirm`-gated
+      cross-check at 120k, since under Rule 0 a metaheuristic is not the product
+      where an exact method finishes. N21 (2026-08-16) then measured the scale
+      above one ward and found CP-SAT proves NOTHING there -- 36, 42, 48 and 54
+      beds all FEASIBLE-not-proven at 300s with the roster scaled to match, and
+      the 36-bed instance still 92.3% from its bound after 900s. Rule 0 step 1
+      is therefore not satisfied at hospital scale, the demotion is rescoped to
+      the single ward it was measured on, and budget and gate are restored.
+      CONDITION ON REPORTING, not on building: N21 showed only that CP-SAT's
+      guarantee is gone, not that a metaheuristic beats its unproven incumbent.
+      Under SPEC-004 criterion 2 this node must clear the N09 baseline gate --
+      against Random Search, HC+restarts AND the unproven CP-SAT schedule -- at
+      hospital scale before any NSGA-II result is reportable.
 
   - id: N21-multiward-scale-gate
     title: Measure CP-SAT at hospital scale; re-decide Rule 0
@@ -269,13 +276,34 @@ nodes:
     gate: autonomous
     budget_tokens: 150000
     decision: N08 benchmark, 2026-08-15
+    status: completed
+    artefacts: [src/hwpm/optimize/instances.py, src/hwpm/optimize/cpsat.py, tests/bench/test_cpsat_scale.py, tests/test_optimize_cpsat.py]
     rationale: >
-      N08's scaling curve was 0.88s at 10 beds, 2.21s at 20, 124.6s proven at
-      30, and NOT proven within 300s at 40. The single-ward answer therefore
-      says nothing about the multi-ward, multi-day problem. This node measures
-      that instance before anyone assumes either way -- the same discipline that
-      made N08 worth running. If CP-SAT fails here, N10 is reinstated with a
-      real justification rather than a presumed one.
+      MEASURED 2026-08-16; Rule 0 re-decided and N10 REINSTATED for the
+      multi-ward regime. Hospital scale moves TWO variables -- beds and
+      clinicians -- and N08's curve moved only one; the finding is that they
+      compound. Makespan on the anchor (30 beds/8 clinicians, 89
+      clinician-patient pairings) proves in 107.02s. Each single step is
+      survivable given time: 36 beds/8 clinicians proves in 719.68s and 30
+      beds/16 clinicians in 303.17s, though neither makes N08's 300s cap. Both
+      steps together do not prove at all -- 36 beds/16 clinicians is still at
+      incumbent makespan 13 vs best bound 1, a 92.3% GAP, after 900s, so it is
+      stuck rather than slow. The hospital-scale curve, roster scaled to hold
+      the proven staffing ratio, therefore proves nothing above 30 beds: 36,
+      42, 48 and 54 beds all FEASIBLE-not-proven at 300s. The practical
+      crossover against ADR-0003's 600s batch threshold falls between 30 beds
+      (107s) and 36 beds (720s) at the fixed roster. Also CORRECTS N08: its curve
+      past 30 beds held the roster at 8 while the ward filled up, and that
+      roster is provably INFEASIBLE from 48 beds (feasibility OPTIMAL at 30/36/
+      40/42, INFEASIBLE at 48/54), so N08's 40-bed row was a near-saturated
+      instance, not a clean scale point, and its "generator defect on some
+      seeds" explanation was wrong. Bed counts stop at 54 because that is the
+      whole reference geometry (BED_IDS, 9 wards x 6 beds); going further needs
+      SPEC-003 floor-plan geometry that does not exist, recorded as a blocking
+      open question. NOT established, and stated in the spec so it is not
+      overclaimed: an unproven CP-SAT incumbent is still a schedule and may
+      still beat NSGA-II, so N10 must clear the N09 baseline gate at hospital
+      scale before any metaheuristic result is reportable.
 
   - id: N11-acs-routing
     title: Ant Colony System visit routing

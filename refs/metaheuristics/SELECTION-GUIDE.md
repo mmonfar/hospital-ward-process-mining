@@ -236,3 +236,130 @@ counts this is millions of evaluations. That single fact — not a general
 preference for fast languages — is the entire justification for the gated C
 kernel in `ADR-0003`. Everything outside the fitness loop stays in Python, where
 it is readable and testable.
+
+---
+
+## MEASURED 2026-08-16 (node N21) — Rule 0 re-decided above one ward
+
+This section is **appended rather than merged into the N08 section above**, and
+the placement is deliberate twice over: this document's convention is amendment
+by addition, and `tests/fixtures/retrieval_queries.yaml` indexes several ranges
+of this file by line number, which an insertion higher up would silently break
+(it did exactly that once already — see the audit log for 2026-08-16 08:50Z).
+Read this section together with the N08 one; where they disagree, this is later.
+
+Instance seed 20260814, solver seed 2026, `workers=1`, makespan (the hardest of
+the five objectives, per N08), 300s cap unless stated. Reproducible via
+`pytest tests/bench/test_cpsat_scale.py --bench -s`.
+
+### The headline: the two dimensions compound, and that is what breaks it
+
+N08 read its result as "CP-SAT wins for a single ward, and the cliff is
+somewhere between 30 and 40 beds". Two variables move as a hospital grows —
+beds and clinicians — and N08's curve moved only one. Moving them
+independently, at N08's 300s cap and again at 900s:
+
+| Beds | Clinicians | Pairings | 300s | 900s |
+|---|---|---|---|---|
+| 30 | 8 | 89 | **OPTIMAL, 107.02s** | — |
+| 30 | 16 | 178 | not proven | **OPTIMAL, 303.17s** |
+| 36 | 8 | 108 | not proven | **OPTIMAL, 719.68s** |
+| 36 | 16 | 216 | not proven | **not proven — 92.3% gap** |
+| 42 | 8 | 122 | not proven | not measured |
+
+**Read this carefully, because the 300s column alone tells a lie.** At 300s it
+looks as though a single step in either direction kills the proof. It does not.
+Given 900s, six more beds still proves (719.68s) and a doubled roster still
+proves (303.17s). Each dimension on its own is survivable; it just costs
+roughly 3x the time for the roster and 7x for the beds.
+
+What does not survive is **both at once**. 36 beds with 16 clinicians is not
+slow — it is stuck, at a 92.3% gap (below). The cost is not additive in the two
+dimensions, and hospital scale moves both together by definition.
+
+The practical crossover against this project's own acceptability bar —
+ADR-0003's **10-minute batch threshold**, 600s — falls between 30 beds/8
+clinicians (107s, comfortable) and 36 beds/8 clinicians (720s, already over).
+
+### Hospital scale: nothing above 30 beds proves
+
+The multi-ward curve scales the roster with the beds (`instances.teams_for_beds`,
+one 8-clinician team per 30 beds) so that it measures *size* rather than the ward
+filling up — see the correction below for why that distinction is not optional:
+
+| Beds | Teams | Clinicians | Multi-specialty | Makespan result |
+|---|---|---|---|---|
+| 30 | 1 | 8 | 9 | **OPTIMAL, 107.02s** |
+| 36 | 2 | 16 | 11 | FEASIBLE, not proven in 300s |
+| 42 | 2 | 16 | 13 | FEASIBLE, not proven in 300s |
+| 48 | 2 | 16 | 17 | FEASIBLE, not proven in 300s |
+| 54 | 2 | 16 | 21 | FEASIBLE, not proven in 300s |
+
+54 beds is the whole modelled hospital — `instances.BED_IDS` enumerates the
+reference geometry's 9 wards × 6 beds and the generator refuses to go above it.
+Sweeping 60, 80 or 100 beds would mean inventing floor-plan geometry the
+`web/hospital-ward.html` prototype does not have, which would put fabricated
+metres into the project's headline motion figure. **The curve therefore covers
+every bed the modelled building has, and stops there by construction, not by
+choice.**
+
+### At hospital scale it is not a near-miss: the bound barely moves
+
+"Not proven within the cap" is two very different findings — a solve sitting 1%
+from its bound wants a bigger budget; one sitting 90% away is telling you the
+method has stopped working. Only the MIP gap separates them, which is why
+`SolveOutcome` now carries it. Measured at 900s:
+
+| Instance | 900s result | Incumbent | Best bound | Gap |
+|---|---|---|---|---|
+| 30 beds, 16 clinicians | OPTIMAL, 303.17s | 11 | 11 | 0.0% |
+| 36 beds, 8 clinicians | OPTIMAL, 719.68s | 27 | 27 | 0.0% |
+| **36 beds, 16 clinicians** | **FEASIBLE, capped** | **13** | **1** | **92.3%** |
+
+The first two rows are budget problems — expensive, but the proof arrives. The
+third is not. After fifteen minutes the lower bound has hardly moved off
+trivial, and no plausible batch threshold closes a gap of that size. **At
+hospital scale — both dimensions moved together — CP-SAT stops being an exact
+method.** It still returns a feasible schedule, but with no optimality claim
+whatsoever.
+
+### Correction to the N08 section: its curve past 30 beds measures saturation
+
+The N08 section above attributes its INFEASIBLE 54-bed row to "a defect — the
+generator can emit infeasible instances on some seeds". **That is wrong, and the
+error matters more than it looks.** It is neither a defect nor seed-dependent.
+Pure feasibility (the model with no objective at all) at the fixed 8-clinician
+roster:
+
+| Beds | 30 | 36 | 40 | 42 | 48 | 54 |
+|---|---|---|---|---|---|---|
+| Feasibility | OPTIMAL | OPTIMAL | OPTIMAL | OPTIMAL | **INFEASIBLE** | **INFEASIBLE** |
+| Wall | 1.54s | 3.08s | 12.26s | 11.97s | 2.17s | 2.78s |
+
+An 8-clinician roster runs out of capacity in a 3-hour window somewhere between
+42 and 48 beds — several specialties have only two holders each. Consequently
+**every row of N08's scaling curve past 30 beds holds the roster fixed while the
+ward fills up**, so it confounds saturation with search difficulty, and its
+40-bed row is a near-saturated instance rather than a clean scale point. N21's
+curve scales staff with beds for exactly this reason.
+
+### Rule 0, re-decided
+
+1. **For one ward at the proven size, nothing changes.** CP-SAT is the product.
+   N08's result stands on its own instance.
+2. **Above it, CP-SAT is no longer an exact method** — it is a heuristic that
+   happens to be a solver. Rule 0's step 1 ("if it solves at real ward scale
+   within the interaction budget, we ship that and no metaheuristic") is
+   **not satisfied at hospital scale.**
+3. **N10 (NSGA-II) is therefore reinstated** for the multi-ward regime, with the
+   real justification N08 said it lacked. Its demotion was correct for one ward
+   and is now scoped to one ward.
+
+**What this does *not* establish, stated plainly because it is the obvious thing
+to overclaim.** CP-SAT-without-a-proof still returns a feasible 54-bed schedule
+in 300s, and that schedule may well be *better* than anything NSGA-II produces
+on the same budget. This measurement shows only that the exact guarantee is
+gone — not that a metaheuristic beats the unproven CP-SAT incumbent. That is a
+quality comparison, it is precisely what the N09 baseline gate exists to run,
+and **N10 must clear it at hospital scale before any metaheuristic result is
+reportable.** Reinstating N10 authorises building it, not believing it.

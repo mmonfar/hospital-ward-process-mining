@@ -160,3 +160,65 @@ metaheuristics on medium instances; mathematical invariants for the front.
   inferred from the event log?
 - **[non-blocking]** Is continuity measured against a named clinician or a team?
   Materially changes objective 4; team is the more achievable target.
+
+## Rule 0 re-decided at hospital scale — measured 2026-08-16 (N21)
+
+Appended rather than folded into the N08 section above: `tests/fixtures/`'s
+retrieval queries index this file by line number, and an insertion higher up
+silently broke that gate once already. Where this section and the N08 one
+disagree, this is later.
+
+N08 deferred the multi-ward question and this node answers it. Full numbers and
+the reasoning are in `SELECTION-GUIDE.md`; the decisions they force are here.
+
+**The two dimensions of growth compound, and that is what breaks it.** Hospital
+scale moves beds *and* clinicians together; N08's curve moved only beds. Moved
+independently, each is survivable — given 900s, 36 beds at the 8-clinician
+roster proves in 719.68s, and 30 beds at a doubled 16-clinician roster proves in
+303.17s, against the anchor's 107.02s. Moved together, 36 beds with 16
+clinicians does not prove at 900s at all.
+
+**For the single steps it is a budget problem; at hospital scale it is not.**
+The distinction is the MIP gap, which `SolveOutcome` now records precisely so
+that "not proven" is never reported as one undifferentiated answer. At 900s the
+36-bed/16-clinician instance sits at an incumbent makespan of 13 slots against a
+best bound of **1 slot — a 92.3% gap**. The lower bound has barely left trivial,
+and no plausible batch threshold closes it.
+
+**The practical crossover** against ADR-0003's 10-minute (600s) batch threshold
+falls between 30 beds/8 clinicians (107s) and 36 beds/8 clinicians (720s).
+
+**Consequences.**
+
+1. CP-SAT remains the product **for one ward at the size N08 proved**, unchanged.
+2. Above that size CP-SAT is a heuristic, not an exact method. Rule 0's step 1 is
+   not satisfied at hospital scale.
+3. **N10 (NSGA-II) is reinstated** for the multi-ward regime and its gate lowered
+   back to `autonomous`. N08's demotion was right for one ward and is now scoped
+   to one ward.
+4. N10 must still clear the **N09 baseline gate** (criterion 2) *at hospital
+   scale*. Reinstatement authorises building it, not believing it: an unproven
+   CP-SAT incumbent is still a schedule, and may still be the better one. Nothing
+   here shows a metaheuristic beats it — only that the guarantee is gone.
+
+**Bed counts stop at 54 by construction.** `instances.BED_IDS` is the reference
+geometry — 9 wards × 6 beds — and 54 is therefore the whole modelled hospital.
+Going further would mean inventing floor-plan geometry `web/hospital-ward.html`
+does not have, putting fabricated metres into the project's headline motion
+figure. See the new open question below.
+
+### Amended acceptance criteria
+
+11. The hospital-scale curve is re-measurable, reports solver *status* rather
+    than only a proven/not flag, and never reports an INFEASIBLE instance as a
+    timing. — `tests/bench/test_cpsat_scale.py` (N21 sweeps)
+
+### New open questions
+
+- **[blocking for anything above 54 beds]** The reference geometry admits 54
+  beds. A genuinely larger hospital needs SPEC-003 floor-plan geometry that does
+  not yet exist; until it does, no motion figure above 54 beds is defensible.
+- **[non-blocking]** "Multi-day" in N21's original framing is still unmeasured.
+  This node varied beds and roster within one 3-hour window. A multi-day
+  instance additionally needs per-day required-specialty sets, which SPEC-004
+  does not define — a spec gap, not an oversight of the measurement.
