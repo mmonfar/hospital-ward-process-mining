@@ -284,6 +284,28 @@ nodes:
     depends_on: [N06-travel-graph, N09-baseline-gate]
     gate: autonomous
     budget_tokens: 150000
+    status: completed
+    artefacts: [src/hwpm/optimize/acs.py, tests/test_optimize_acs.py]
+    rationale: >
+      SELECTION-GUIDE.md P2 scopes ACS (Alg 112, p.159) to visit *routing*, not
+      to a full CP-SAT/NSGA-II-style competitor: coverage is drawn the same
+      random way N09's baselines draw it, and only the per-clinician visit
+      order is decided by pheromone-guided construction over a shared
+      bed-to-bed edge table, segmented into isolation/acuity precedence
+      classes so ACS only ever chooses among the orderings that are actually
+      legal. Internal exploitation fitness is motion_m alone (SELECTION-GUIDE's
+      objective for this slot), never a scalarisation of the five SPEC-004
+      objectives (ADR-0004); the returned Scheduler result is still
+      pareto_front() over everything evaluated. MEASURED 2026-08-16 on three
+      12-bed/24-slot instances (seeds 17, 41, 99) under equal
+      Budget(max_seconds=15): ACS's best-motion point beats or matches both
+      RandomSearchScheduler and HillClimbingScheduler on every instance
+      (190.46 vs 201.57m, 144.06 vs 147.47m, 181.51 vs 233.51m), and its
+      median-motion point beats or ties both on every instance. This is the
+      pheromone/heuristic-guided tie-break earning its keep over the
+      baselines' patient-id tie-break, on the one objective SELECTION-GUIDE
+      assigns to this node -- not a Rule-0 claim against CP-SAT, which this
+      node was never scoped to challenge.
 
   - id: N12-profile-gate
     title: Fitness throughput benchmark; decide on the C kernel
