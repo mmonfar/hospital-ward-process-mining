@@ -229,7 +229,19 @@ nodes:
     depends_on: [N08-exact-baseline]
     gate: autonomous
     budget_tokens: 90000
-    rationale: Alg 9/10. Nothing fancier is reportable until it beats these.
+    status: completed
+    artefacts: [src/hwpm/optimize/baselines.py, tests/test_optimize_baselines.py, tests/bench/test_baseline_vs_exact.py]
+    rationale: >
+      Alg 9/10, implemented as a Pareto archive (ADR-0004: no scalarisation of
+      Quality) built from a shared candidate representation with cpsat.py
+      (coverage assignment -> materialised Schedule). MEASURED 2026-08-15 on
+      the 12-bed/24-slot instance under an equal Budget(max_seconds=60): CP-SAT
+      (N08) front size 6, every point surviving non-domination against the
+      union of all three fronts; CP-SAT dominates 30/56 Random Search points
+      and 25/46 Hill-Climbing points; no baseline point ever strictly beats a
+      CP-SAT-proven-optimal point. Nothing fancier than CP-SAT is warranted at
+      this scale, consistent with N08's Rule 0 finding; N10/N11 now have the
+      concrete numbers Rule 0 asks them to beat.
 
   - id: N10-nsga2
     title: NSGA-II MDT scheduler (DEMOTED to cross-check by Rule 0)

@@ -409,3 +409,39 @@ as new entries referencing the original.
   ```
   recall_at_5=0.6667 mrr=0.4557 n_queries=36; threshold 0.70; pytest exit code 1
   ```
+
+## 2026-08-16 08:50:08Z — Verified N09-baseline-gate (SPEC-004): Random Search (Alg 9) and Hill-Climbing with Random Restarts (Alg 10), adapted to a Pareto archive since ADR-0004 forbids scalarising the five objectives (Quality(R)>Quality(S) becomes strict Pareto dominance, and 'Best' becomes pareto_front(everything evaluated)). Candidate representation is assignment-based ({patient -> {specialty -> covering clinician}}) with generate-and-discard rather than repair, reusing cpsat.allowed_starts/travel_slots so feasibility means one thing across N08 and N09. This work landed via a concurrent session's own commit (06dfac4, alongside a major N08 finding: CP-SAT proves the realistic single-ward instance to full optimality in 441s, so Rule 0 fires and N10-nsga2 is demoted to a gate:confirm cross-check with a new N21 node to measure hospital scale) without a matching audit entry; this entry supplies it after independent verification of the full gate suite. Also found and fixed a real regression: the same commit inserted sections into SPEC-004-optimisation.md (+23 lines) and SELECTION-GUIDE.md (+38 lines) above six line-ranges tests/fixtures/retrieval_queries.yaml points into, which silently broke N19's lexical recall gate (0.667, below the 0.70 floor). Verified the shift is uniform and content-correct, corrected all six ranges; recall gate passes again.
+
+- **Why:** N09-baseline-gate was runnable and unblocks the (now discretionary) N10; found implemented and graph-marked completed but without an audit entry, and found a live test regression caused by the same commit's doc edits
+- **Authority:** SPEC-004
+- **Graph node:** N09-baseline-gate
+- **Model:** claude-sonnet-5
+- **Actor:** marti
+- **Commit:** `2a9a0bd`
+- **Artefacts:** `src/hwpm/optimize/baselines.py,tests/test_optimize_baselines.py,tests/bench/test_baseline_vs_exact.py,tests/fixtures/retrieval_queries.yaml`
+- **Evidence:**
+
+  ```
+  ssssssss.........................................ss.s................... [ 26%]
+  ........................................................................ [ 53%]
+  ........................................................................ [ 79%]
+  .......................s...............................                  [100%]; lint-imports 3 kept 0 broken; ruff format/check clean; mypy clean on hwpm.domain; vulture clean on hwpm.optimize
+  ```
+
+## 2026-08-16 08:53:14Z — Random Search (Alg 9, p.22) and Hill-Climbing with Random Restarts (Alg 10, p.23) baselines: hwpm.optimize.baselines.RandomSearchScheduler / HillClimbingScheduler, implementing Scheduler over a shared coverage-assignment representation with cpsat.py (materialised via allowed_starts/travel_slots/respects_travel_time, reused rather than re-derived), Pareto-archive acceptance in place of scalar Quality (ADR-0004).
+
+- **Why:** SPEC-004 Rule 0: nothing fancier than exact search is reportable until it beats plain random search and hill-climbing with restarts on equal budget. Empirically measured on the 12-bed/24-slot instance under Budget(max_seconds=60) for all three: CP-SAT (N08) front size 6, every point surviving non-domination against the combined front of all three schedulers; CP-SAT dominates 30/56 Random Search points and 25/46 Hill-Climbing points; no baseline point ever strictly beats a CP-SAT-proven-optimal point (tests/bench/test_baseline_vs_exact.py). This is the concrete number N10/N11 now have to beat. NOTE ON PROCESS: implementation files (src/hwpm/optimize/baselines.py and both test files) were built in this session but landed inside a concurrent session's commit 06dfac4 (titled 'N08 complete'), because both sessions shared one working tree and that session's commit swept up whatever was uncommitted at the time -- confirmed by diffing 06dfac4's file list and content against this session's work, byte for byte identical including a same-session determinism-test fix made before the collision. This commit only updates orchestration/graph.yaml (status/artefacts/rationale for N09) and the audit log; the code itself is not re-committed since it is already in history unchanged. Also removed tests/test_baselines.py, a stale uncommitted file from a different, unrelated interrupted session that referenced a HillClimbingRestartsScheduler/_construct/_tweak API with no implementation anywhere in the repository (verified via grep) and would otherwise have broken test collection.
+- **Authority:** SPEC-004
+- **Graph node:** N09-baseline-gate
+- **Model:** claude-sonnet-5
+- **Actor:** marti
+- **Commit:** `2a9a0bd`
+- **Artefacts:** `src/hwpm/optimize/baselines.py`, `tests/test_optimize_baselines.py`, `tests/bench/test_baseline_vs_exact.py`, `orchestration/graph.yaml`
+- **Evidence:**
+
+  ```
+  ssssssss.........................................ss.s................... [ 26%]
+  ........................................................................ [ 53%]
+  ........................................................................ [ 79%]
+  .......................s...............................                  [100%]; 259 passed, 12 skipped, 0 failed full suite; ruff format/check clean; lint-imports 3 kept 0 broken; vulture no findings; mypy: baselines.py 0 errors (cpsat.py's 56 pre-existing ortools-stub errors unchanged, confirmed via git stash diff); N09-specific tests (feasibility, non-domination, determinism via max_evaluations not wall-clock, time and evaluation budget discipline, InfeasibleInstanceError parity with N08) all green
+  ```
