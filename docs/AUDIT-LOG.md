@@ -599,3 +599,18 @@ as new entries referencing the original.
   coverage: auditor.py 94%, domain 89-100%, total 91%
   hwpm govern review exit 1 (4 blocking governance findings, unacknowledged)
   ```
+
+## 2026-08-17 19:23:50Z — Measured evaluate() as a fraction of NSGA-II wall clock on ADR-0003's exact instance (30-bed ward, 8 clinicians, 36 slots at 300s) at the stated scale (population 200, 500 generations, Budget(max_evaluations=200*(500+1))). Instrumented with a perf_counter accumulator wrapped around evaluate and monkeypatched onto nsga2's own bound name (cProfile tried first and rejected: its per-call overhead across ~100k evaluations inflates the wall clock the 10-minute threshold is judging). Reproduced twice: hand run 445.37s/6.24%, committed test tests/bench/test_fitness_throughput.py -s run 466.04s/6.42% (100200 evaluate calls, front size 325). GATE DOES NOT FIRE: wall clock ~466s is under the 10-minute (600s) threshold and the fitness-loop fraction 6.42% is far under the 60% threshold -- both conditions fail independently, so ADR-0003's ladder stops before the C kernel. Wall clock is dominated by everything around evaluate() (route materialisation, repair, non-dominated sorting, crowding distance, selection, breeding), not by scoring candidates. N13-native-kernel's confirm condition is NOT met; native/ stays empty. Recorded on both N12's and N13's graph.yaml entries (condition_met: false on N13) so N13 is not mistaken for runnable even though its dependency (N12) is now closed and govern graph -v lists it under a CONFIRM gate mechanically. No human review happened (N16 untouched).
+
+- **Why:** ADR-0003 requires the C fitness kernel to be pursued only when a measured profile gate fires; this node performs that measurement so N13 is never started on assumption
+- **Authority:** SPEC-004
+- **Graph node:** N12-profile-gate
+- **Model:** claude-sonnet-5
+- **Actor:** marti
+- **Commit:** `5afe693`
+- **Artefacts:** `tests/bench/test_fitness_throughput.py,orchestration/graph.yaml`
+- **Evidence:**
+
+  ```
+  gates: ruff format tests/bench/test_fitness_throughput.py clean; ruff check clean; mypy src/hwpm/domain clean (advisory elsewhere); import-linter 3 contracts kept 0 broken; vulture src/ tools/ no findings; full-suite pytest 339 passed, 31 skipped in 75.55s; tests/bench/test_fitness_throughput.py --bench -s: 1 passed in 467.00s, wall=466.04s (7.77 min), evaluate() calls=100200, fitness time=29.94s, fraction=6.42%, runtime>10min=False, fraction>60%=False, gate_fires=False
+  ```
