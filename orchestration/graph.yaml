@@ -386,6 +386,25 @@ nodes:
     gate: autonomous
     budget_tokens: 80000
     decision: ADR-0003
+    status: completed
+    artefacts: [tests/bench/test_fitness_throughput.py]
+    outcome: >
+      MEASURED 2026-08-16/17, ADR-0003's instance verbatim (30-bed ward, 8
+      clinicians, 36 slots x 300s) at the named scale (NSGA-II population 200,
+      500 generations, i.e. Budget(max_evaluations=200*(500+1))). `evaluate`
+      wrapped with a perf_counter accumulator monkeypatched onto nsga2's own
+      bound name (cProfile's per-call overhead on ~100k evaluations was tried
+      first and rejected -- it inflates the wall clock the 10-minute threshold
+      is judging). Reproduced twice: 445.37s/6.24% (hand run) and
+      466.04s/6.42% (the committed test, `-s` output). GATE DOES NOT FIRE:
+      wall clock ~466s is under the 10-minute (600s) threshold, and the
+      fitness loop's 6.42% is nowhere near the 60% threshold -- both
+      conditions fail independently. Wall clock is dominated by everything
+      around evaluate() (route materialisation, repair, non-dominated
+      sorting, crowding distance, selection, breeding), not by scoring
+      candidates. N13-native-kernel's condition is NOT met; native/ stays
+      empty and N13 must not be treated as runnable or offered to the user
+      until a future re-measurement crosses both thresholds.
 
   - id: N13-native-kernel
     title: C fitness kernel + differential test
@@ -394,10 +413,17 @@ nodes:
     depends_on: [N12-profile-gate]
     gate: confirm
     condition: N12-profile-gate reports >10 min runtime AND >60% in fitness loop
+    condition_met: false
     budget_tokens: 200000
     rationale: >
       Conditional node. Do not start unless the measured gate fires; adds a
-      permanent build-toolchain and memory-safety burden.
+      permanent build-toolchain and memory-safety burden. N12-profile-gate
+      measured 2026-08-16/17 at ADR-0003's exact instance and population x
+      generation count: wall clock ~466s (< 600s threshold) and 6.42% of that
+      in the fitness loop (< 60% threshold). NEITHER condition holds, so this
+      node's gate does not fire and it is NOT runnable -- do not offer it to
+      the user as if it were. See N12-profile-gate's outcome and
+      docs/AUDIT-LOG.md for the full measurement.
 
   - id: N14a-design-system
     title: Front-end design system (palette, type scale, chart primitives)
