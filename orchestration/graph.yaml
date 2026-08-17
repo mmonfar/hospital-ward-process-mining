@@ -432,9 +432,17 @@ nodes:
     title: Automated code and method auditor
     spec: SPEC-006
     agent: reviewer
+    status: completed
     depends_on: [N05-mining, N07-motion-analytics, N10-nsga2]
     gate: autonomous
     budget_tokens: 200000
+    rationale: >
+      Built as `hwpm govern review` (src/hwpm/govern/auditor.py). Four of
+      SPEC-006's five audits are mechanised; the provenance audit (scope item 3,
+      no acceptance criterion) is not, and the method audit is partial by
+      design -- algorithm-against-intent stays a reviewer's reading. Its first
+      run's findings are in docs/AUDIT-LOG.md per criterion 6, unfixed: they
+      belong to the nodes that own the code, not to N15.
 
   - id: N16-face-validity
     title: Clinician review of the discovered process model

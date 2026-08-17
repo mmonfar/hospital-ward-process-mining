@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 from hwpm.design import colour, emit, tokens
-from hwpm.govern import audit, ledger
+from hwpm.govern import audit, auditor, ledger
 from hwpm.govern import graph as graph_mod
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -142,6 +142,28 @@ def cmd_audit(args: argparse.Namespace) -> int:
     )
     print(f"appended to {AUDIT_PATH.relative_to(REPO_ROOT)}")
     return 0
+
+
+def cmd_review(args: argparse.Namespace) -> int:
+    """The SPEC-006 auditor (node N15). Distinct from `govern audit`, which
+    appends one hand-written entry; this runs the five machine audits and
+    appends their findings.
+
+    Writing to the log is the default, not a flag: SPEC-006 criterion 6 makes
+    recording the findings the thing that distinguishes an audit from a to-do
+    list, so skipping it has to be the deliberate act (`--no-log`).
+    """
+    result = auditor.run(REPO_ROOT, only=args.only)
+    print(auditor.render(result))
+    if args.log:
+        audit.append(
+            AUDIT_PATH, auditor.to_entry(result, model=args.model), repo=REPO_ROOT
+        )
+        print(f"\nfindings appended to {AUDIT_PATH.relative_to(REPO_ROOT)}")
+    blocking = result.blocking
+    if args.strict and result.findings:
+        return 1
+    return 1 if blocking else 0
 
 
 def cmd_design_build(_args: argparse.Namespace) -> int:
@@ -281,6 +303,30 @@ def build_parser() -> argparse.ArgumentParser:
     audit_cmd.add_argument("--artefact", action="append")
     audit_cmd.add_argument("--evidence")
     audit_cmd.set_defaults(func=cmd_audit)
+
+    review = gsub.add_parser(
+        "review", help="run the SPEC-006 automated code and method auditor"
+    )
+    review.add_argument(
+        "--only",
+        action="append",
+        choices=list(auditor.AUDIT_NAMES),
+        help="run only the named audit (repeatable)",
+    )
+    review.add_argument(
+        "--no-log",
+        dest="log",
+        action="store_false",
+        help="do not append findings to the audit log (SPEC-006 criterion 6 "
+        "expects them to be appended; use only for a dry run)",
+    )
+    review.add_argument(
+        "--strict",
+        action="store_true",
+        help="exit non-zero on any finding, not only blocking ones",
+    )
+    review.add_argument("--model", help="model that ran the audit, for the log entry")
+    review.set_defaults(func=cmd_review, log=True)
 
     design = sub.add_parser("design", help="design-system tokens and checks")
     dsub = design.add_subparsers(dest="command", required=True)

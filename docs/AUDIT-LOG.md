@@ -501,3 +501,101 @@ as new entries referencing the original.
   ```
   298 passed, 30 skipped, 0 failed in 77.32s; ruff format 69 files clean; ruff check clean; mypy src/hwpm/domain clean and nsga2.py clean; vulture src/ tools/ no findings; import-linter 3 contracts kept 0 broken; coverage TOTAL 92%, nsga2.py 98%; gate 8 test_determinism + test_determinism_on_a_ward pass under max_evaluations; gate 9 tests/bench/test_nsga2_vs_baselines.py --bench 3 passed (36 beds: nsga2 202 vs random 0 vs hill-climbing 0; 54 beds: 114 vs 0 vs 0; 36 beds at 300s vs CP-SAT: 271 vs sweep 5, mutual non-domination 0/5 and 0/271, cp_sat motion OPTIMAL 1129.61m vs nsga2 1250.42m, cp_sat makespan FEASIBLE gap 92.3% dominated by 14/271)
   ```
+
+## 2026-08-17 19:20:34Z — Automated audit: 45 finding(s), 4 blocking
+
+- **Why:** SPEC-006 criterion 6: findings are written to the audit log whether or not they are acted on. A tool that records only what got fixed is a to-do list.
+- **Authority:** SPEC-006
+- **Graph node:** N15-auditor
+- **Model:** claude-opus-5
+- **Actor:** marti
+- **Commit:** `9145392`
+- **Artefacts:** `src/hwpm/govern/auditor.py`
+- **Evidence:**
+
+  ```
+  Automated audit (SPEC-006, node N15)
+  
+      50  modules examined
+      73  acceptance criteria examined
+       8  stochastic modules examined
+       1  HWPM_DATA_DIR references examined
+      28  commits examined
+  
+  spec-conformance: 7 finding(s)
+    [advisory] src/hwpm/__init__.py: no authorising spec named in the module docstring
+    [advisory] src/hwpm/cli.py: no authorising spec named in the module docstring (cites SPEC-006, SPEC-007 in the body, but not in the module docstring, so nothing states which spec authorises the module)
+    [advisory] src/hwpm/design/emit.py: no authorising spec named in the module docstring (cites SPEC-005 in the body, but not in the module docstring, so nothing states which spec authorises the module)
+    [advisory] src/hwpm/govern/audit.py: no authorising spec named in the module docstring
+        acknowledged: Governance tooling, authorised by brief item 4 and docs/04-AGENT-ORCHESTRATION.md rather than by a SPEC. A real ADR-0001 gap, recorded at N15 rather than closed by writing a retrospective spec.
+    [advisory] src/hwpm/govern/graph.py: no authorising spec named in the module docstring
+        acknowledged: As above: orchestration tooling, authorised by orchestration/graph.yaml and docs/04, not by a SPEC.
+    [advisory] src/hwpm/govern/ledger.py: no authorising spec named in the module docstring
+        acknowledged: As above: token governance, authorised by docs/04 section Token governance, not by a SPEC.
+    [advisory] src/hwpm/retrieve/corpus.py: no authorising spec named in the module docstring (cites SPEC-007 in the body, but not in the module docstring, so nothing states which spec authorises the module)
+  
+  criteria-coverage: 33 finding(s)
+    [advisory] SPEC-001 Acceptance criteria 2: verified by import-linter, not by a test: the suite does not hold this criterion
+    [advisory] SPEC-004 Acceptance criteria 2: names `test_baseline_gate`, which exists in no test module
+    [advisory] SPEC-004 Acceptance criteria 6: names `test_spea2_crosscheck`, which exists in no test module
+    [advisory] SPEC-004 Acceptance criteria 7: names `test_repair_terminates`, which does not exist; the suite has `test_repair_terminates_and_returns_a_feasible_schedule` -- spec wording and suite have drifted apart
+    [advisory] SPEC-004 Acceptance criteria 8: names `test_noisy_elites_reevaluated`, which exists in no test module
+    [advisory] SPEC-004 Acceptance criteria 9: verified by bench, not by a test: the suite does not hold this criterion
+    [advisory] SPEC-004 Acceptance criteria 10: names `test_native_differential`, which exists in no test module
+    [advisory] SPEC-004 Amended acceptance criteria 11: verified by bench, not by a test: the suite does not hold this criterion
+    [advisory] SPEC-005 Acceptance criteria 1: names `test_no_hardcoded_layout`, which exists in no test module
+    [advisory] SPEC-005 Acceptance criteria 2: names `test_no_arithmetic_in_view_layer`, which exists in no test module
+    [advisory] SPEC-005 Acceptance criteria 3: names `test_no_bare_point_estimates`, which exists in no test module
+    [advisory] SPEC-005 Acceptance criteria 4: names `test_screenshot_self_sufficiency`, which exists in no test module
+    [advisory] SPEC-005 Acceptance criteria 5: names `test_strategy_spread`, which exists in no test module
+    [advisory] SPEC-005 Acceptance criteria 6: verified by manual review, not by a test: the suite does not hold this criterion
+    [advisory] SPEC-005 Acceptance criteria 7: names `test_no_identifiers_in_artefacts`, which exists in no test module
+    [advisory] SPEC-005 Acceptance criteria 9: verified by manual review, not by a test: the suite does not hold this criterion
+    [advisory] SPEC-005 Acceptance criteria 10: names `test_reduced_motion`, which does not exist; the suite has `test_reduced_motion_is_honoured_by_the_token_layer` -- spec wording and suite have drifted apart
+    [advisory] SPEC-005 Acceptance criteria 11: verified by bench, not by a test: the suite does not hold this criterion
+    [advisory] SPEC-007 Acceptance criteria 4: names `test_eval_reports_both_baselines`, which exists in no test module
+    [advisory] SPEC-007 Acceptance criteria 5: names `test_hybrid_beats_lexical_gate`, which exists in no test module
+    [advisory] SPEC-007 Acceptance criteria 7: verified by bench, not by a test: the suite does not hold this criterion
+    [advisory] SPEC-007 Acceptance criteria 9: names `test_govern_imports_without_retrieve`, which does not exist; the suite has `test_govern_imports_without_retrieve_deps` -- spec wording and suite have drifted apart
+    [advisory] SPEC-007 Acceptance criteria 10: names `test_context_missing_dep_message`, which exists in no test module
+    [advisory] SPEC-007 Acceptance criteria 11: names `test_incremental_reindex`, which exists in no test module
+    [advisory] SPEC-007 Acceptance criteria 12: names `test_index_artefacts_untracked`, which exists in no test module
+    [advisory] SPEC-007 Acceptance criteria 13: names `test_features_always_present`, which exists in no test module
+    [advisory] SPEC-007 Acceptance criteria 14: verified by import-linter, not by a test: the suite does not hold this criterion
+    [advisory] SPEC-007 Acceptance criteria 15: names `test_governance_schema_rejects_embedding_fields`, which exists in no test module
+    [advisory] SPEC-007 Acceptance criteria 16: names `test_embedding_beats_feature_baseline`, which exists in no test module
+    [advisory] SPEC-007 Acceptance criteria 17: names `test_clustering_minimum_days`, which exists in no test module
+    [advisory] SPEC-007 Acceptance criteria 18: names `test_cluster_suppression_floor`, which exists in no test module
+    [advisory] SPEC-007 Acceptance criteria 19: names `test_warm_start_determinism`, which exists in no test module
+    [advisory] SPEC-007 Acceptance criteria 20: names `test_no_network_egress`, which exists in no test module
+  
+  method: no findings
+  governance: 5 finding(s)
+    [advisory] src/hwpm/retrieve/corpus.py:29: `_data_dir` references HWPM_DATA_DIR but performs no read call; reads as a guard, reported so the reference is visible rather than assumed benign
+    [blocking] src/hwpm/ingest/report.py:40: `build_report` returns `IngestionReport` -- an aggregate output -- and neither it nor any function it calls in this module applies the ADR-0005 suppression floor
+    [blocking] src/hwpm/mining/_pm4py_adapter.py:124: `check` returns `ConformanceReport` -- an aggregate output -- and neither it nor any function it calls in this module applies the ADR-0005 suppression floor
+    [blocking] src/hwpm/mining/discovery.py:44: `conformance` returns `ConformanceReport` -- an aggregate output -- and neither it nor any function it calls in this module applies the ADR-0005 suppression floor
+    [blocking] src/hwpm/mining/episodes.py:261: `sensitivity_analysis` returns `SensitivityReport` -- an aggregate output -- and neither it nor any function it calls in this module applies the ADR-0005 suppression floor
+  
+  audit-log: no findings
+  45 finding(s), 4 blocking.
+  Provenance audit (SPEC-006 scope item 3) is not mechanised: it has no acceptance criterion and needs the pipeline run, not the source read.
+  ```
+
+## 2026-08-17 19:20:51Z — N15: automated code and method auditor, hwpm govern review
+
+- **Why:** SPEC-006. Four of the five audits mechanised (spec conformance, criteria coverage, governance, audit-log integrity) plus the machine-checkable half of the method audit; the provenance audit is not implemented and is recorded as such rather than approximated. First run's 45 findings are in this log unfixed -- they belong to the nodes that own the code.
+- **Authority:** SPEC-006
+- **Graph node:** N15-auditor
+- **Model:** claude-opus-5
+- **Actor:** marti
+- **Commit:** `9145392`
+- **Artefacts:** `src/hwpm/govern/auditor.py`, `tests/test_auditor.py`, `src/hwpm/cli.py`, `docs/specs/SPEC-006-auditor.md`
+- **Evidence:**
+
+  ```
+  339 passed, 31 skipped in 81.23s
+  ruff format/check clean; mypy clean on auditor.py and cli.py; import-linter exit 0; vulture 0 findings
+  coverage: auditor.py 94%, domain 89-100%, total 91%
+  hwpm govern review exit 1 (4 blocking governance findings, unacknowledged)
+  ```

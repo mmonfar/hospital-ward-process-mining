@@ -47,6 +47,15 @@ will fail. Until the auditor (N15) can check that directly, this is a review
 obligation rather than an enforced one, and saying so is better than implying
 a coverage the tooling does not have.
 
+**Closed at N15 (2026-08-16).** `hwpm govern review` now checks it directly:
+every module whose *syntax tree* shows a random component (a `random` import, a
+`Random` reference, an `rng` argument — not the word appearing in prose) must be
+referenced by a test module that holds a determinism test, and any call to
+module-level `random.*` is reported. The gate still has no single entry point,
+by design; what it now has is something that notices when a module slips out
+from under it. This is an advisory finding, not a blocking one — see SPEC-006's
+resolved open question.
+
 **Gate 9 (baseline)** encodes Rule 0: if NSGA-II cannot beat random restarts on
 the same evaluation budget, the representation or the fitness function is wrong.
 This runs as a test because it is the kind of check that is otherwise done once,
