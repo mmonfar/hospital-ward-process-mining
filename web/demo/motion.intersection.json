@@ -1,0 +1,67 @@
+{
+  "kind": "motion_report",
+  "schema_version": 1,
+  "method_version": "viewer_demo/1.0.0",
+  "strategy": "intersection",
+  "available_strategies": [
+    "referral",
+    "consult_note",
+    "problem_list",
+    "union",
+    "intersection"
+  ],
+  "calibration": "uncalibrated",
+  "payload": {
+    "observed_m": 1401.28,
+    "necessary_m": 1302.26,
+    "attributable_m": 99.01,
+    "attributable_fraction": 0.0707,
+    "ci95": [
+      14.53,
+      238.48
+    ],
+    "params": {
+      "method_version": "motion/1.0.0",
+      "interpretation": "attributable_m is an UPPER BOUND on avoidable motion under perfect foresight (observed minus the optimal tour of the same visit set). It is not a target, not a forecast and not a savings estimate. Report it as 'at most N% of observed walking was attributable to visit ordering, under perfect foresight', never as 'we could save N% of walking' (SPEC-003, 'Defining waste honestly').",
+      "n_rounds": 29,
+      "n_ward_days": 8,
+      "n_patients": 12,
+      "n_clinicians": 8,
+      "necessary_m_methods": [
+        "exact: Held-Karp subset DP over free-endpoint Hamiltonian paths",
+        "trivial (fewer than two beds)"
+      ],
+      "necessary_m_exact": true,
+      "necessary_m_max_instance_nodes": 4,
+      "exact_node_limit": 12,
+      "bound_node_limit": 256,
+      "ci_measures": "attributable_m",
+      "ci_method": "percentile bootstrap over ward-days, 2.5/97.5",
+      "n_replicates": 300,
+      "min_dwell_s_base": 120,
+      "min_dwell_s_sweep": [
+        60,
+        120,
+        180,
+        300
+      ],
+      "min_dwell_s_sweep_is_one_sided": true,
+      "models_mapping_confidence": true,
+      "uncertainty_sources": [
+        "episode-derivation parameter sensitivity (SPEC-002 min_dwell_s sweep, one-sided: it can drop episodes a stricter threshold would have lost, not recover ones a looser threshold would have found)",
+        "location-mapping confidence (SPEC-001, per-episode retention probability)",
+        "sampling variation across ward-days (percentile bootstrap)"
+      ],
+      "observed_m_ci95": [
+        944.5046377727689,
+        1944.7916342279202
+      ],
+      "necessary_m_ci95": [
+        912.5739451548678,
+        1738.1810600246663
+      ],
+      "suppression_floor_min_patients": 5,
+      "suppression_floor_min_clinicians": 2
+    }
+  }
+}

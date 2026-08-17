@@ -1,0 +1,602 @@
+{
+  "kind": "pareto_front",
+  "schema_version": 1,
+  "method_version": "viewer_demo/1.0.0",
+  "strategy": "intersection",
+  "available_strategies": [
+    "referral",
+    "consult_note",
+    "problem_list",
+    "union",
+    "intersection"
+  ],
+  "calibration": "uncalibrated",
+  "payload": {
+    "objectives_meta": [
+      {
+        "key": "copresence",
+        "label": "MDT co-presence",
+        "unit": "fraction",
+        "direction": "max"
+      },
+      {
+        "key": "motion_m",
+        "label": "Motion",
+        "unit": "m",
+        "direction": "min"
+      },
+      {
+        "key": "disruption",
+        "label": "Nursing disruption",
+        "unit": "visits",
+        "direction": "min"
+      },
+      {
+        "key": "continuity",
+        "label": "Continuity",
+        "unit": "fraction",
+        "direction": "max"
+      },
+      {
+        "key": "makespan_s",
+        "label": "Makespan",
+        "unit": "s",
+        "direction": "min"
+      }
+    ],
+    "baseline": {
+      "id": "baseline",
+      "label": "Today (observed, uncoordinated)",
+      "objectives": {
+        "copresence": 1.0,
+        "motion_m": 340.94,
+        "disruption": 3,
+        "continuity": 0.3333,
+        "makespan_s": 7200
+      },
+      "visits": [
+        {
+          "clinician": "C00",
+          "patient": "P10",
+          "bed": "1B/BED4",
+          "start_s": 0,
+          "duration_s": 300
+        },
+        {
+          "clinician": "C00",
+          "patient": "P03",
+          "bed": "1A/BED3",
+          "start_s": 2100,
+          "duration_s": 300
+        },
+        {
+          "clinician": "C01",
+          "patient": "P02",
+          "bed": "1A/BED2",
+          "start_s": 3600,
+          "duration_s": 300
+        },
+        {
+          "clinician": "C03",
+          "patient": "P00",
+          "bed": "1A/BED0",
+          "start_s": 4200,
+          "duration_s": 300
+        },
+        {
+          "clinician": "C03",
+          "patient": "P11",
+          "bed": "1B/BED5",
+          "start_s": 6600,
+          "duration_s": 300
+        },
+        {
+          "clinician": "C04",
+          "patient": "P09",
+          "bed": "1B/BED3",
+          "start_s": 6300,
+          "duration_s": 300
+        },
+        {
+          "clinician": "C05",
+          "patient": "P00",
+          "bed": "1A/BED0",
+          "start_s": 2700,
+          "duration_s": 300
+        },
+        {
+          "clinician": "C05",
+          "patient": "P08",
+          "bed": "1B/BED2",
+          "start_s": 6300,
+          "duration_s": 300
+        },
+        {
+          "clinician": "C05",
+          "patient": "P07",
+          "bed": "1B/BED1",
+          "start_s": 6900,
+          "duration_s": 300
+        },
+        {
+          "clinician": "C06",
+          "patient": "P05",
+          "bed": "1A/BED5",
+          "start_s": 1500,
+          "duration_s": 300
+        },
+        {
+          "clinician": "C06",
+          "patient": "P06",
+          "bed": "1B/BED0",
+          "start_s": 4800,
+          "duration_s": 300
+        },
+        {
+          "clinician": "C06",
+          "patient": "P09",
+          "bed": "1B/BED3",
+          "start_s": 6900,
+          "duration_s": 300
+        },
+        {
+          "clinician": "C07",
+          "patient": "P04",
+          "bed": "1A/BED4",
+          "start_s": 600,
+          "duration_s": 300
+        },
+        {
+          "clinician": "C07",
+          "patient": "P06",
+          "bed": "1B/BED0",
+          "start_s": 5700,
+          "duration_s": 300
+        }
+      ]
+    },
+    "schedules": [
+      {
+        "id": "S00",
+        "label": "S00",
+        "objectives": {
+          "copresence": 1.0,
+          "motion_m": 16.63,
+          "disruption": 0,
+          "continuity": 0.5,
+          "makespan_s": 2100
+        },
+        "feasible": true,
+        "visits": [
+          {
+            "clinician": "C02",
+            "patient": "P10",
+            "bed": "1B/BED4",
+            "start_s": 0,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C03",
+            "patient": "P09",
+            "bed": "1B/BED3",
+            "start_s": 0,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C04",
+            "patient": "P00",
+            "bed": "1A/BED0",
+            "start_s": 1800,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C05",
+            "patient": "P05",
+            "bed": "1A/BED5",
+            "start_s": 0,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C06",
+            "patient": "P08",
+            "bed": "1B/BED2",
+            "start_s": 0,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C06",
+            "patient": "P07",
+            "bed": "1B/BED1",
+            "start_s": 1200,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C07",
+            "patient": "P04",
+            "bed": "1A/BED4",
+            "start_s": 0,
+            "duration_s": 300
+          }
+        ]
+      },
+      {
+        "id": "S01",
+        "label": "S01",
+        "objectives": {
+          "copresence": 1.0,
+          "motion_m": 16.63,
+          "disruption": 1,
+          "continuity": 0.4167,
+          "makespan_s": 3900
+        },
+        "feasible": true,
+        "visits": [
+          {
+            "clinician": "C02",
+            "patient": "P10",
+            "bed": "1B/BED4",
+            "start_s": 1500,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C03",
+            "patient": "P00",
+            "bed": "1A/BED0",
+            "start_s": 3600,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C04",
+            "patient": "P09",
+            "bed": "1B/BED3",
+            "start_s": 300,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C05",
+            "patient": "P05",
+            "bed": "1A/BED5",
+            "start_s": 300,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C06",
+            "patient": "P08",
+            "bed": "1B/BED2",
+            "start_s": 1500,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C06",
+            "patient": "P07",
+            "bed": "1B/BED1",
+            "start_s": 2400,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C07",
+            "patient": "P04",
+            "bed": "1A/BED4",
+            "start_s": 1200,
+            "duration_s": 300
+          }
+        ]
+      },
+      {
+        "id": "S02",
+        "label": "S02",
+        "objectives": {
+          "copresence": 1.0,
+          "motion_m": 16.63,
+          "disruption": 0,
+          "continuity": 0.5,
+          "makespan_s": 6300
+        },
+        "feasible": true,
+        "visits": [
+          {
+            "clinician": "C02",
+            "patient": "P10",
+            "bed": "1B/BED4",
+            "start_s": 1200,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C03",
+            "patient": "P09",
+            "bed": "1B/BED3",
+            "start_s": 6000,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C04",
+            "patient": "P00",
+            "bed": "1A/BED0",
+            "start_s": 5400,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C05",
+            "patient": "P05",
+            "bed": "1A/BED5",
+            "start_s": 600,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C06",
+            "patient": "P08",
+            "bed": "1B/BED2",
+            "start_s": 600,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C06",
+            "patient": "P07",
+            "bed": "1B/BED1",
+            "start_s": 4500,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C07",
+            "patient": "P04",
+            "bed": "1A/BED4",
+            "start_s": 1200,
+            "duration_s": 300
+          }
+        ]
+      },
+      {
+        "id": "S03",
+        "label": "S03",
+        "objectives": {
+          "copresence": 1.0,
+          "motion_m": 16.63,
+          "disruption": 0,
+          "continuity": 0.0833,
+          "makespan_s": 2100
+        },
+        "feasible": true,
+        "visits": [
+          {
+            "clinician": "C01",
+            "patient": "P10",
+            "bed": "1B/BED4",
+            "start_s": 600,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C03",
+            "patient": "P00",
+            "bed": "1A/BED0",
+            "start_s": 1800,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C04",
+            "patient": "P09",
+            "bed": "1B/BED3",
+            "start_s": 900,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C05",
+            "patient": "P08",
+            "bed": "1B/BED2",
+            "start_s": 0,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C05",
+            "patient": "P07",
+            "bed": "1B/BED1",
+            "start_s": 1500,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C06",
+            "patient": "P05",
+            "bed": "1A/BED5",
+            "start_s": 1800,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C07",
+            "patient": "P04",
+            "bed": "1A/BED4",
+            "start_s": 1500,
+            "duration_s": 300
+          }
+        ]
+      },
+      {
+        "id": "S04",
+        "label": "S04",
+        "objectives": {
+          "copresence": 1.0,
+          "motion_m": 16.63,
+          "disruption": 0,
+          "continuity": 0.1667,
+          "makespan_s": 5100
+        },
+        "feasible": true,
+        "visits": [
+          {
+            "clinician": "C00",
+            "patient": "P10",
+            "bed": "1B/BED4",
+            "start_s": 1800,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C03",
+            "patient": "P09",
+            "bed": "1B/BED3",
+            "start_s": 4500,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C04",
+            "patient": "P00",
+            "bed": "1A/BED0",
+            "start_s": 2100,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C05",
+            "patient": "P08",
+            "bed": "1B/BED2",
+            "start_s": 600,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C05",
+            "patient": "P07",
+            "bed": "1B/BED1",
+            "start_s": 4800,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C06",
+            "patient": "P05",
+            "bed": "1A/BED5",
+            "start_s": 1800,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C07",
+            "patient": "P04",
+            "bed": "1A/BED4",
+            "start_s": 4800,
+            "duration_s": 300
+          }
+        ]
+      },
+      {
+        "id": "S05",
+        "label": "S05",
+        "objectives": {
+          "copresence": 1.0,
+          "motion_m": 16.63,
+          "disruption": 0,
+          "continuity": 0.4167,
+          "makespan_s": 5700
+        },
+        "feasible": true,
+        "visits": [
+          {
+            "clinician": "C01",
+            "patient": "P10",
+            "bed": "1B/BED4",
+            "start_s": 2100,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C03",
+            "patient": "P09",
+            "bed": "1B/BED3",
+            "start_s": 600,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C04",
+            "patient": "P00",
+            "bed": "1A/BED0",
+            "start_s": 1800,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C05",
+            "patient": "P05",
+            "bed": "1A/BED5",
+            "start_s": 300,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C06",
+            "patient": "P08",
+            "bed": "1B/BED2",
+            "start_s": 2400,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C06",
+            "patient": "P07",
+            "bed": "1B/BED1",
+            "start_s": 5400,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C07",
+            "patient": "P04",
+            "bed": "1A/BED4",
+            "start_s": 2400,
+            "duration_s": 300
+          }
+        ]
+      },
+      {
+        "id": "S06",
+        "label": "S06",
+        "objectives": {
+          "copresence": 1.0,
+          "motion_m": 16.63,
+          "disruption": 2,
+          "continuity": 0.4167,
+          "makespan_s": 3000
+        },
+        "feasible": true,
+        "visits": [
+          {
+            "clinician": "C01",
+            "patient": "P10",
+            "bed": "1B/BED4",
+            "start_s": 1800,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C03",
+            "patient": "P09",
+            "bed": "1B/BED3",
+            "start_s": 600,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C04",
+            "patient": "P00",
+            "bed": "1A/BED0",
+            "start_s": 2100,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C05",
+            "patient": "P05",
+            "bed": "1A/BED5",
+            "start_s": 300,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C06",
+            "patient": "P08",
+            "bed": "1B/BED2",
+            "start_s": 1500,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C06",
+            "patient": "P07",
+            "bed": "1B/BED1",
+            "start_s": 2700,
+            "duration_s": 300
+          },
+          {
+            "clinician": "C07",
+            "patient": "P04",
+            "bed": "1A/BED4",
+            "start_s": 2700,
+            "duration_s": 300
+          }
+        ]
+      }
+    ]
+  }
+}

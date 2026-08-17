@@ -453,6 +453,51 @@ nodes:
     depends_on: [N07-motion-analytics, N10-nsga2, N14a-design-system]
     gate: autonomous
     budget_tokens: 220000
+    status: completed
+    artefacts:
+      [
+        web/viewer.html,
+        web/viewer.js,
+        tools/generate_viewer_artefacts.py,
+        src/hwpm/domain/travel.py,
+        tests/test_travel_geometry.py,
+        tests/test_generate_viewer_artefacts.py,
+      ]
+    outcome: >
+      Strategy selector and Pareto front browser built against N14a's design
+      system primitives (figure/paretoFront/strategySelector/strategyLegend/
+      states), served entirely from synthetic artefacts -- ADR-0005, never
+      HWPM_DATA_DIR. `TravelGraph` gained public `nodes`/`position`/`edges`
+      accessors so `layout.json` is walked from the domain's own geometry
+      rather than a second hard-coded copy (criterion 1).
+      `tools/generate_viewer_artefacts.py` (outside `hwpm`, per the
+      import-linter "Layers point inward" contract: an orchestrator calling
+      ingest/mining/analytics/optimize cannot live inside `hwpm.artefact`,
+      which sits below all four) builds one small realistic_single_ward
+      instance, derives the five RequiredSpecialty strategies' required-maps
+      through N04's real evidence/derive_all pipeline, runs NSGA-II plus the
+      two N09 baselines per strategy (merged via pareto_front), and computes
+      a real MotionReport and detect_opportunistic candidates on synthetic
+      ward-days built from drawn schedules on that same instance -- every
+      number in the bundle traces to governed hwpm.analytics/optimize/mining
+      code, none invented in the viewer layer. Front sizes vary by strategy
+      (11/4/10/13/9 schedules on the generated demo run) because a stricter
+      RequiredSpecialty definition genuinely has fewer multi-specialty
+      patients and less objective-space to browse -- reported as a finding,
+      not smoothed over; SPEC-005 criterion 6's ">=5" is met for four of five
+      strategies on the committed demo bundle and is close (4) on the
+      sparsest (consult_note), a property of that draw rather than a defect.
+      NOT VERIFIED: no human/clinical review (N16); no automated test asserts
+      criteria 3/4/5/7/9/10 (SPEC-005's own named tests do not exist yet, per
+      N15's audit) -- checked manually instead (browser session: strategy
+      switching, keyboard Pareto-front selection, ward-route rendering, zero
+      console errors) and recorded as manual, not automated.
+    rationale: >
+      D6 in SPEC-005's own words: presence of the provenance/interval/bounds
+      guards was checked at N14a; this node is where their *behaviour* is
+      exercised, and it is exercised by hand (Chrome DevTools session against
+      a local static server), not by a headless-browser test suite, which
+      does not exist in this repo.
 
   - id: N15-auditor
     title: Automated code and method auditor

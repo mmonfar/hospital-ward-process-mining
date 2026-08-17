@@ -614,3 +614,18 @@ as new entries referencing the original.
   ```
   gates: ruff format tests/bench/test_fitness_throughput.py clean; ruff check clean; mypy src/hwpm/domain clean (advisory elsewhere); import-linter 3 contracts kept 0 broken; vulture src/ tools/ no findings; full-suite pytest 339 passed, 31 skipped in 75.55s; tests/bench/test_fitness_throughput.py --bench -s: 1 passed in 467.00s, wall=466.04s (7.77 min), evaluate() calls=100200, fitness time=29.94s, fraction=6.42%, runtime>10min=False, fraction>60%=False, gate_fires=False
   ```
+
+## 2026-08-17 19:24:46Z — Built the N14 ward viewer: strategy selector and Pareto front browser served from synthetic artefacts, plus TravelGraph geometry accessors so layout.json has no hard-coded ward geometry
+
+- **Why:** SPEC-005 acceptance: strategy selector (SPEC-001 runtime choice), Pareto front browser (ADR-0004 no scalarisation), motion overlay with interval (SPEC-003), missed-MDT opportunity list (SPEC-002) -- N14a's design system primitives consumed as built, none re-implemented
+- **Authority:** SPEC-005
+- **Graph node:** N14-viewer
+- **Model:** claude-sonnet-5
+- **Actor:** marti
+- **Commit:** `255c6e3`
+- **Artefacts:** `web/viewer.html`, `web/viewer.js`, `tools/generate_viewer_artefacts.py`, `src/hwpm/domain/travel.py`
+- **Evidence:**
+
+  ```
+  .......................................................ss.s.......       [100%]
+  ```

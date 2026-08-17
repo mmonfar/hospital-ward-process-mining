@@ -1,0 +1,957 @@
+{
+  "nodes": [
+    {
+      "id": "1A/CORRIDOR",
+      "kind": "corridor",
+      "x": -6.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    {
+      "id": "1A/BED0",
+      "kind": "bed",
+      "x": -4.0,
+      "y": 0.0,
+      "z": -2.2
+    },
+    {
+      "id": "1A/BED1",
+      "kind": "bed",
+      "x": 0.0,
+      "y": 0.0,
+      "z": -2.2
+    },
+    {
+      "id": "1A/BED2",
+      "kind": "bed",
+      "x": 4.0,
+      "y": 0.0,
+      "z": -2.2
+    },
+    {
+      "id": "1A/BED3",
+      "kind": "bed",
+      "x": -4.0,
+      "y": 0.0,
+      "z": 2.2
+    },
+    {
+      "id": "1A/BED4",
+      "kind": "bed",
+      "x": 0.0,
+      "y": 0.0,
+      "z": 2.2
+    },
+    {
+      "id": "1A/BED5",
+      "kind": "bed",
+      "x": 4.0,
+      "y": 0.0,
+      "z": 2.2
+    },
+    {
+      "id": "FLOOR0/LIFT",
+      "kind": "lift",
+      "x": -16.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    {
+      "id": "FLOOR0/STAIR",
+      "kind": "stair",
+      "x": -20.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    {
+      "id": "1B/CORRIDOR",
+      "kind": "corridor",
+      "x": 26.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    {
+      "id": "1B/BED0",
+      "kind": "bed",
+      "x": 28.0,
+      "y": 0.0,
+      "z": -2.2
+    },
+    {
+      "id": "1B/BED1",
+      "kind": "bed",
+      "x": 32.0,
+      "y": 0.0,
+      "z": -2.2
+    },
+    {
+      "id": "1B/BED2",
+      "kind": "bed",
+      "x": 36.0,
+      "y": 0.0,
+      "z": -2.2
+    },
+    {
+      "id": "1B/BED3",
+      "kind": "bed",
+      "x": 28.0,
+      "y": 0.0,
+      "z": 2.2
+    },
+    {
+      "id": "1B/BED4",
+      "kind": "bed",
+      "x": 32.0,
+      "y": 0.0,
+      "z": 2.2
+    },
+    {
+      "id": "1B/BED5",
+      "kind": "bed",
+      "x": 36.0,
+      "y": 0.0,
+      "z": 2.2
+    },
+    {
+      "id": "1C/CORRIDOR",
+      "kind": "corridor",
+      "x": 58.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    {
+      "id": "1C/BED0",
+      "kind": "bed",
+      "x": 60.0,
+      "y": 0.0,
+      "z": -2.2
+    },
+    {
+      "id": "1C/BED1",
+      "kind": "bed",
+      "x": 64.0,
+      "y": 0.0,
+      "z": -2.2
+    },
+    {
+      "id": "1C/BED2",
+      "kind": "bed",
+      "x": 68.0,
+      "y": 0.0,
+      "z": -2.2
+    },
+    {
+      "id": "1C/BED3",
+      "kind": "bed",
+      "x": 60.0,
+      "y": 0.0,
+      "z": 2.2
+    },
+    {
+      "id": "1C/BED4",
+      "kind": "bed",
+      "x": 64.0,
+      "y": 0.0,
+      "z": 2.2
+    },
+    {
+      "id": "1C/BED5",
+      "kind": "bed",
+      "x": 68.0,
+      "y": 0.0,
+      "z": 2.2
+    },
+    {
+      "id": "2A/CORRIDOR",
+      "kind": "corridor",
+      "x": -6.0,
+      "y": 4.2,
+      "z": 0.0
+    },
+    {
+      "id": "2A/BED0",
+      "kind": "bed",
+      "x": -4.0,
+      "y": 4.2,
+      "z": -2.2
+    },
+    {
+      "id": "2A/BED1",
+      "kind": "bed",
+      "x": 0.0,
+      "y": 4.2,
+      "z": -2.2
+    },
+    {
+      "id": "2A/BED2",
+      "kind": "bed",
+      "x": 4.0,
+      "y": 4.2,
+      "z": -2.2
+    },
+    {
+      "id": "2A/BED3",
+      "kind": "bed",
+      "x": -4.0,
+      "y": 4.2,
+      "z": 2.2
+    },
+    {
+      "id": "2A/BED4",
+      "kind": "bed",
+      "x": 0.0,
+      "y": 4.2,
+      "z": 2.2
+    },
+    {
+      "id": "2A/BED5",
+      "kind": "bed",
+      "x": 4.0,
+      "y": 4.2,
+      "z": 2.2
+    },
+    {
+      "id": "FLOOR1/LIFT",
+      "kind": "lift",
+      "x": -16.0,
+      "y": 4.2,
+      "z": 0.0
+    },
+    {
+      "id": "FLOOR1/STAIR",
+      "kind": "stair",
+      "x": -20.0,
+      "y": 4.2,
+      "z": 0.0
+    },
+    {
+      "id": "2B/CORRIDOR",
+      "kind": "corridor",
+      "x": 26.0,
+      "y": 4.2,
+      "z": 0.0
+    },
+    {
+      "id": "2B/BED0",
+      "kind": "bed",
+      "x": 28.0,
+      "y": 4.2,
+      "z": -2.2
+    },
+    {
+      "id": "2B/BED1",
+      "kind": "bed",
+      "x": 32.0,
+      "y": 4.2,
+      "z": -2.2
+    },
+    {
+      "id": "2B/BED2",
+      "kind": "bed",
+      "x": 36.0,
+      "y": 4.2,
+      "z": -2.2
+    },
+    {
+      "id": "2B/BED3",
+      "kind": "bed",
+      "x": 28.0,
+      "y": 4.2,
+      "z": 2.2
+    },
+    {
+      "id": "2B/BED4",
+      "kind": "bed",
+      "x": 32.0,
+      "y": 4.2,
+      "z": 2.2
+    },
+    {
+      "id": "2B/BED5",
+      "kind": "bed",
+      "x": 36.0,
+      "y": 4.2,
+      "z": 2.2
+    },
+    {
+      "id": "2C/CORRIDOR",
+      "kind": "corridor",
+      "x": 58.0,
+      "y": 4.2,
+      "z": 0.0
+    },
+    {
+      "id": "2C/BED0",
+      "kind": "bed",
+      "x": 60.0,
+      "y": 4.2,
+      "z": -2.2
+    },
+    {
+      "id": "2C/BED1",
+      "kind": "bed",
+      "x": 64.0,
+      "y": 4.2,
+      "z": -2.2
+    },
+    {
+      "id": "2C/BED2",
+      "kind": "bed",
+      "x": 68.0,
+      "y": 4.2,
+      "z": -2.2
+    },
+    {
+      "id": "2C/BED3",
+      "kind": "bed",
+      "x": 60.0,
+      "y": 4.2,
+      "z": 2.2
+    },
+    {
+      "id": "2C/BED4",
+      "kind": "bed",
+      "x": 64.0,
+      "y": 4.2,
+      "z": 2.2
+    },
+    {
+      "id": "2C/BED5",
+      "kind": "bed",
+      "x": 68.0,
+      "y": 4.2,
+      "z": 2.2
+    },
+    {
+      "id": "3A/CORRIDOR",
+      "kind": "corridor",
+      "x": -6.0,
+      "y": 8.4,
+      "z": 0.0
+    },
+    {
+      "id": "3A/BED0",
+      "kind": "bed",
+      "x": -4.0,
+      "y": 8.4,
+      "z": -2.2
+    },
+    {
+      "id": "3A/BED1",
+      "kind": "bed",
+      "x": 0.0,
+      "y": 8.4,
+      "z": -2.2
+    },
+    {
+      "id": "3A/BED2",
+      "kind": "bed",
+      "x": 4.0,
+      "y": 8.4,
+      "z": -2.2
+    },
+    {
+      "id": "3A/BED3",
+      "kind": "bed",
+      "x": -4.0,
+      "y": 8.4,
+      "z": 2.2
+    },
+    {
+      "id": "3A/BED4",
+      "kind": "bed",
+      "x": 0.0,
+      "y": 8.4,
+      "z": 2.2
+    },
+    {
+      "id": "3A/BED5",
+      "kind": "bed",
+      "x": 4.0,
+      "y": 8.4,
+      "z": 2.2
+    },
+    {
+      "id": "FLOOR2/LIFT",
+      "kind": "lift",
+      "x": -16.0,
+      "y": 8.4,
+      "z": 0.0
+    },
+    {
+      "id": "FLOOR2/STAIR",
+      "kind": "stair",
+      "x": -20.0,
+      "y": 8.4,
+      "z": 0.0
+    },
+    {
+      "id": "3B/CORRIDOR",
+      "kind": "corridor",
+      "x": 26.0,
+      "y": 8.4,
+      "z": 0.0
+    },
+    {
+      "id": "3B/BED0",
+      "kind": "bed",
+      "x": 28.0,
+      "y": 8.4,
+      "z": -2.2
+    },
+    {
+      "id": "3B/BED1",
+      "kind": "bed",
+      "x": 32.0,
+      "y": 8.4,
+      "z": -2.2
+    },
+    {
+      "id": "3B/BED2",
+      "kind": "bed",
+      "x": 36.0,
+      "y": 8.4,
+      "z": -2.2
+    },
+    {
+      "id": "3B/BED3",
+      "kind": "bed",
+      "x": 28.0,
+      "y": 8.4,
+      "z": 2.2
+    },
+    {
+      "id": "3B/BED4",
+      "kind": "bed",
+      "x": 32.0,
+      "y": 8.4,
+      "z": 2.2
+    },
+    {
+      "id": "3B/BED5",
+      "kind": "bed",
+      "x": 36.0,
+      "y": 8.4,
+      "z": 2.2
+    },
+    {
+      "id": "3C/CORRIDOR",
+      "kind": "corridor",
+      "x": 58.0,
+      "y": 8.4,
+      "z": 0.0
+    },
+    {
+      "id": "3C/BED0",
+      "kind": "bed",
+      "x": 60.0,
+      "y": 8.4,
+      "z": -2.2
+    },
+    {
+      "id": "3C/BED1",
+      "kind": "bed",
+      "x": 64.0,
+      "y": 8.4,
+      "z": -2.2
+    },
+    {
+      "id": "3C/BED2",
+      "kind": "bed",
+      "x": 68.0,
+      "y": 8.4,
+      "z": -2.2
+    },
+    {
+      "id": "3C/BED3",
+      "kind": "bed",
+      "x": 60.0,
+      "y": 8.4,
+      "z": 2.2
+    },
+    {
+      "id": "3C/BED4",
+      "kind": "bed",
+      "x": 64.0,
+      "y": 8.4,
+      "z": 2.2
+    },
+    {
+      "id": "3C/BED5",
+      "kind": "bed",
+      "x": 68.0,
+      "y": 8.4,
+      "z": 2.2
+    }
+  ],
+  "edges": [
+    {
+      "a": "1A/CORRIDOR",
+      "b": "1A/BED0",
+      "metres": 2.973,
+      "seconds": 2.478
+    },
+    {
+      "a": "1A/CORRIDOR",
+      "b": "1A/BED1",
+      "metres": 6.391,
+      "seconds": 5.326
+    },
+    {
+      "a": "1A/CORRIDOR",
+      "b": "1A/BED2",
+      "metres": 10.239,
+      "seconds": 8.533
+    },
+    {
+      "a": "1A/CORRIDOR",
+      "b": "1A/BED3",
+      "metres": 2.973,
+      "seconds": 2.478
+    },
+    {
+      "a": "1A/CORRIDOR",
+      "b": "1A/BED4",
+      "metres": 6.391,
+      "seconds": 5.326
+    },
+    {
+      "a": "1A/CORRIDOR",
+      "b": "1A/BED5",
+      "metres": 10.239,
+      "seconds": 8.533
+    },
+    {
+      "a": "1A/CORRIDOR",
+      "b": "FLOOR0/LIFT",
+      "metres": 10.0,
+      "seconds": 8.333
+    },
+    {
+      "a": "1A/CORRIDOR",
+      "b": "FLOOR0/STAIR",
+      "metres": 14.0,
+      "seconds": 11.667
+    },
+    {
+      "a": "FLOOR0/LIFT",
+      "b": "1B/CORRIDOR",
+      "metres": 42.0,
+      "seconds": 35.0
+    },
+    {
+      "a": "FLOOR0/LIFT",
+      "b": "1C/CORRIDOR",
+      "metres": 74.0,
+      "seconds": 61.667
+    },
+    {
+      "a": "FLOOR0/LIFT",
+      "b": "FLOOR1/LIFT",
+      "metres": 4.2,
+      "seconds": 49.2
+    },
+    {
+      "a": "FLOOR0/LIFT",
+      "b": "FLOOR2/LIFT",
+      "metres": 8.4,
+      "seconds": 53.4
+    },
+    {
+      "a": "FLOOR0/STAIR",
+      "b": "1B/CORRIDOR",
+      "metres": 46.0,
+      "seconds": 38.333
+    },
+    {
+      "a": "FLOOR0/STAIR",
+      "b": "1C/CORRIDOR",
+      "metres": 78.0,
+      "seconds": 65.0
+    },
+    {
+      "a": "FLOOR0/STAIR",
+      "b": "FLOOR1/STAIR",
+      "metres": 4.2,
+      "seconds": 8.4
+    },
+    {
+      "a": "FLOOR0/STAIR",
+      "b": "FLOOR2/STAIR",
+      "metres": 8.4,
+      "seconds": 16.8
+    },
+    {
+      "a": "1B/CORRIDOR",
+      "b": "1B/BED0",
+      "metres": 2.973,
+      "seconds": 2.478
+    },
+    {
+      "a": "1B/CORRIDOR",
+      "b": "1B/BED1",
+      "metres": 6.391,
+      "seconds": 5.326
+    },
+    {
+      "a": "1B/CORRIDOR",
+      "b": "1B/BED2",
+      "metres": 10.239,
+      "seconds": 8.533
+    },
+    {
+      "a": "1B/CORRIDOR",
+      "b": "1B/BED3",
+      "metres": 2.973,
+      "seconds": 2.478
+    },
+    {
+      "a": "1B/CORRIDOR",
+      "b": "1B/BED4",
+      "metres": 6.391,
+      "seconds": 5.326
+    },
+    {
+      "a": "1B/CORRIDOR",
+      "b": "1B/BED5",
+      "metres": 10.239,
+      "seconds": 8.533
+    },
+    {
+      "a": "1C/CORRIDOR",
+      "b": "1C/BED0",
+      "metres": 2.973,
+      "seconds": 2.478
+    },
+    {
+      "a": "1C/CORRIDOR",
+      "b": "1C/BED1",
+      "metres": 6.391,
+      "seconds": 5.326
+    },
+    {
+      "a": "1C/CORRIDOR",
+      "b": "1C/BED2",
+      "metres": 10.239,
+      "seconds": 8.533
+    },
+    {
+      "a": "1C/CORRIDOR",
+      "b": "1C/BED3",
+      "metres": 2.973,
+      "seconds": 2.478
+    },
+    {
+      "a": "1C/CORRIDOR",
+      "b": "1C/BED4",
+      "metres": 6.391,
+      "seconds": 5.326
+    },
+    {
+      "a": "1C/CORRIDOR",
+      "b": "1C/BED5",
+      "metres": 10.239,
+      "seconds": 8.533
+    },
+    {
+      "a": "2A/CORRIDOR",
+      "b": "2A/BED0",
+      "metres": 2.973,
+      "seconds": 2.478
+    },
+    {
+      "a": "2A/CORRIDOR",
+      "b": "2A/BED1",
+      "metres": 6.391,
+      "seconds": 5.326
+    },
+    {
+      "a": "2A/CORRIDOR",
+      "b": "2A/BED2",
+      "metres": 10.239,
+      "seconds": 8.533
+    },
+    {
+      "a": "2A/CORRIDOR",
+      "b": "2A/BED3",
+      "metres": 2.973,
+      "seconds": 2.478
+    },
+    {
+      "a": "2A/CORRIDOR",
+      "b": "2A/BED4",
+      "metres": 6.391,
+      "seconds": 5.326
+    },
+    {
+      "a": "2A/CORRIDOR",
+      "b": "2A/BED5",
+      "metres": 10.239,
+      "seconds": 8.533
+    },
+    {
+      "a": "2A/CORRIDOR",
+      "b": "FLOOR1/LIFT",
+      "metres": 10.0,
+      "seconds": 8.333
+    },
+    {
+      "a": "2A/CORRIDOR",
+      "b": "FLOOR1/STAIR",
+      "metres": 14.0,
+      "seconds": 11.667
+    },
+    {
+      "a": "FLOOR1/LIFT",
+      "b": "2B/CORRIDOR",
+      "metres": 42.0,
+      "seconds": 35.0
+    },
+    {
+      "a": "FLOOR1/LIFT",
+      "b": "2C/CORRIDOR",
+      "metres": 74.0,
+      "seconds": 61.667
+    },
+    {
+      "a": "FLOOR1/LIFT",
+      "b": "FLOOR2/LIFT",
+      "metres": 4.2,
+      "seconds": 49.2
+    },
+    {
+      "a": "FLOOR1/STAIR",
+      "b": "2B/CORRIDOR",
+      "metres": 46.0,
+      "seconds": 38.333
+    },
+    {
+      "a": "FLOOR1/STAIR",
+      "b": "2C/CORRIDOR",
+      "metres": 78.0,
+      "seconds": 65.0
+    },
+    {
+      "a": "FLOOR1/STAIR",
+      "b": "FLOOR2/STAIR",
+      "metres": 4.2,
+      "seconds": 8.4
+    },
+    {
+      "a": "2B/CORRIDOR",
+      "b": "2B/BED0",
+      "metres": 2.973,
+      "seconds": 2.478
+    },
+    {
+      "a": "2B/CORRIDOR",
+      "b": "2B/BED1",
+      "metres": 6.391,
+      "seconds": 5.326
+    },
+    {
+      "a": "2B/CORRIDOR",
+      "b": "2B/BED2",
+      "metres": 10.239,
+      "seconds": 8.533
+    },
+    {
+      "a": "2B/CORRIDOR",
+      "b": "2B/BED3",
+      "metres": 2.973,
+      "seconds": 2.478
+    },
+    {
+      "a": "2B/CORRIDOR",
+      "b": "2B/BED4",
+      "metres": 6.391,
+      "seconds": 5.326
+    },
+    {
+      "a": "2B/CORRIDOR",
+      "b": "2B/BED5",
+      "metres": 10.239,
+      "seconds": 8.533
+    },
+    {
+      "a": "2C/CORRIDOR",
+      "b": "2C/BED0",
+      "metres": 2.973,
+      "seconds": 2.478
+    },
+    {
+      "a": "2C/CORRIDOR",
+      "b": "2C/BED1",
+      "metres": 6.391,
+      "seconds": 5.326
+    },
+    {
+      "a": "2C/CORRIDOR",
+      "b": "2C/BED2",
+      "metres": 10.239,
+      "seconds": 8.533
+    },
+    {
+      "a": "2C/CORRIDOR",
+      "b": "2C/BED3",
+      "metres": 2.973,
+      "seconds": 2.478
+    },
+    {
+      "a": "2C/CORRIDOR",
+      "b": "2C/BED4",
+      "metres": 6.391,
+      "seconds": 5.326
+    },
+    {
+      "a": "2C/CORRIDOR",
+      "b": "2C/BED5",
+      "metres": 10.239,
+      "seconds": 8.533
+    },
+    {
+      "a": "3A/CORRIDOR",
+      "b": "3A/BED0",
+      "metres": 2.973,
+      "seconds": 2.478
+    },
+    {
+      "a": "3A/CORRIDOR",
+      "b": "3A/BED1",
+      "metres": 6.391,
+      "seconds": 5.326
+    },
+    {
+      "a": "3A/CORRIDOR",
+      "b": "3A/BED2",
+      "metres": 10.239,
+      "seconds": 8.533
+    },
+    {
+      "a": "3A/CORRIDOR",
+      "b": "3A/BED3",
+      "metres": 2.973,
+      "seconds": 2.478
+    },
+    {
+      "a": "3A/CORRIDOR",
+      "b": "3A/BED4",
+      "metres": 6.391,
+      "seconds": 5.326
+    },
+    {
+      "a": "3A/CORRIDOR",
+      "b": "3A/BED5",
+      "metres": 10.239,
+      "seconds": 8.533
+    },
+    {
+      "a": "3A/CORRIDOR",
+      "b": "FLOOR2/LIFT",
+      "metres": 10.0,
+      "seconds": 8.333
+    },
+    {
+      "a": "3A/CORRIDOR",
+      "b": "FLOOR2/STAIR",
+      "metres": 14.0,
+      "seconds": 11.667
+    },
+    {
+      "a": "FLOOR2/LIFT",
+      "b": "3B/CORRIDOR",
+      "metres": 42.0,
+      "seconds": 35.0
+    },
+    {
+      "a": "FLOOR2/LIFT",
+      "b": "3C/CORRIDOR",
+      "metres": 74.0,
+      "seconds": 61.667
+    },
+    {
+      "a": "FLOOR2/STAIR",
+      "b": "3B/CORRIDOR",
+      "metres": 46.0,
+      "seconds": 38.333
+    },
+    {
+      "a": "FLOOR2/STAIR",
+      "b": "3C/CORRIDOR",
+      "metres": 78.0,
+      "seconds": 65.0
+    },
+    {
+      "a": "3B/CORRIDOR",
+      "b": "3B/BED0",
+      "metres": 2.973,
+      "seconds": 2.478
+    },
+    {
+      "a": "3B/CORRIDOR",
+      "b": "3B/BED1",
+      "metres": 6.391,
+      "seconds": 5.326
+    },
+    {
+      "a": "3B/CORRIDOR",
+      "b": "3B/BED2",
+      "metres": 10.239,
+      "seconds": 8.533
+    },
+    {
+      "a": "3B/CORRIDOR",
+      "b": "3B/BED3",
+      "metres": 2.973,
+      "seconds": 2.478
+    },
+    {
+      "a": "3B/CORRIDOR",
+      "b": "3B/BED4",
+      "metres": 6.391,
+      "seconds": 5.326
+    },
+    {
+      "a": "3B/CORRIDOR",
+      "b": "3B/BED5",
+      "metres": 10.239,
+      "seconds": 8.533
+    },
+    {
+      "a": "3C/CORRIDOR",
+      "b": "3C/BED0",
+      "metres": 2.973,
+      "seconds": 2.478
+    },
+    {
+      "a": "3C/CORRIDOR",
+      "b": "3C/BED1",
+      "metres": 6.391,
+      "seconds": 5.326
+    },
+    {
+      "a": "3C/CORRIDOR",
+      "b": "3C/BED2",
+      "metres": 10.239,
+      "seconds": 8.533
+    },
+    {
+      "a": "3C/CORRIDOR",
+      "b": "3C/BED3",
+      "metres": 2.973,
+      "seconds": 2.478
+    },
+    {
+      "a": "3C/CORRIDOR",
+      "b": "3C/BED4",
+      "metres": 6.391,
+      "seconds": 5.326
+    },
+    {
+      "a": "3C/CORRIDOR",
+      "b": "3C/BED5",
+      "metres": 10.239,
+      "seconds": 8.533
+    }
+  ]
+}

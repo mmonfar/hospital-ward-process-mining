@@ -1,0 +1,58 @@
+{
+  "kind": "missed_mdt_opportunities",
+  "schema_version": 1,
+  "method_version": "viewer_demo/1.0.0",
+  "strategy": "intersection",
+  "available_strategies": [
+    "referral",
+    "consult_note",
+    "problem_list",
+    "union",
+    "intersection"
+  ],
+  "calibration": "uncalibrated",
+  "payload": {
+    "candidates": [
+      {
+        "clinician": "C02",
+        "patient": "P10",
+        "specialty": "general_medicine",
+        "bed": "1B/BED4",
+        "at": "2026-01-06T09:55:00",
+        "proximity_m": 6.39,
+        "confidence": 0.574,
+        "reason": "C02 (specialty general_medicine) passed within 6.4m of 1B/BED4 (patient P10 requires general_medicine) between 08:40 and 09:55, 0s from a confirmed presence there"
+      },
+      {
+        "clinician": "C05",
+        "patient": "P08",
+        "specialty": "surgical",
+        "bed": "1B/BED2",
+        "at": "2026-01-06T09:50:00",
+        "proximity_m": 10.24,
+        "confidence": 0.0,
+        "reason": "C05 (specialty surgical) passed within 10.2m of 1B/BED2 (patient P08 requires surgical) between 09:35 and 09:50, 300s from a confirmed presence there"
+      },
+      {
+        "clinician": "C05",
+        "patient": "P07",
+        "specialty": "surgical",
+        "bed": "1B/BED1",
+        "at": "2026-01-06T09:50:00",
+        "proximity_m": 6.39,
+        "confidence": 0.574,
+        "reason": "C05 (specialty surgical) passed within 6.4m of 1B/BED1 (patient P07 requires surgical) between 09:35 and 09:50, 0s from a confirmed presence there"
+      },
+      {
+        "clinician": "C07",
+        "patient": "P10",
+        "specialty": "general_medicine",
+        "bed": "1B/BED4",
+        "at": "2026-01-06T09:40:00",
+        "proximity_m": 6.39,
+        "confidence": 0.0,
+        "reason": "C07 (specialty general_medicine) passed within 6.4m of 1B/BED4 (patient P10 requires general_medicine) between 09:10 and 09:40, 300s from a confirmed presence there"
+      }
+    ]
+  }
+}

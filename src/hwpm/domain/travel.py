@@ -302,3 +302,42 @@ class TravelGraph:
             current = tree[current][2]
         nodes.reverse()
         return [LocationId(node) for node in nodes]
+
+    # -- geometry export (N14-viewer) --------------------------------------
+    #
+    # `layout.json` (SPEC-005) must be served data, not literals baked into the
+    # viewer -- acceptance criterion 1. This graph is the single place ward
+    # geometry lives (01-DOMAIN-MODEL.md, "Place"), so the export walks it
+    # rather than the front end re-reading `_WARD_SPECS`/`_BED_LOCAL` itself,
+    # which would put a second, driftable copy of the geometry outside the
+    # domain layer.
+
+    def nodes(self) -> tuple[LocationId, ...]:
+        """Every node id in the graph: beds, ward corridors, lift and stair
+        lobbies. Insertion order, which is construction order in `_build` --
+        deterministic for a given `TravelGraph()` (gate 8)."""
+        return tuple(LocationId(node_id) for node_id in self._points)
+
+    def position(self, location: LocationId) -> tuple[float, float, float]:
+        """`(x, y, z)` scene-unit coordinates of `location`, y being the
+        vertical (floor) axis -- the same convention `web/hospital-ward.html`
+        and `_Point3` use."""
+        point = self._points[self._resolve(location)]
+        return (point.x, point.y, point.z)
+
+    def edges(self) -> tuple[tuple[LocationId, LocationId, float, float], ...]:
+        """Every undirected edge once, as `(a, b, metres, seconds)`. This is
+        the "travel-graph edges" `layout.json` is asked to carry (SPEC-005,
+        'Artefacts consumed')."""
+        seen: set[frozenset[str]] = set()
+        out: list[tuple[LocationId, LocationId, float, float]] = []
+        for a_id, edges in self._adj.items():
+            for edge in edges:
+                key = frozenset((a_id, edge.to))
+                if key in seen:
+                    continue
+                seen.add(key)
+                out.append(
+                    (LocationId(a_id), LocationId(edge.to), edge.metres, edge.seconds)
+                )
+        return tuple(out)

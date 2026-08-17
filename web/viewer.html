@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ward viewer — strategy selector &amp; Pareto front browser</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js",
+    "three/addons/exporters/OBJExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js",
+    "three/addons/exporters/GLTFExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+    "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js": "sha384-nbwtoZENJD3Vq+ACK0CuGQdPMuDWHkamC2KJD70EV5nfg6jQjfppKOea07YJN+N3",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js": "sha384-VofkvpG6HERhFCYbsUOHeNXBCqID2nfqkQqnVzE1jc/oPcz+qJ13ADdXH08hE+cQ"
+  }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Load order per web/design/base.css's own header comment: tokens.css, then
+     base.css, then nothing else -- there is no per-component stylesheet. -->
+<link rel="stylesheet" href="./design/tokens.css">
+<link rel="stylesheet" href="./design/base.css">
+<style>
+  /* Page chrome only -- layout, not colour/type/space. Every value here is
+     either a token custom property or a bare CSS layout primitive (flex/grid
+     dimensions), never a literal colour (test_design_tokens.py's ban is
+     scoped to web/design/*, but the same discipline is kept here by hand). */
+  three-d-stage:not(:defined) { visibility: hidden; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--surface-page);
+    display: grid;
+    grid-template-rows: auto 1fr;
+    grid-template-columns: 1fr;
+    height: 100vh;
+    overflow: hidden;
+  }
+  #app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--s-4);
+    padding: var(--s-4) var(--s-5) var(--s-2);
+  }
+  #app-header p { max-width: 46em; }
+  #layout {
+    display: grid;
+    grid-template-columns: minmax(320px, 380px) 1fr;
+    grid-template-rows: 1fr;
+    gap: var(--s-4);
+    padding: 0 var(--s-5) var(--s-5);
+    min-height: 0;
+  }
+  #side {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-4);
+    overflow-y: auto;
+    min-height: 0;
+  }
+  #main {
+    display: grid;
+    grid-template-rows: minmax(220px, 1fr) minmax(220px, 40%);
+    gap: var(--s-4);
+    min-height: 0;
+  }
+  #scene-figure .figure__body { min-height: 320px; }
+  #stage-wrap { position: relative; height: 100%; min-height: 320px; border-radius: var(--r-sm); overflow: hidden; background: var(--surface-scene); }
+  three-d-stage { height: 100%; }
+  #front-figure .figure__body { min-height: 260px; }
+  .opps-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s-2); }
+  .opps-list li { border-left: 2px solid var(--line-hairline); padding-left: var(--s-2); }
+  .schedule-readout { min-height: 1.4em; }
+</style>
+</head>
+<body>
+
+<header id="app-header">
+  <div>
+    <h1 class="t-title">Ward viewer</h1>
+    <p class="t-micro">Synthetic demo data (ADR-0005) — a browsable Pareto front of MDT-coordination
+      schedules against the routed ward, with the RequiredSpecialty definition as a runtime choice
+      (SPEC-001) rather than a fixed one. No real patient or clinician data anywhere in this page.</p>
+  </div>
+  <div id="strategy-select-slot"></div>
+</header>
+
+<div id="layout">
+  <div id="side">
+    <div id="motion-figure-slot"></div>
+    <div id="opportunities-figure-slot"></div>
+  </div>
+  <div id="main">
+    <div id="scene-figure-slot"></div>
+    <div id="front-figure-slot"></div>
+  </div>
+</div>
+
+<script src="./three-d-stage.js"></script>
+<script type="module" src="./viewer.js"></script>
+</body>
+</html>
