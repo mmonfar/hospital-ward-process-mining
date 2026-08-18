@@ -534,6 +534,7 @@ nodes:
     gate: autonomous
     budget_tokens: 180000
     decision: ADR-0006
+    status: completed
     rationale: >
       Added 2026-08-14. Clinical Governance monitors MDT coverage as part of the
       project, which makes the headline figure a governance measurement rather

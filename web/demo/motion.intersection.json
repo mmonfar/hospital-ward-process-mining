@@ -12,18 +12,18 @@
   ],
   "calibration": "uncalibrated",
   "payload": {
-    "observed_m": 1401.28,
-    "necessary_m": 1302.26,
-    "attributable_m": 99.01,
-    "attributable_fraction": 0.0707,
+    "observed_m": 1463.88,
+    "necessary_m": 1375.98,
+    "attributable_m": 87.9,
+    "attributable_fraction": 0.06,
     "ci95": [
       14.53,
-      238.48
+      218.91
     ],
     "params": {
       "method_version": "motion/1.0.0",
       "interpretation": "attributable_m is an UPPER BOUND on avoidable motion under perfect foresight (observed minus the optimal tour of the same visit set). It is not a target, not a forecast and not a savings estimate. Report it as 'at most N% of observed walking was attributable to visit ordering, under perfect foresight', never as 'we could save N% of walking' (SPEC-003, 'Defining waste honestly').",
-      "n_rounds": 29,
+      "n_rounds": 28,
       "n_ward_days": 8,
       "n_patients": 12,
       "n_clinicians": 8,
@@ -53,12 +53,12 @@
         "sampling variation across ward-days (percentile bootstrap)"
       ],
       "observed_m_ci95": [
-        944.5046377727689,
-        1944.7916342279202
+        1002.5369274109302,
+        1973.8203623722213
       ],
       "necessary_m_ci95": [
-        912.5739451548678,
-        1738.1810600246663
+        987.3347916808825,
+        1767.131438444915
       ],
       "suppression_floor_min_patients": 5,
       "suppression_floor_min_clinicians": 2

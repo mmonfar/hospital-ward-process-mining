@@ -13,7 +13,12 @@
     "layout": "layout.json",
     "front": "front.{strategy}.json",
     "motion": "motion.{strategy}.json",
-    "opportunities": "opportunities.{strategy}.json"
+    "opportunities": "opportunities.{strategy}.json",
+    "coverage": "coverage.{strategy}.json"
+  },
+  "coverage_bounds_strategies": {
+    "upper": "union",
+    "lower": "intersection"
   },
   "note": "Synthetic demo data (ADR-0005): every figure is computed by the governed hwpm.analytics/hwpm.optimize code, run on hwpm.optimize.instances.tiny_instance rather than a real extract."
 }

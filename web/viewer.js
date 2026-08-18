@@ -36,7 +36,7 @@ async function fetchJSON(path) {
 async function loadBundle() {
   const manifest = await fetchJSON(ARTEFACT_BASE + "manifest.json");
   const layout = await fetchJSON(ARTEFACT_BASE + "layout.json");
-  const kinds = ["front", "motion", "opportunities"];
+  const kinds = ["front", "motion", "opportunities", "coverage"];
   const byKind = {};
   for (const kind of kinds) {
     byKind[kind] = {};
@@ -248,6 +248,76 @@ function renderOpportunitiesFigure(slot, envelope, manifest) {
   slot.replaceChildren(figureNode);
 }
 
+function renderGovernanceFigure(slot, envelope, manifest, bundle) {
+  const p = envelope.payload;
+  const body = document.createElement("div");
+  body.className = "stack";
+
+  if (p.withheld) {
+    body.appendChild(
+      ds.emptyState(
+        "MDT coverage withheld",
+        p.reason,
+      ),
+    );
+  } else {
+    body.appendChild(
+      ds.statistic({
+        label: "MDT coverage",
+        value: (100 * p.coverage).toFixed(1),
+        unit: "%",
+        interval: p.ci95.map((v) => (100 * v).toFixed(1)),
+      }),
+    );
+    const detail = document.createElement("p");
+    detail.className = "t-micro";
+    detail.textContent =
+      `${p.n_covered} of ${p.n_patients} multi-specialty patients, ` +
+      `${p.n_published_cells} ward-day cell(s) published, ` +
+      `${p.n_suppressed_cells} withheld under the ADR-0005 floor.`;
+    body.appendChild(detail);
+  }
+
+  // ADR-0006 point 3: union/intersection are always shown as bounds,
+  // regardless of which strategy is selected.
+  const boundsKeys = manifest.coverage_bounds_strategies || { upper: "union", lower: "intersection" };
+  const boundsWrap = document.createElement("div");
+  boundsWrap.className = "stack";
+  const boundsLabel = document.createElement("p");
+  boundsLabel.className = "t-micro";
+  boundsLabel.textContent = "Plausible range across all five RequiredSpecialty strategies:";
+  boundsWrap.appendChild(boundsLabel);
+  for (const [side, key] of Object.entries(boundsKeys)) {
+    const bp = bundle.coverage?.[key]?.payload;
+    const line = document.createElement("p");
+    line.className = "t-micro";
+    if (!bp || bp.withheld) {
+      line.textContent = `${side} bound (${key}): withheld -- ${bp ? bp.reason : "not available"}`;
+    } else {
+      line.textContent =
+        `${side} bound (${key}): ${(100 * bp.coverage).toFixed(1)}% ` +
+        `[${(100 * bp.ci95[0]).toFixed(1)}%, ${(100 * bp.ci95[1]).toFixed(1)}%]`;
+    }
+    boundsWrap.appendChild(line);
+  }
+  body.appendChild(boundsWrap);
+
+  const warning = document.createElement("p");
+  warning.className = "t-micro";
+  warning.textContent =
+    "Measured, never attested (ADR-0006 rule 4). Never quote a bare percentage -- " +
+    "the interval and the strategy that produced this denominator travel with the number.";
+  body.appendChild(warning);
+
+  const figureNode = ds.figure({
+    title: "Clinical Governance — MDT coverage",
+    subtitle: "Fraction of multi-specialty patients whose required review happened at the bedside",
+    provenance: provenanceOf(envelope, manifest),
+    body,
+  });
+  slot.replaceChildren(figureNode);
+}
+
 function renderFrontFigure(slot, envelope, manifest, onSelect) {
   const payload = envelope.payload;
   const wrap = document.createElement("div");
@@ -355,6 +425,12 @@ async function main() {
       document.getElementById("opportunities-figure-slot"),
       bundle.opportunities[strategyKey],
       manifest,
+    );
+    renderGovernanceFigure(
+      document.getElementById("governance-figure-slot"),
+      bundle.coverage[strategyKey],
+      manifest,
+      bundle,
     );
     highlightFn = renderFrontFigure(
       document.getElementById("front-figure-slot"),

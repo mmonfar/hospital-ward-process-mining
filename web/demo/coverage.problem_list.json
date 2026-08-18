@@ -1,0 +1,57 @@
+{
+  "kind": "mdt_coverage",
+  "schema_version": 1,
+  "method_version": "viewer_demo/1.0.0",
+  "strategy": "problem_list",
+  "available_strategies": [
+    "referral",
+    "consult_note",
+    "problem_list",
+    "union",
+    "intersection"
+  ],
+  "calibration": "uncalibrated",
+  "payload": {
+    "withheld": false,
+    "coverage": 0.375,
+    "ci95": [
+      0.0714,
+      0.6667
+    ],
+    "n_patients": 16,
+    "n_covered": 6,
+    "n_published_cells": 0,
+    "n_suppressed_cells": 16,
+    "render": "MDT coverage (coverage/1.0.0, definition: problem_list)\n  37.5%   95% CI [7.1%, 66.7%]\n  6 of 16 multi-specialty patients, over 16 ward-days (16 withheld under the ADR-0005 floor)\n\nMeasured from observed bedside co-presence of required specialties.\nNever attested, never self-reported. The interval is sampling and\nward-day clustering variation, not a forecast.",
+    "params": {
+      "method_version": "coverage/1.0.0",
+      "strategy": "problem_list",
+      "interpretation": "MDT coverage is the fraction of observed multi-specialty patients for whom >=2 of their REQUIRED specialties were simultaneously at the bedside, derived from observed events only (ADR-0006 rule 4). It is measured, never attested. The interval is sampling and ward-day clustering variation in what was observed -- not a forecast, not a target, and not a tolerance. Quote it as 'coverage was X% (95% CI A to B) under the {strategy} definition', never as a bare percentage (ADR-0006 rule 6).",
+      "numerator": "multi-specialty patients with >=1 MDTMoment: >=2 of their REQUIRED specialties simultaneously at the bedside (never merely present)",
+      "denominator": "distinct observed patients whose required set holds >=2 specialties under this strategy",
+      "evidence": "observed BedsideEpisodes only (ADR-0006 rule 4)",
+      "n_patients": 16,
+      "n_covered": 6,
+      "n_clinicians": 8,
+      "n_ward_days": 16,
+      "n_ward_days_suppressed": 16,
+      "window_s": 300,
+      "ci_measures": "coverage",
+      "ci_method": "envelope of a two-stage ward-day cluster bootstrap (2.5/97.5) and the pooled Wilson score interval; the wider bound on each side is reported, so the figure is never narrower than either component",
+      "ci_wilson_pooled": [
+        0.18481232558863633,
+        0.6135895945449727
+      ],
+      "ci_cluster_bootstrap": [
+        0.07142857142857142,
+        0.6666666666666666
+      ],
+      "cell_ci_method": "Wilson score interval, per ward-day",
+      "n_replicates": 1000,
+      "z": 1.959963984540054,
+      "suppression_floor_min_patients": 5,
+      "suppression_floor_min_clinicians": 2,
+      "clinician_level_breakdown": "absent by design, not permission-gated (ADR-0006 rule 5)"
+    }
+  }
+}

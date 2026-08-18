@@ -302,10 +302,12 @@ class _RoundView:
     ward: str
 
 
-def _ward_of(bed: LocationId) -> str:
+def ward_of(bed: LocationId) -> str:
     """Ward component of a bed id (`"1A/BED3"` -> `"1A"`). The graph's node
     ids are structured, so this is a parse rather than a lookup; ids without a
-    separator are their own ward."""
+    separator are their own ward. Public: N18's coverage module groups
+    episodes into ward-day cells with the same parse, and one definition of
+    "ward" is the point."""
     return bed.value.split("/", 1)[0]
 
 
@@ -315,7 +317,7 @@ def _view_of(round_: Round) -> _RoundView:
     confidences = tuple(e.confidence for e in round_.episodes)
     time_by_ward: dict[str, float] = {}
     for episode in round_.episodes:
-        ward = _ward_of(episode.bed)
+        ward = ward_of(episode.bed)
         seconds = episode.duration.total_seconds()
         time_by_ward[ward] = time_by_ward.get(ward, 0.0) + seconds
     # Modal ward by bedside time; ties broken by ward id so the unit key is
@@ -549,4 +551,5 @@ __all__ = [
     "MotionReport",
     "SuppressionFloorError",
     "analyse",
+    "ward_of",
 ]

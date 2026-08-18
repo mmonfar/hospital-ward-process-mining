@@ -37,12 +37,15 @@ from __future__ import annotations
 import dataclasses
 import json
 import sys
+from collections.abc import Sequence
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from random import Random
 from typing import Any
 
 from hwpm.analytics import MotionParams, analyse
+from hwpm.analytics.coverage import InsufficientCoverageEvidenceError, analyse_coverage
+from hwpm.analytics.suppression import SuppressionFloorError
 from hwpm.artefact import ArtefactEnvelope
 from hwpm.domain import (
     BedsideEpisode,
@@ -379,6 +382,77 @@ def build_motion_artefact(
     return {key: base.with_strategy(key) for key in ALL_STRATEGIES}
 
 
+def _coverage_day_episodes(
+    base_inst: Instance, days: Sequence[date], rng: Random
+) -> list[BedsideEpisode]:
+    """Several ward-days of episodes, patient- and specialty-attributed.
+
+    `detect_mdt_moments` (via `analyse_coverage`) reads `episode.patient` and
+    `episode.clinician_specialties` -- `_draw_day_episodes` only fills the
+    former, which is fine for motion (walking distance doesn't care who a
+    clinician is) but would make every coverage figure read as 0% here.
+    """
+    from hwpm.mining.episodes import attach_clinician_specialties
+
+    clinician_specialties = {c.id: c.specialties for c in base_inst.clinicians}
+    episodes: list[BedsideEpisode] = []
+    for day in days:
+        episodes.extend(_draw_day_episodes(base_inst, day, rng))
+    return attach_clinician_specialties(episodes, clinician_specialties)
+
+
+def build_coverage_artefacts(
+    base_inst: Instance,
+    required_maps: dict[
+        RequiredSpecialtyStrategyKey, dict[PatientId, frozenset[Specialty]]
+    ],
+    rng: Random,
+) -> dict[RequiredSpecialtyStrategyKey, ArtefactEnvelope]:
+    """`coverage.{strategy}.json`: the Clinical Governance MDT-coverage view
+    (ADR-0006, SPEC-005 N18).
+
+    All five strategies are computed unconditionally (ADR-0006 point 3 -- the
+    denominator is `hwpm.analytics.coverage`'s "distinct multi-specialty
+    patients", and it moves with the strategy, so union/intersection give
+    real, not cosmetic, upper/lower bounds). The episode evidence itself
+    (which visits happened, drawn once over several ward-days) is shared
+    across strategies exactly as `build_front_artefacts` shares one baseline
+    schedule -- coverage differs by strategy only through which patients
+    count in the denominator/numerator, not through a different ward.
+
+    A strategy whose denominator can't clear the ADR-0005 floor over this
+    demo's small ward-day set raises `SuppressionFloorError` or
+    `InsufficientCoverageEvidenceError` inside `analyse_coverage`; that
+    strategy is reported as withheld rather than silently dropped, so the
+    viewer can say *why* a bound is missing instead of just not showing it.
+    """
+    days = [date(2026, 2, 2) + timedelta(days=offset) for offset in range(8)]
+    episodes = _coverage_day_episodes(base_inst, days, rng)
+
+    out: dict[RequiredSpecialtyStrategyKey, ArtefactEnvelope] = {}
+    for key in ALL_STRATEGIES:
+        try:
+            report = analyse_coverage(
+                episodes, required_maps[key], Random(rng.random()), strategy=key.value
+            )
+        except (SuppressionFloorError, InsufficientCoverageEvidenceError) as exc:
+            payload = {"withheld": True, "reason": str(exc)}
+        else:
+            payload = {
+                "withheld": False,
+                "coverage": round(report.coverage, 4),
+                "ci95": [round(report.ci95[0], 4), round(report.ci95[1], 4)],
+                "n_patients": report.n_patients,
+                "n_covered": report.n_covered,
+                "n_published_cells": report.n_published_cells,
+                "n_suppressed_cells": report.n_suppressed_cells,
+                "render": report.render(),
+                "params": report.params,
+            }
+        out[key] = _envelope("mdt_coverage", key, payload)
+    return out
+
+
 def build_opportunities_artefacts(
     base_inst: Instance,
     required_maps: dict[
@@ -491,6 +565,11 @@ def build_manifest() -> dict[str, Any]:
             "front": "front.{strategy}.json",
             "motion": "motion.{strategy}.json",
             "opportunities": "opportunities.{strategy}.json",
+            "coverage": "coverage.{strategy}.json",
+        },
+        "coverage_bounds_strategies": {
+            "upper": RequiredSpecialtyStrategyKey.UNION.value,
+            "lower": RequiredSpecialtyStrategyKey.INTERSECTION.value,
         },
         "note": (
             "Synthetic demo data (ADR-0005): every figure is computed by the "
@@ -509,12 +588,14 @@ def build_bundle(seed: int = 2026) -> dict[str, Any]:
     front = build_front_artefacts(base_inst, required_maps, rng)
     motion = build_motion_artefact(base_inst, graph, rng)
     opportunities = build_opportunities_artefacts(base_inst, required_maps, rng)
+    coverage = build_coverage_artefacts(base_inst, required_maps, rng)
 
     return {
         "layout": layout_payload(graph),
         "front": front,
         "motion": motion,
         "opportunities": opportunities,
+        "coverage": coverage,
         "manifest": build_manifest(),
     }
 
@@ -527,7 +608,7 @@ def write_bundle(bundle: dict[str, Any], out_dir: Path) -> None:
     (out_dir / "manifest.json").write_text(
         json.dumps(bundle["manifest"], indent=2) + "\n", encoding="utf-8"
     )
-    for kind in ("front", "motion", "opportunities"):
+    for kind in ("front", "motion", "opportunities", "coverage"):
         for key, envelope in bundle[kind].items():
             path = out_dir / f"{kind}.{key.value}.json"
             path.write_text(
@@ -543,7 +624,9 @@ def main() -> None:
     )
     bundle = build_bundle()
     write_bundle(bundle, out_dir)
-    n_files = sum(len(bundle[k]) for k in ("front", "motion", "opportunities")) + 2
+    n_files = (
+        sum(len(bundle[k]) for k in ("front", "motion", "opportunities", "coverage")) + 2
+    )
     print(f"wrote {n_files} artefact files to {out_dir}")
 
 

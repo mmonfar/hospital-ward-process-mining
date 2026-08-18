@@ -1,0 +1,18 @@
+{
+  "kind": "mdt_coverage",
+  "schema_version": 1,
+  "method_version": "viewer_demo/1.0.0",
+  "strategy": "consult_note",
+  "available_strategies": [
+    "referral",
+    "consult_note",
+    "problem_list",
+    "union",
+    "intersection"
+  ],
+  "calibration": "uncalibrated",
+  "payload": {
+    "withheld": true,
+    "reason": "no multi-specialty patients were observed, so MDT coverage has an empty denominator. Reporting 0% or 100% here would both be inventions; the honest output is that the question does not apply to this period"
+  }
+}

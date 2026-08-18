@@ -89,22 +89,34 @@ def cohort_of(rounds: Sequence[Round]) -> Cohort:
     return Cohort(patients=frozenset(patients), clinicians=frozenset(clinicians))
 
 
-def enforce_suppression_floor(rounds: Sequence[Round]) -> Cohort:
-    """Refuse to produce a figure ADR-0005 rule 4 forbids. Returns the cohort
-    so the caller can record it in the report's provenance."""
-    cohort = cohort_of(rounds)
-    if cohort.n_patients < MIN_PATIENTS:
+def check_counts(n_patients: int, n_clinicians: int) -> None:
+    """The floor check on already-counted distinct patients/clinicians.
+
+    For a caller that has already reduced its evidence to counts (N18's
+    per-ward-day cells, which are built from `BedsideEpisode`s grouped by day
+    rather than from `Round`s) -- so the two thresholds have one definition
+    shared with `enforce_suppression_floor`, and a cell-wise caller cannot
+    drift from it.
+    """
+    if n_patients < MIN_PATIENTS:
         raise SuppressionFloorError(
-            f"derived from {cohort.n_patients} distinct patient(s); the "
+            f"derived from {n_patients} distinct patient(s); the "
             f"ADR-0005 aggregation floor is {MIN_PATIENTS}. Suppressed"
         )
-    if cohort.n_clinicians < MIN_CLINICIANS:
+    if n_clinicians < MIN_CLINICIANS:
         raise SuppressionFloorError(
-            f"attributable to {cohort.n_clinicians} named clinician(s); "
+            f"attributable to {n_clinicians} named clinician(s); "
             "ADR-0005 forbids any output cell attributable to a single named "
             "clinician, and ADR-0006 rule 5 allows no governance exemption. "
             "Suppressed"
         )
+
+
+def enforce_suppression_floor(rounds: Sequence[Round]) -> Cohort:
+    """Refuse to produce a figure ADR-0005 rule 4 forbids. Returns the cohort
+    so the caller can record it in the report's provenance."""
+    cohort = cohort_of(rounds)
+    check_counts(cohort.n_patients, cohort.n_clinicians)
     return cohort
 
 
@@ -113,6 +125,7 @@ __all__ = [
     "MIN_PATIENTS",
     "Cohort",
     "SuppressionFloorError",
+    "check_counts",
     "cohort_of",
     "enforce_suppression_floor",
 ]

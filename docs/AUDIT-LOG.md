@@ -629,3 +629,18 @@ as new entries referencing the original.
   ```
   .......................................................ss.s.......       [100%]
   ```
+
+## 2026-08-18 17:26:30Z — N18-governance-view: Clinical Governance MDT coverage figure, built and closed directly by the orchestrator after the two dispatched subagents (aecd3331f840f347d attempt, a7d419226df043911 for the unrelated N19b) repeatedly hit transient 529 server-overload errors
+
+- **Why:** N18 was runnable (N14-viewer, N05-mining closed); the dispatched architect subagent's partial work (src/hwpm/analytics/coverage.py) was found on disk after a 529 stall, so it was completed in-session rather than re-dispatched into a persisting outage
+- **Authority:** SPEC-005
+- **Graph node:** N18-governance-view
+- **Model:** claude-opus-5
+- **Actor:** marti
+- **Commit:** `39c889e`
+- **Artefacts:** `src/hwpm/analytics/coverage.py,src/hwpm/analytics/suppression.py,src/hwpm/analytics/motion.py,tools/generate_viewer_artefacts.py,web/viewer.html,web/viewer.js,tests/test_coverage.py`
+- **Evidence:**
+
+  ```
+  356 passed, 31 skipped, 0 failed; ruff format/check clean; mypy clean (coverage.py, suppression.py, motion.py); vulture clean; import-linter 3 kept 0 broken; page verified live in browser (strategy switch between referral and intersection, coverage figure with 95% CI, withheld state with reason, union/intersection bounds section), zero console errors
+  ```

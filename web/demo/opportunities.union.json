@@ -14,124 +14,124 @@
   "payload": {
     "candidates": [
       {
-        "clinician": "C01",
-        "patient": "P06",
-        "specialty": "general_medicine",
-        "bed": "1B/BED0",
-        "at": "2026-01-06T09:45:00",
-        "proximity_m": 2.97,
-        "confidence": 0.8018,
-        "reason": "C01 (specialty general_medicine) passed within 3.0m of 1B/BED0 (patient P06 requires general_medicine) between 09:40 and 09:45, 0s from a confirmed presence there"
-      },
-      {
-        "clinician": "C01",
-        "patient": "P06",
-        "specialty": "general_medicine",
-        "bed": "1B/BED0",
-        "at": "2026-01-06T09:55:00",
-        "proximity_m": 2.97,
-        "confidence": 0.8018,
-        "reason": "C01 (specialty general_medicine) passed within 3.0m of 1B/BED0 (patient P06 requires general_medicine) between 09:50 and 09:55, 0s from a confirmed presence there"
-      },
-      {
-        "clinician": "C02",
-        "patient": "P05",
-        "specialty": "general_medicine",
-        "bed": "1A/BED5",
-        "at": "2026-01-06T09:55:00",
-        "proximity_m": 10.24,
-        "confidence": 0.3174,
-        "reason": "C02 (specialty general_medicine) passed within 10.2m of 1A/BED5 (patient P05 requires general_medicine) between 08:40 and 09:55, 0s from a confirmed presence there"
-      },
-      {
-        "clinician": "C02",
-        "patient": "P10",
-        "specialty": "general_medicine",
-        "bed": "1B/BED4",
-        "at": "2026-01-06T09:55:00",
-        "proximity_m": 6.39,
-        "confidence": 0.574,
-        "reason": "C02 (specialty general_medicine) passed within 6.4m of 1B/BED4 (patient P10 requires general_medicine) between 08:40 and 09:55, 0s from a confirmed presence there"
-      },
-      {
         "clinician": "C02",
         "patient": "P03",
         "specialty": "general_medicine",
         "bed": "1A/BED3",
-        "at": "2026-01-06T09:55:00",
+        "at": "2026-01-06T09:40:00",
         "proximity_m": 2.97,
         "confidence": 0.8018,
-        "reason": "C02 (specialty general_medicine) passed within 3.0m of 1A/BED3 (patient P03 requires general_medicine) between 08:40 and 09:55, 0s from a confirmed presence there"
+        "reason": "C02 (specialty general_medicine) passed within 3.0m of 1A/BED3 (patient P03 requires general_medicine) between 08:55 and 09:40, 0s from a confirmed presence there"
       },
       {
         "clinician": "C05",
-        "patient": "P08",
+        "patient": "P00",
         "specialty": "surgical",
-        "bed": "1B/BED2",
-        "at": "2026-01-06T09:50:00",
-        "proximity_m": 10.24,
+        "bed": "1A/BED0",
+        "at": "2026-01-06T09:05:00",
+        "proximity_m": 2.97,
         "confidence": 0.0,
-        "reason": "C05 (specialty surgical) passed within 10.2m of 1B/BED2 (patient P08 requires surgical) between 09:35 and 09:50, 300s from a confirmed presence there"
+        "reason": "C05 (specialty surgical) passed within 3.0m of 1A/BED0 (patient P00 requires surgical) between 08:45 and 09:05, 300s from a confirmed presence there"
       },
       {
         "clinician": "C05",
         "patient": "P07",
         "specialty": "surgical",
         "bed": "1B/BED1",
-        "at": "2026-01-06T09:50:00",
+        "at": "2026-01-06T09:55:00",
         "proximity_m": 6.39,
         "confidence": 0.574,
-        "reason": "C05 (specialty surgical) passed within 6.4m of 1B/BED1 (patient P07 requires surgical) between 09:35 and 09:50, 0s from a confirmed presence there"
+        "reason": "C05 (specialty surgical) passed within 6.4m of 1B/BED1 (patient P07 requires surgical) between 09:50 and 09:55, 0s from a confirmed presence there"
       },
       {
-        "clinician": "C05",
+        "clinician": "C06",
         "patient": "P09",
         "specialty": "surgical",
         "bed": "1B/BED3",
-        "at": "2026-01-06T09:50:00",
+        "at": "2026-01-06T09:55:00",
         "proximity_m": 2.97,
         "confidence": 0.8018,
-        "reason": "C05 (specialty surgical) passed within 3.0m of 1B/BED3 (patient P09 requires surgical) between 09:35 and 09:50, 0s from a confirmed presence there"
+        "reason": "C06 (specialty surgical) passed within 3.0m of 1B/BED3 (patient P09 requires surgical) between 08:35 and 09:55, 0s from a confirmed presence there"
+      },
+      {
+        "clinician": "C06",
+        "patient": "P05",
+        "specialty": "surgical",
+        "bed": "1A/BED5",
+        "at": "2026-01-06T09:55:00",
+        "proximity_m": 10.24,
+        "confidence": 0.3174,
+        "reason": "C06 (specialty surgical) passed within 10.2m of 1A/BED5 (patient P05 requires surgical) between 08:35 and 09:55, 0s from a confirmed presence there"
       },
       {
         "clinician": "C06",
         "patient": "P06",
         "specialty": "surgical",
         "bed": "1B/BED0",
-        "at": "2026-01-06T09:35:00",
+        "at": "2026-01-06T09:55:00",
         "proximity_m": 2.97,
-        "confidence": 0.0,
-        "reason": "C06 (specialty surgical) passed within 3.0m of 1B/BED0 (patient P06 requires surgical) between 09:30 and 09:35, 300s from a confirmed presence there"
+        "confidence": 0.8018,
+        "reason": "C06 (specialty surgical) passed within 3.0m of 1B/BED0 (patient P06 requires surgical) between 08:35 and 09:55, 0s from a confirmed presence there"
       },
       {
         "clinician": "C06",
-        "patient": "P06",
+        "patient": "P08",
         "specialty": "surgical",
-        "bed": "1B/BED0",
-        "at": "2026-01-06T09:45:00",
+        "bed": "1B/BED2",
+        "at": "2026-01-06T09:55:00",
+        "proximity_m": 10.24,
+        "confidence": 0.3174,
+        "reason": "C06 (specialty surgical) passed within 10.2m of 1B/BED2 (patient P08 requires surgical) between 08:35 and 09:55, 0s from a confirmed presence there"
+      },
+      {
+        "clinician": "C07",
+        "patient": "P03",
+        "specialty": "general_medicine",
+        "bed": "1A/BED3",
+        "at": "2026-01-06T09:30:00",
         "proximity_m": 2.97,
         "confidence": 0.8018,
-        "reason": "C06 (specialty surgical) passed within 3.0m of 1B/BED0 (patient P06 requires surgical) between 09:40 and 09:45, 0s from a confirmed presence there"
+        "reason": "C07 (specialty general_medicine) passed within 3.0m of 1A/BED3 (patient P03 requires general_medicine) between 08:25 and 09:30, 0s from a confirmed presence there"
+      },
+      {
+        "clinician": "C07",
+        "patient": "P02",
+        "specialty": "general_medicine",
+        "bed": "1A/BED2",
+        "at": "2026-01-06T09:30:00",
+        "proximity_m": 10.24,
+        "confidence": 0.3174,
+        "reason": "C07 (specialty general_medicine) passed within 10.2m of 1A/BED2 (patient P02 requires general_medicine) between 08:25 and 09:30, 0s from a confirmed presence there"
       },
       {
         "clinician": "C07",
         "patient": "P05",
         "specialty": "general_medicine",
         "bed": "1A/BED5",
-        "at": "2026-01-06T09:40:00",
+        "at": "2026-01-06T09:30:00",
         "proximity_m": 10.24,
         "confidence": 0.3174,
-        "reason": "C07 (specialty general_medicine) passed within 10.2m of 1A/BED5 (patient P05 requires general_medicine) between 09:10 and 09:40, 0s from a confirmed presence there"
+        "reason": "C07 (specialty general_medicine) passed within 10.2m of 1A/BED5 (patient P05 requires general_medicine) between 08:25 and 09:30, 0s from a confirmed presence there"
       },
       {
         "clinician": "C07",
-        "patient": "P10",
+        "patient": "P03",
         "specialty": "general_medicine",
-        "bed": "1B/BED4",
-        "at": "2026-01-06T09:40:00",
-        "proximity_m": 6.39,
+        "bed": "1A/BED3",
+        "at": "2026-01-06T09:45:00",
+        "proximity_m": 2.97,
         "confidence": 0.0,
-        "reason": "C07 (specialty general_medicine) passed within 6.4m of 1B/BED4 (patient P10 requires general_medicine) between 09:10 and 09:40, 300s from a confirmed presence there"
+        "reason": "C07 (specialty general_medicine) passed within 3.0m of 1A/BED3 (patient P03 requires general_medicine) between 09:35 and 09:45, 300s from a confirmed presence there"
+      },
+      {
+        "clinician": "C07",
+        "patient": "P05",
+        "specialty": "general_medicine",
+        "bed": "1A/BED5",
+        "at": "2026-01-06T09:45:00",
+        "proximity_m": 10.24,
+        "confidence": 0.3174,
+        "reason": "C07 (specialty general_medicine) passed within 10.2m of 1A/BED5 (patient P05 requires general_medicine) between 09:35 and 09:45, 0s from a confirmed presence there"
       }
     ]
   }
