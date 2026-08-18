@@ -644,3 +644,18 @@ as new entries referencing the original.
   ```
   356 passed, 31 skipped, 0 failed; ruff format/check clean; mypy clean (coverage.py, suppression.py, motion.py); vulture clean; import-linter 3 kept 0 broken; page verified live in browser (strategy switch between referral and intersection, coverage figure with 95% CI, withheld state with reason, union/intersection bounds section), zero console errors
   ```
+
+## 2026-08-18 18:44:50Z — N19b: built hwpm.retrieve.vector (fastembed BAAI/bge-small-en-v1.5, sqlite-vec, model_sha recorded) and hwpm.retrieve.hybrid (RRF, RRF_K=60); measured lexical/vector/hybrid recall@5+MRR on the real 36-query set; ADR-0007 G3 does not clear
+
+- **Why:** N19b commissioned to reopen ADR-0007 G2 after the corpus grew; build the vector half and RRF hybrid per SPEC-007 Part A and report honestly regardless of outcome
+- **Authority:** SPEC-007
+- **Graph node:** N19b-vector-retrieval
+- **Model:** claude-sonnet-5
+- **Actor:** marti
+- **Commit:** `ccf7b04`
+- **Artefacts:** `src/hwpm/retrieve/vector.py`, `src/hwpm/retrieve/hybrid.py`, `src/hwpm/retrieve/eval.py`, `src/hwpm/retrieve/index.py`, `src/hwpm/retrieve/__init__.py`, `src/hwpm/cli.py`, `tests/test_retrieve.py`, `tests/bench/test_retrieval_quality.py`, `tests/bench/test_retrieval_latency.py`, `pyproject.toml`
+- **Evidence:**
+
+  ```
+  commit ccf7b04; measured 2026-08-18 n=36 n_chunks=1346: lexical recall@5=0.750 mrr=0.469 CI[0.589,0.862]; vector recall@5=0.611 mrr=0.343 CI[0.449,0.752]; hybrid recall@5=0.639 mrr=0.459 CI[0.476,0.775]. ADR-0007 G3 (hybrid>=lexical+0.15) NOT MET -- hybrid scores below lexical alone. tests/bench/test_retrieval_quality.py::test_hybrid_recall_gate asserts the real G3 threshold and is deliberately red, not loosened. tests/test_retrieve.py::test_lexical_recall_gate green at 0.75 (inherited uncommitted fixture correction from a concurrent N09 session, included in this commit). Full corpus vector build ~1368s, over the 60s ADR-0007 budget, recorded honestly in tests/bench/test_retrieval_latency.py. Default pytest -q: 365 passed, 35 skipped (bench tests skip by design). ruff format/check clean; mypy clean on hwpm.domain, 1 advisory missing-stub note on sqlite_vec elsewhere; vulture clean; lint-imports 3 kept 0 broken; coverage 91% overall. Recommendation: hwpm context search --lexical-only remains the honest default given the measured regression.
+  ```
