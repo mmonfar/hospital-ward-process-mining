@@ -1,21 +1,25 @@
-"""The `hwpm context` index — lexical only.
+"""The `hwpm context` index — lexical build artefact, and the `search()`
+entry point that layers hybrid ranking on top when a vector index exists.
 
-ADR-0007's G2 measurement (`docs/AUDIT-LOG.md`, node N19) came back with
-lexical-only recall@5 = 0.75 on the labelled query set — above the 0.70 stop
-threshold — so the vector half of SPEC-007 Part A was **not built** and this
-module never imports `fastembed` or `sqlite-vec`. `Hit.vector_rank` is always
-`None`; `search()` accepts `lexical_only` for interface compatibility with
-SPEC-007 but there is currently no other mode to select.
+ADR-0007's G2 measurement (`docs/AUDIT-LOG.md`, node N19) originally came back
+with lexical-only recall@5 = 0.75, above the 0.70 stop threshold, so the
+vector half was not built at first. The corpus grew and a later remeasurement
+(N19b) reopened G2; `hwpm.retrieve.vector` and `hwpm.retrieve.hybrid` are the
+vector half and RRF fusion built in response. This module itself still never
+imports `fastembed` or `sqlite-vec` at module scope — those live in
+`hwpm.retrieve.vector`/`hwpm.retrieve.hybrid` and are imported lazily, inside
+`search()`, only when `lexical_only` is False. `Hit.vector_rank` is `None`
+whenever the vector half was not consulted (deps absent, no vector index
+built yet, or `lexical_only=True`); it is set when a hybrid hit came from the
+vector retriever.
 
-The index is a git-ignored JSON build artefact (`.hwpm/context-index.json`
+The lexical index is a git-ignored JSON build artefact (`.hwpm/context-index.json`
 by default): the chunked corpus plus its `IndexStats`. Rebuilding it is a
-sub-second, pure-Python operation at this corpus size (~940 chunks, ~1.2 MB)
-— there is no embedding cost to amortise, so unlike the vector design in
-SPEC-007 there is no incremental-reindex machinery here. If the vector half
-is ever built later (a fresh G2/G3 measurement would be required first,
-since this file is the record that G2 passed on 2026-08-15), incremental
-reindexing becomes worth the complexity because embedding, not indexing, is
-the expensive step.
+sub-second, pure-Python operation at this corpus size — there is no embedding
+cost to amortise, so unlike the vector index there is no incremental-reindex
+machinery here. The vector index (`.hwpm/context-vectors.db`, also
+git-ignored) is built separately by `hwpm.retrieve.vector.build_vector_index`
+and consulted here only if it is present on disk.
 """
 
 from __future__ import annotations
@@ -57,14 +61,14 @@ class Hit:
 
 
 class MissingOptionalDependencyError(RuntimeError):
-    """Raised for a retrieval mode that needs `fastembed`/`sqlite-vec`.
-
-    Neither is a dependency of this repository yet (SPEC-007's vector half
-    was not built — the G2 gate stopped at lexical-only). CLI callers catch
-    this and exit 2 with an install hint, never a traceback, matching
-    SPEC-007 criterion 10's intent even though today there is nothing to
-    install a hint *for* — vector mode simply does not exist yet.
-    """
+    """Raised by `hwpm.retrieve.vector`/`hwpm.retrieve.hybrid` when a
+    function that needs `fastembed`/`sqlite-vec` is called without them
+    installed (the `retrieve` extra; N19b, ADR-0007 G2 reopened). Defined
+    here rather than in `vector.py` so `hwpm.retrieve.index` — and every
+    caller that only wants the lexical path — can reference it without
+    importing anything optional-dependent. `hwpm context index`/`search`
+    catch it and degrade or exit 2 with an install hint, never a traceback
+    (SPEC-007 criteria 9-10)."""
 
 
 def _chunk_to_dict(c: Chunk) -> dict:
@@ -160,15 +164,52 @@ def search(
     index_path: Path = DEFAULT_INDEX_PATH,
     repo_root: Path | None = None,
 ) -> list[Hit]:
-    """Ranked passages for `q`. `lexical_only` is accepted for SPEC-007
-    interface parity; every result is lexical-only today regardless of its
-    value, and `Hit.vector_rank` is always `None` (criterion 8) because the
-    vector half was not built."""
-    del lexical_only  # no other mode exists yet — see module docstring
+    """Ranked passages for `q`.
+
+    `lexical_only=True` runs BM25 alone and needs no optional dependency
+    (SPEC-007 criterion 8): every `Hit.vector_rank` is `None`.
+
+    Otherwise this tries RRF-fused hybrid search (`hwpm.retrieve.hybrid`)
+    against whatever vector index exists at `<repo_root>/.hwpm/context-vectors.db`.
+    If `fastembed`/`sqlite-vec` are not installed, or no vector index has been
+    built yet, it degrades to the same lexical-only result rather than raising
+    — vector search is additive, never a hard requirement to get an answer.
+
+    N19b measured (2026-08-18, docs/AUDIT-LOG.md) that hybrid recall@5 (0.639)
+    is currently *below* lexical-only (0.750) on this corpus — ADR-0007 G3
+    (hybrid >= lexical + 0.15) did not clear. `lexical_only=True` is the
+    honestly-recommended mode today; hybrid is shipped per this node's
+    instruction to build and measure it, not because it was shown to help.
+    """
     if index_path.exists():
         chunks = load_chunks(index_path)
     else:
         chunks = build_chunks((repo_root or Path.cwd()).resolve())
+
+    root = (repo_root or Path.cwd()).resolve()
+
+    if not lexical_only:
+        try:
+            from hwpm.retrieve.hybrid import HybridRetriever
+            from hwpm.retrieve.vector import DEFAULT_VECTOR_DB_PATH
+
+            vector_path = root / DEFAULT_VECTOR_DB_PATH
+            lexical_index = LexicalIndex.build(chunks)
+            hybrid = HybridRetriever(lexical_index, vector_path)
+            ranked = hybrid.search_ranked(q, k=k)
+            if ranked:
+                return [
+                    Hit(
+                        chunk=h.chunk,
+                        score=h.score,
+                        lexical_rank=h.lexical_rank,
+                        vector_rank=h.vector_rank,
+                    )
+                    for h in ranked
+                ]
+        except MissingOptionalDependencyError:
+            pass
+
     idx = LexicalIndex.build(chunks)
     results = idx.search(q, k=k)
     return [

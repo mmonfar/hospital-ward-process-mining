@@ -580,6 +580,49 @@ nodes:
     gate: autonomous
     budget_tokens: 150000
     decision: ADR-0007 G2, re-measured 2026-08-15
+    status: completed
+    artefacts:
+      [
+        src/hwpm/retrieve/vector.py,
+        src/hwpm/retrieve/hybrid.py,
+        src/hwpm/retrieve/eval.py,
+        src/hwpm/retrieve/index.py,
+        src/hwpm/retrieve/__init__.py,
+        src/hwpm/cli.py,
+        tests/test_retrieve.py,
+        tests/bench/test_retrieval_quality.py,
+        tests/bench/test_retrieval_latency.py,
+        pyproject.toml,
+      ]
+    outcome: >
+      Built and shipped: hwpm.retrieve.vector (fastembed BAAI/bge-small-en-v1.5,
+      384-dim, sqlite-vec local storage, model_sha recorded -- closes the N19
+      gap) and hwpm.retrieve.hybrid (standard RRF, RRF_K=60, no tuned alpha).
+      Measured 2026-08-18 on the real 36-query set, n_chunks=1346: lexical
+      recall@5=0.750 mrr=0.469 (95% Wilson CI [0.589,0.862]); vector-only
+      recall@5=0.611 mrr=0.343 (CI [0.449,0.752]); hybrid recall@5=0.639
+      mrr=0.459 (CI [0.476,0.775]). ADR-0007 G3 (hybrid >= lexical + 0.15)
+      DOES NOT CLEAR -- hybrid scores below lexical-only, not above it, and
+      vector-only scores lower still. tests/bench/test_retrieval_quality.py::
+      test_hybrid_recall_gate asserts the real G3 threshold and is
+      deliberately left red, not loosened, matching this node's own
+      instruction. tests/test_retrieve.py::test_lexical_recall_gate (the
+      originally-red gate this node was opened to answer) is GREEN again at
+      0.75: a concurrent session's uncommitted fixture correction (line-range
+      re-pointing after unrelated insertions in SPEC-004/SELECTION-GUIDE.md,
+      already validated in a prior N09 audit entry) was present in the
+      working tree when this node started and is included in this commit.
+      So the premise "recall fell to 0.667" no longer holds against the
+      corrected fixture, but the vector half was built regardless per this
+      node's explicit instruction, and the measurement is honest either way.
+      Full-corpus vector index build measured at ~1368s (~23 min) on this
+      reference machine -- far over the ADR-0007 G3 60s budget; recorded in
+      tests/bench/test_retrieval_latency.py rather than hidden. Given the
+      measured recall regression, `hwpm context search --lexical-only`
+      (unchanged, always available, no optional dep) is the honest
+      recommendation today; hybrid is shipped and available but not shown to
+      help on this corpus. See docs/AUDIT-LOG.md for full detail and
+      plausible causes.
     rationale: >
       REOPENED BY MEASUREMENT. N19 shipped lexical-only because ADR-0007's G2
       gate measured lexical recall@5 at 0.75, above the 0.70 stop threshold.

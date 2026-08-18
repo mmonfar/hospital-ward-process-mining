@@ -39,9 +39,10 @@ queries:
 
   - id: q03
     query: "How do we handle noisy fitness during calibration?"
+    note: "line range re-checked 2026-08-15/16 after a concurrent N08 benchmark session inserted a Rule 0 outcome section above these lines in both files (+23 in SPEC-004, +38 in SELECTION-GUIDE)"
     relevant:
-      - {path: docs/specs/SPEC-004-optimisation.md, start_line: 108, end_line: 116}
-      - {path: refs/metaheuristics/SELECTION-GUIDE.md, start_line: 144, end_line: 149}
+      - {path: docs/specs/SPEC-004-optimisation.md, start_line: 131, end_line: 139}
+      - {path: refs/metaheuristics/SELECTION-GUIDE.md, start_line: 182, end_line: 187}
 
   - id: q04
     query: "Who decides the RequiredSpecialty denominator and how was it resolved?"
@@ -84,8 +85,9 @@ queries:
 
   - id: q11
     query: "how is a clinician's schedule represented inside the optimiser"
+    note: "line range re-checked 2026-08-15/16, see q03"
     relevant:
-      - {path: docs/specs/SPEC-004-optimisation.md, start_line: 92, end_line: 96}
+      - {path: docs/specs/SPEC-004-optimisation.md, start_line: 115, end_line: 119}
 
   - id: q12
     query: "why does the project produce a Pareto front instead of one recommended schedule"
@@ -130,8 +132,9 @@ queries:
 
   - id: q20
     query: "does the project ever nest one metaheuristic inside another to tune it"
+    note: "line range re-checked 2026-08-15/16, see q03"
     relevant:
-      - {path: refs/metaheuristics/SELECTION-GUIDE.md, start_line: 166, end_line: 173}
+      - {path: refs/metaheuristics/SELECTION-GUIDE.md, start_line: 204, end_line: 211}
 
   - id: q21
     query: "what is the opportunistic MDT detection case about the passing surgeon"
@@ -140,8 +143,9 @@ queries:
 
   - id: q22
     query: "why was ant colony optimisation chosen over a genetic algorithm for visit routing"
+    note: "line range re-checked 2026-08-15/16, see q03"
     relevant:
-      - {path: refs/metaheuristics/SELECTION-GUIDE.md, start_line: 110, end_line: 117}
+      - {path: refs/metaheuristics/SELECTION-GUIDE.md, start_line: 148, end_line: 155}
 
   - id: q23
     query: "what suppresses a small ward-day cluster from being shown"
@@ -189,8 +193,9 @@ queries:
 
   - id: q31
     query: "which algorithm is used to calibrate the simulation's parameters"
+    note: "line range re-checked 2026-08-15/16, see q03"
     relevant:
-      - {path: refs/metaheuristics/SELECTION-GUIDE.md, start_line: 129, end_line: 142}
+      - {path: refs/metaheuristics/SELECTION-GUIDE.md, start_line: 167, end_line: 180}
 
   - id: q32
     query: "why check a JIT compiler before reaching for a compiled kernel"

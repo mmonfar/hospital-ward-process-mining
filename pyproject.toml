@@ -25,6 +25,14 @@ analysis = [
 optimize = [
     "ortools>=9.9",
 ]
+# SPEC-007 Part A vector half (N19b, ADR-0007 G2 reopened). `hwpm govern`
+# stays installable without this -- `hwpm.retrieve.vector`/`hwpm.retrieve.hybrid`
+# import neither package at module scope, only lazily when a function that
+# needs them is actually called (SPEC-007 criteria 8-9).
+retrieve = [
+    "fastembed>=0.3",
+    "sqlite-vec>=0.1",
+]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",

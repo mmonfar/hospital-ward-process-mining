@@ -221,19 +221,42 @@ def cmd_design_check(_args: argparse.Namespace) -> int:
 
 
 def cmd_context_index(_args: argparse.Namespace) -> int:
-    """Build/refresh the lexical index (SPEC-007 Part A, `hwpm context index`).
+    """Build/refresh the lexical index, and the vector index if the
+    `retrieve` extra is installed (SPEC-007 Part A, `hwpm context index`).
 
-    Lexical only: the G2 measurement (ADR-0007) came back with lexical-only
-    recall@5 above the 0.70 stop threshold, so the vector half was never
-    built. `IndexStats.model` reports `lexical-bm25`, not an embedding model.
+    N19b (ADR-0007 G2 reopened) added the vector half on top of the
+    lexical-only build N19 shipped. `IndexStats.model` for the lexical build
+    is still `lexical-bm25`; the vector build's stats separately report the
+    embedding model and its `model_sha`. If `fastembed`/`sqlite-vec` are not
+    installed, the vector build is skipped with an install hint and the
+    lexical build still succeeds -- never a traceback (criteria 9-10).
     """
-    from hwpm.retrieve.index import DEFAULT_INDEX_PATH, build_index
+    from hwpm.retrieve.index import (
+        DEFAULT_INDEX_PATH,
+        MissingOptionalDependencyError,
+        build_index,
+    )
 
     out = REPO_ROOT / DEFAULT_INDEX_PATH
     stats = build_index([REPO_ROOT], out)
     print(f"wrote {out.relative_to(REPO_ROOT)}")
     print(f"files={stats.n_files} chunks={stats.n_chunks} bytes={stats.bytes_indexed:,}")
-    print(f"model={stats.model} build_seconds={stats.build_seconds:.2f}")
+    print(f"lexical model={stats.model} build_seconds={stats.build_seconds:.2f}")
+
+    try:
+        from hwpm.retrieve.corpus import build_chunks
+        from hwpm.retrieve.vector import DEFAULT_VECTOR_DB_PATH, build_vector_index
+
+        vector_out = REPO_ROOT / DEFAULT_VECTOR_DB_PATH
+        chunks = build_chunks(REPO_ROOT)
+        vstats = build_vector_index(chunks, vector_out)
+        print(f"wrote {vector_out.relative_to(REPO_ROOT)}")
+        print(
+            f"vector model={vstats.model} model_sha={vstats.model_sha[:12]} "
+            f"dim={vstats.dim} build_seconds={vstats.build_seconds:.2f}"
+        )
+    except MissingOptionalDependencyError as exc:
+        print(f"vector index skipped: {exc}")
     return 0
 
 
@@ -253,7 +276,12 @@ def cmd_context_search(args: argparse.Namespace) -> int:
         print("No results.")
         return 0
     for hit in hits:
-        retriever = "lexical" if hit.vector_rank is None else "vector"
+        if hit.lexical_rank is not None and hit.vector_rank is not None:
+            retriever = "hybrid"
+        elif hit.vector_rank is not None:
+            retriever = "vector"
+        else:
+            retriever = "lexical"
         print(f"\n{hit.citation()}  [{retriever}]  score={hit.score:.2f}")
         print(f"  {hit.chunk.heading_path}")
         for line in hit.chunk.text.splitlines():
@@ -261,14 +289,20 @@ def cmd_context_search(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_context_eval(_args: argparse.Namespace) -> int:
-    """The G2/G3 measurement (ADR-0007), JSON out."""
+def cmd_context_eval(args: argparse.Namespace) -> int:
+    """The G2/G3 measurement (ADR-0007), JSON out.
+
+    Full (default) mode builds the vector index and reports lexical, vector
+    and hybrid recall/MRR -- this embeds the whole corpus and takes minutes
+    on CPU (measured for N19b, see docs/AUDIT-LOG.md). `--lexical-only` skips
+    that and reports the cheap BM25-only baseline in under a second.
+    """
     import json as _json
 
     from hwpm.retrieve.eval import evaluate
 
     queries_path = REPO_ROOT / "tests" / "fixtures" / "retrieval_queries.yaml"
-    scores = evaluate(queries_path, REPO_ROOT)
+    scores = evaluate(queries_path, REPO_ROOT, include_vector=not args.lexical_only)
     out = {
         name: {"recall_at_5": s.recall_at_5, "mrr": s.mrr, "n_queries": s.n_queries}
         for name, s in scores.items()
@@ -348,10 +382,23 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ctx_search.add_argument("query")
     ctx_search.add_argument("-k", type=int, default=8)
-    ctx_search.add_argument("--lexical-only", action="store_true")
+    ctx_search.add_argument(
+        "--lexical-only",
+        action="store_true",
+        help=(
+            "BM25 only, no embedding needed. Recommended: the N19b measurement "
+            "(docs/AUDIT-LOG.md) found hybrid recall@5 (0.64) below lexical-only "
+            "(0.75) on this corpus, so hybrid is not yet a clear improvement"
+        ),
+    )
     ctx_search.set_defaults(func=cmd_context_search)
 
     ctx_eval = csub.add_parser("eval", help="the G2/G3 retrieval-quality measurement")
+    ctx_eval.add_argument(
+        "--lexical-only",
+        action="store_true",
+        help="skip the vector/hybrid measurement (skips the full-corpus embed)",
+    )
     ctx_eval.set_defaults(func=cmd_context_eval)
 
     return parser
