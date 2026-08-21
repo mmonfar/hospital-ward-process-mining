@@ -124,6 +124,57 @@
   </section>
 
   <section class="section stack">
+    <h2 class="t-title">Plain-language summary and method disclosure</h2>
+    <p class="note">
+      Every figure opens with one sentence in the reader's language, above the
+      number rather than after it — a figure that opens with a statistic gets
+      read as a statistic, and the statistic is the evidence rather than the
+      finding. The rule beside it says what <em>kind</em> of claim the figure
+      makes. Hue and line style both vary and the status word is always printed,
+      so nothing depends on colour alone.
+    </p>
+    <p class="note">
+      None of the six statuses is a verdict. There is no "good" and no
+      "concerning", for the same reason there is no success-green in the
+      palette: a tool that makes the judgement on the reader's behalf leaves
+      them nothing to read but the judgement. "Measured" and "Upper bound"
+      describe how a number was arrived at, not whether the ward should be
+      pleased about it.
+    </p>
+    <div class="panel stack" id="summary-host"></div>
+    <p class="note">
+      Method, provenance detail and internal citations collapse into a
+      <code>&lt;details&gt;</code> panel at the foot of each figure — reachable
+      in one keystroke, findable by in-page search, and not in the way of a
+      first read. The interval, the denominator and the strategy key never go
+      in here: an interval behind a disclosure is read as absent.
+    </p>
+    <div class="panel" id="method-host"></div>
+  </section>
+
+  <section class="section stack">
+    <h2 class="t-title">Supporting measure — the KPI tile</h2>
+    <p class="note">
+      Not every quantity a page can compute is a quantity the reader came for.
+      A page of equally weighted figures has as many entry points as it has
+      figures, and therefore none; a tile says "this is real, it is here, it is
+      not the story" in about a fifth of the height. Expanding it is an explicit
+      request for detail, which is the moment full statistics and method prose
+      become welcome rather than in the way.
+    </p>
+    <p class="note">
+      The interval and the provenance render <em>while it is collapsed</em>, and
+      <code>kpiTile()</code> throws without either — the same guards
+      <code>figure()</code> and <code>statistic()</code> carry, deliberately not
+      relaxed for a smaller component. A tile is more likely to be cropped out
+      of context than a full figure, not less, and "big number, no interval" is
+      the failure mode SPEC-005 names by name. The tile is smaller because it
+      carries less prose, never because it carries less evidence.
+    </p>
+    <div id="kpi-host"></div>
+  </section>
+
+  <section class="section stack">
     <h2 class="t-title">States</h2>
     <p class="note">
       An empty result is a finding, not a failure — a ward whose rounds already
@@ -154,13 +205,17 @@ import {
   categoricalLegend,
   emptyState,
   figure,
+  kpiTile,
   loadingState,
+  methodNote,
   paretoFront,
+  plainSummary,
   roleLegend,
   series,
   seriesOther,
   statistic,
   strategyLegend,
+  STATUSES,
   strategySelector,
   suppressedState,
   timeSeries,
@@ -358,6 +413,68 @@ document.getElementById("front-host").appendChild(
     subtitle: "Six non-dominated schedules; no ordering is implied by the layout",
     provenance,
     body: front.node,
+  }),
+);
+
+/* ---- summary and method ---------------------------------------------- */
+
+const SUMMARY_SPECIMENS = {
+  measured: "14 of the 24 patients who needed more than one specialty had at least two of them at the bedside at the same time.",
+  bounded: "Clinicians walked 1464 m on the rounds observed. No more than 88 m of that can be put down to the order patients were visited in.",
+  candidate: "Eight occasions where a clinician walked past a patient who needed their specialty, without a bedside visit being recorded.",
+  modelled: "Eleven alternative schedules, shown against today's observed rounds. None of them is recommended.",
+  reference: "The ward every distance on this page was measured against.",
+  withheld: "Joint-review coverage is not reported under the Intersection definition.",
+};
+const summaryHost = document.getElementById("summary-host");
+for (const status of Object.keys(STATUSES)) {
+  summaryHost.appendChild(plainSummary({ status, text: SUMMARY_SPECIMENS[status] }));
+}
+
+document.getElementById("method-host").appendChild(
+  methodNote({
+    entries: [
+      ["What counts as covered", "Two or more of a patient's required specialties at the bedside at the same time — present together, not merely both on the ward."],
+      ["Measured, never attested", "Observed bedside presence only. Nothing here is self-reported or taken from a completion record. ADR-0006 rule 4."],
+      ["Small numbers", "Any group below five patients is not displayed, so that no individual can be identified from a small cell. ADR-0005."],
+      ["Governing decisions", "ADR-0006, ADR-0005, SPEC-001, SPEC-005. Synthetic figures throughout this page."],
+    ],
+  }),
+);
+
+/* ---- kpi tile -------------------------------------------------------- */
+
+const kpiDetail = document.createElement("div");
+kpiDetail.className = "stack";
+kpiDetail.appendChild(
+  statistic({
+    label: "Walked on the observed rounds",
+    value: "1464",
+    unit: "m",
+    exact: true,
+    note: "Synthetic. Across 28 rounds on 8 ward-days.",
+  }),
+);
+kpiDetail.appendChild(
+  methodNote({
+    entries: [
+      ["What the ceiling means", "An upper bound on avoidable motion under perfect foresight. Not a target, not a forecast, not a saving to plan against."],
+      ["Governing decisions", "SPEC-003, SPEC-005. Synthetic figures throughout this page."],
+    ],
+  }),
+);
+document.getElementById("kpi-host").appendChild(
+  kpiTile({
+    title: "Walking distance",
+    label: "at most, of the 1464 m walked",
+    value: "88",
+    unit: "m",
+    interval: ["15", "219"],
+    summary:
+      "No more than 6.0% of the ward's walking can be put down to the order patients were " +
+      "visited in. A ceiling, not a saving.",
+    provenance,
+    detail: kpiDetail,
   }),
 );
 

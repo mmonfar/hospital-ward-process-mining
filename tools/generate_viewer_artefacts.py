@@ -79,7 +79,14 @@ from hwpm.optimize.types import Budget, Instance, Objectives
 _INSTANCE_SEED = 17
 
 METHOD_VERSION = "viewer_demo/1.0.0"
-DATE_RANGE = "synthetic demo data (no real dates -- ADR-0005)"
+#: Rendered verbatim into every figure's provenance strip, which is prose a
+#: Clinical Governance reader sees before anything else on the page. It
+#: therefore says what is true in their language rather than citing the ADR
+#: that requires it -- the citation belongs in the figure's method panel, where
+#: SPEC-005's own design bar 8 puts the material a reader goes looking for once
+#: they have decided to challenge a number. The substance is unchanged: this
+#: bundle carries no real dates because it carries no real data.
+DATE_RANGE = "Synthetic demo data — no real dates"
 ALL_STRATEGIES: tuple[RequiredSpecialtyStrategyKey, ...] = tuple(
     RequiredSpecialtyStrategyKey
 )

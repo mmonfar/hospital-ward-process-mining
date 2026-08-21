@@ -1,8 +1,10 @@
 # SPEC-005 — Front end: ward visualisation, strategy selection, governance view
 
 **Status:** accepted · **Nodes:** N14a, N14, N18 · **Owner role:** architect (design), builder (implementation)
-**Depends on:** SPEC-001, SPEC-003, SPEC-004 · **Last revised:** 2026-08-15
-(2026-08-15: design-system section and criteria D1–D6 added at N14a.)
+**Depends on:** SPEC-001, SPEC-003, SPEC-004 · **Last revised:** 2026-08-21
+(2026-08-15: design-system section and criteria D1–D6 added at N14a.
+ 2026-08-21: decisions 11–13 and criteria 12–14 added — register, disclosure and
+ tiering. Addition only; nothing above was altered.)
 
 ## Problem
 
@@ -182,6 +184,63 @@ build` regenerates the CSS and JS.
     to a darkened neutral (`#54666b`, 5.29:1). Anything set in the old tone in
     `web/hospital-ward.html` is a known defect to be corrected at N14.
 
+### Decisions added 2026-08-21 (N14-viewer follow-on)
+
+The first built version of the viewer satisfied every criterion above and was
+still not usable by the audience in the Problem statement. Read cold by a
+Clinical Governance reader, it presented as an audit trail: subtitles cited
+`ADR-0004`, `SPEC-002` and `N06` inline, five figures of equal weight rendered
+simultaneously each carrying a paragraph of methodological caveat, and the
+withheld-coverage explanation appeared twice on one screen. Nothing was
+*wrong* — criteria 1–11 and D1–D6 all held. The gap was that this spec
+constrained what a figure must **contain** and never what it must **read
+like**, and containment turns out to be satisfiable by documentation.
+
+**11. Internal citations are not user-facing prose.** No ADR number, SPEC
+number, graph-node id or artefact filename appears in any text a reader sees
+before they open a disclosure — not in a title, subtitle, headline, caption,
+axis label, provenance strip or page title. This is not a softening of the
+provenance requirement and nothing is deleted: every citation stays on the page,
+inside the figure's own method panel, one keystroke away. The audience for this
+work has never heard of this project's decision records, and prose that cites
+them at a reader reads as a tool describing itself rather than as a finding —
+which costs exactly the credibility the design bar exists to buy.
+
+**12. Every figure opens with a plain-language sentence, and method collapses
+behind it.** A figure whose first element is a statistic is read as a statistic;
+the number is the evidence, not the finding. The sentence is written in clinical
+register and is pure substitution of fields already in the artefact — it states
+no qualifier (*"just over half"*, *"only"*, *"disappointing"*) that the artefact
+does not contain, because a qualifier is a judgement and decision 5 keeps
+judgement with the reader. Methodological caveat prose, estimator detail and
+citations go in a collapsed panel. **The interval, the denominator and the
+strategy key never do**: design bar 5 is explicit that uncertainty behind a
+disclosure is read as absent.
+
+Figures also carry an **epistemic status** — how the number came to exist —
+drawn from a closed set: measured, upper bound, for review, modelled, reference,
+withheld. These are deliberately *not* evaluative. A brief for this work asked
+for good / concerning / uncertain encoding using the palette; that is refused
+here and the refusal is recorded rather than silently taken, because decision 5
+and the KPI-dashboard failure mode both forbid the interface making the
+judgement on the reader's behalf. "Measured" and "Upper bound" describe
+provenance; "good" would describe a verdict the tool is not entitled to.
+Status is carried by a printed word *and* a rule that varies in hue and line
+style, never by colour alone.
+
+**13. Figures are tiered, not equal.** A page of *n* equally weighted figures
+has *n* entry points and therefore none. The primary tier answers the question
+the page exists to answer and must be legible without reading a paragraph: the
+ward scene, whether joint review is happening (coverage and its near-miss
+candidates are one question and belong in one figure), and the schedule
+browser. Supporting measures — currently motion waste, which is a ceiling
+rather than a finding — render as a collapsed tile carrying the headline
+number, its interval, one sentence and its provenance, expanding to the full
+figure on request. A tile is smaller because it carries less prose, never
+because it carries less evidence: `kpiTile()` throws without an interval or
+provenance exactly as `figure()` and `statistic()` do, since a tile is *more*
+likely to be cropped into a slide than a full figure, not less.
+
 ### Design-system acceptance criteria
 
 | # | Criterion | Test |
@@ -288,6 +347,16 @@ directly from that ADR and are not negotiable at implementation time:
 9. Full keyboard operation of selectors and front browser. — manual review
 10. `prefers-reduced-motion` honoured throughout. — `test_reduced_motion`
 11. Loads and animates a full ward-day in <3 s on a mid-range laptop. — `bench`
+12. No ADR number, SPEC number, node id or artefact filename appears in text
+    rendered before a disclosure is opened; every one of them remains reachable
+    inside one. — manual review (no JS test harness in this repo; see D6's note
+    on not naming coverage stronger than it is)
+13. Every figure carries a plain-language sentence and an epistemic status from
+    the closed set, and no status is evaluative. — `plainSummary()` throws on a
+    missing sentence or an unknown status + manual review
+14. Supporting measures render collapsed, and render their interval and
+    provenance while collapsed. — `kpiTile()` throws without either + manual
+    review
 
 ## Failure modes
 

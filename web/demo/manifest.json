@@ -1,6 +1,6 @@
 {
   "method_version": "viewer_demo/1.0.0",
-  "date_range": "synthetic demo data (no real dates -- ADR-0005)",
+  "date_range": "Synthetic demo data \u2014 no real dates",
   "strategies": [
     "referral",
     "consult_note",

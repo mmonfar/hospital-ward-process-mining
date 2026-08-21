@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Ward viewer — strategy selector &amp; Pareto front browser</title>
+<!-- The tab title is user-facing prose too, and it is what a bookmark and a
+     pasted link carry. Named for the question the page answers rather than for
+     the two controls it happens to contain. -->
+<title>Ward round coordination</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script type="importmap">
 {
@@ -46,10 +49,26 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: var(--s-4);
-    padding: var(--s-4) var(--s-5) var(--s-2);
+    gap: var(--s-5);
+    padding: var(--s-4) var(--s-5) var(--s-3);
+    border-bottom: 1px solid var(--line-hairline);
   }
-  #app-header p { max-width: 46em; }
+  #intro { display: flex; flex-direction: column; gap: var(--s-2); min-width: 0; }
+  #intro .lede { font-size: var(--t-body); color: var(--ink); max-width: 62ch; }
+  /* The numbered reading-order list that stood here is gone. It was scaffolding
+     for a flat page of five equal figures -- once the layout itself says which
+     three things are the point and demotes the fourth to a tile, an explicit
+     "read this first" is the layout apologising for not being legible. Cutting
+     it is data-ink discipline (design bar 2) applied to instructions as well as
+     to pixels. */
+  #controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--s-2);
+    flex: none;
+  }
+  #controls .hint { max-width: 34ch; text-align: right; }
   #layout {
     display: grid;
     grid-template-columns: minmax(320px, 380px) 1fr;
@@ -65,16 +84,39 @@
     overflow-y: auto;
     min-height: 0;
   }
+  /* The right column scrolls as one. Both figures grew a plain-language
+     headline and a (collapsed) method panel, so a fixed two-row split now
+     clips rather than fits; the scene keeps a floor tall enough to be
+     navigable and the front browser takes the height it needs. */
+  /* The right column scrolls as one. The ward scene is the visual centrepiece
+     (design bar 2 -- everything else is quiet so that it can be), so it takes a
+     viewport-proportional share rather than sharing equally with the front
+     browser below it. */
   #main {
     display: grid;
-    grid-template-rows: minmax(220px, 1fr) minmax(220px, 40%);
+    grid-template-rows: clamp(400px, 52vh, 560px) auto;
     gap: var(--s-4);
+    align-content: start;
+    overflow-y: auto;
     min-height: 0;
   }
-  #scene-figure .figure__body { min-height: 320px; }
-  #stage-wrap { position: relative; height: 100%; min-height: 320px; border-radius: var(--r-sm); overflow: hidden; background: var(--surface-scene); }
+  #scene-figure-slot { display: flex; min-height: 0; }
+  #scene-figure-slot .figure { flex: 1; min-height: 0; }
+  #scene-figure-slot .figure__body { min-height: 0; flex: 1; }
+  #stage-wrap { position: relative; height: 100%; min-height: 260px; border-radius: var(--r-sm); overflow: hidden; background: var(--surface-scene); }
+  #scene-figure-slot .figure__body > .stack { height: 100%; }
   three-d-stage { height: 100%; }
-  #front-figure .figure__body { min-height: 260px; }
+  #front-figure-slot .figure__body { min-height: 260px; }
+  /* The tier boundary, drawn once. Everything above it is what the page is
+     for; everything below it is a measure that supports the argument without
+     being it. */
+  #secondary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+    padding-top: var(--s-3);
+    border-top: 1px solid var(--line-hairline);
+  }
   .opps-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s-2); }
   .opps-list li { border-left: 2px solid var(--line-hairline); padding-left: var(--s-2); }
   .schedule-readout { min-height: 1.4em; }
@@ -83,20 +125,61 @@
 <body>
 
 <header id="app-header">
-  <div>
-    <h1 class="t-title">Ward viewer</h1>
-    <p class="t-micro">Synthetic demo data (ADR-0005) — a browsable Pareto front of MDT-coordination
-      schedules against the routed ward, with the RequiredSpecialty definition as a runtime choice
-      (SPEC-001) rather than a fixed one. No real patient or clinician data anywhere in this page.</p>
+  <div id="intro">
+    <h1 class="t-title">Ward round coordination</h1>
+    <p class="lede">Where the ward's walking time goes, how often patients who need more than one
+      specialty are seen by them together, and what would change if rounds were planned around
+      each other.</p>
+    <details class="method">
+      <summary class="method__summary">About this page</summary>
+      <dl class="method__body">
+        <div class="method__row">
+          <dt>No real data</dt>
+          <dd>No patient, clinician or ward identifier from any real record appears anywhere on
+            this page. Every figure is computed from synthetic demo data by the same code that
+            would run against a real extract, so the shapes and the caveats are real even though
+            the numbers describe nobody. ADR-0005.</dd>
+        </div>
+        <div class="method__row">
+          <dt>Why there are five definitions</dt>
+          <dd>Whether a patient "needed" a specialty is not recorded anywhere directly — it has to
+            be inferred, and referrals, consult notes and problem lists disagree. Rather than pick
+            one and present it as the answer, all five are computed and the selector switches
+            between them. The distance between the widest and the strictest is the honest
+            uncertainty in the question itself, and it is usually larger than the confidence
+            interval on any single one. SPEC-001.</dd>
+        </div>
+        <div class="method__row">
+          <dt>What this page will not do</dt>
+          <dd>It will not rank schedules or recommend one, it will not break any figure down by
+            individual clinician, and it will not show a group small enough to identify someone.
+            Each of those is a decision on record rather than a feature that has not been built
+            yet. ADR-0004, ADR-0006 rule 5, ADR-0005.</dd>
+        </div>
+        <div class="method__row">
+          <dt>Full method</dt>
+          <dd>Each figure carries its own "How this was measured" panel, naming the estimator, the
+            interval and the decision that governs how it may be reported.</dd>
+        </div>
+      </dl>
+    </details>
   </div>
-  <div id="strategy-select-slot"></div>
+  <div id="controls">
+    <div class="t-label" id="strategy-label">A patient needed a specialty if it appears in</div>
+    <div id="strategy-select-slot"></div>
+    <p class="t-micro hint">Changing this changes the definition, not the ward. Watch how far the
+      answer moves: that distance is the uncertainty in the question.</p>
+  </div>
 </header>
 
 <div id="layout">
   <div id="side">
-    <div id="governance-figure-slot"></div>
-    <div id="motion-figure-slot"></div>
-    <div id="opportunities-figure-slot"></div>
+    <div id="joint-review-slot"></div>
+    <!-- Tier 2. Present, checkable, and visibly not the headline. -->
+    <section id="secondary" aria-label="Supporting measures">
+      <h2 class="t-label" id="secondary-label">Supporting measure</h2>
+      <div id="motion-tile-slot"></div>
+    </section>
   </div>
   <div id="main">
     <div id="scene-figure-slot"></div>

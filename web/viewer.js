@@ -172,148 +172,329 @@ function provenanceOf(envelope, manifest) {
   };
 }
 
-function renderMotionFigure(slot, envelope, manifest) {
+/* Copy discipline, applied throughout this section.
+ *
+ * Nothing a reader sees before opening a method panel names an ADR, a SPEC, a
+ * graph node or a filename. That is not a cosmetic preference: the audience for
+ * this page is a Clinical Governance department and a ward manager, and prose
+ * that cites this project's own internal decision records at a reader who has
+ * never heard of them reads as documentation rather than as a finding, which is
+ * exactly the credibility the design bar exists to protect. The citations have
+ * not been deleted -- every one of them is one keystroke away in the figure's
+ * own "How this was measured" panel, which is where a reader who has decided to
+ * challenge a number goes looking.
+ *
+ * What stays in the open regardless: the interval (design bar 5 -- an interval
+ * behind a disclosure is read as absent), the denominator and the definition
+ * that produced it (ADR-0006 rule 2), and the withheld state (ADR-0005).
+ */
+
+/** Formats an artefact's own snake_case specialty key for reading. Not a
+ * computation on a value -- rendering, per SPEC-005 decision 9. */
+function specialtyLabel(key) {
+  const spaced = key.replace(/_/g, " ");
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+/* Tier 2: walking distance, as a tile.
+ *
+ * This was a full-height figure in the first version of this page and it was
+ * the wrong weight for what it is. Walking distance is a supporting measure --
+ * it explains part of why joint review is hard to arrange, and it is a ceiling
+ * rather than a finding -- and at equal weight beside the coverage figure and
+ * the schedule browser it competed for the reader's first glance and won often
+ * enough to bury the question the page exists to answer. Collapsed, it says the
+ * same thing in four lines; expanded, it gives back every statistic, the
+ * encoding legend and the method panel it had before. Nothing was deleted, and
+ * the interval and provenance stay visible while it is shut.
+ */
+function renderMotionTile(slot, envelope, manifest) {
   const p = envelope.payload;
-  const body = document.createElement("div");
-  body.className = "stack";
-  body.appendChild(
+  const detail = document.createElement("div");
+  detail.className = "stack";
+  detail.appendChild(
     ds.statistic({
-      label: "Observed motion",
+      label: "Walked on the observed rounds",
       value: p.observed_m.toFixed(0),
       unit: "m",
       exact: true,
-      note: `${p.params.n_rounds} rounds over ${p.params.n_ward_days} ward-days`,
+      note: `Across ${p.params.n_rounds} rounds on ${p.params.n_ward_days} ward-days.`,
     }),
   );
-  body.appendChild(
+  detail.appendChild(
     ds.statistic({
-      label: "Attributable to visit ordering (upper bound, perfect foresight)",
+      label: "Shortest route that would have covered the same patients",
+      value: p.necessary_m.toFixed(0),
+      unit: "m",
+      exact: true,
+      note:
+        "Computed with perfect knowledge of who would need visiting. No real round " +
+        "has that knowledge, which is why the gap is a ceiling and not a target.",
+    }),
+  );
+  detail.appendChild(
+    ds.roleLegend(["observed", "necessary", "interval", "baseline"], "Motion encoding"),
+  );
+  detail.appendChild(
+    ds.methodNote({
+      entries: [
+        ["What the ceiling means", p.params.interpretation],
+        [
+          "The shortest route it is compared against",
+          p.params.necessary_m_methods.join("; ") +
+            ". Perfect foresight is assumed on purpose: it makes the number the largest " +
+            "the ordering could possibly account for, so nobody can claim the tool " +
+            "understated the scope for improvement.",
+        ],
+        [
+          "How the interval was built",
+          `${p.params.ci_method}, ${p.params.n_replicates} replicates.`,
+        ],
+        ["What the interval covers", p.params.uncertainty_sources.join("; ")],
+        [
+          "Governing decisions",
+          "SPEC-003 (defining waste honestly, and the interval), SPEC-001 " +
+            "(location-mapping confidence), SPEC-005 (how this figure may be presented).",
+        ],
+      ],
+    }),
+  );
+
+  slot.replaceChildren(
+    ds.kpiTile({
+      title: "Walking distance",
+      label: `at most, of the ${p.observed_m.toFixed(0)} m walked`,
       value: p.attributable_m.toFixed(0),
       unit: "m",
       interval: p.ci95.map((v) => v.toFixed(0)),
+      summary:
+        `No more than ${(100 * p.attributable_fraction).toFixed(1)}% of the ward's walking ` +
+        "can be put down to the order patients were visited in. A ceiling, not a saving.",
+      provenance: provenanceOf(envelope, manifest),
+      detail,
     }),
   );
-  body.appendChild(
-    ds.roleLegend(["observed", "necessary", "interval", "baseline"], "Motion encoding"),
-  );
-  const note = document.createElement("p");
-  note.className = "t-micro";
-  note.textContent =
-    "At most " +
-    (100 * p.attributable_fraction).toFixed(1) +
-    "% of observed walking was attributable to visit ordering, under perfect " +
-    "foresight -- an upper bound on avoidable motion, not a savings estimate.";
-  body.appendChild(note);
-
-  const figureNode = ds.figure({
-    title: "Motion waste",
-    subtitle: "Observed distance against the proven lower-bound necessary tour",
-    provenance: provenanceOf(envelope, manifest),
-    body,
-  });
-  slot.replaceChildren(figureNode);
 }
 
-function renderOpportunitiesFigure(slot, envelope, manifest) {
+/* Tier 1: is joint review happening?
+ *
+ * Coverage and the near-miss candidates were two figures answering one
+ * question, and splitting them made the reader do the joining. Together they
+ * read as a single argument: this share of multi-specialty patients had their
+ * specialties meet at the bedside, and here are the occasions where it nearly
+ * happened anyway. The two artefacts share a strategy key and a method version
+ * (both are re-keyed from the same bundle), so one provenance strip is honest
+ * for both -- the coverage envelope's is used, and the near-miss block names
+ * its own source in the method panel.
+ */
+/* Four, not the eight the standalone figure showed. The count is in the
+ * headline sentence and the full set is one artefact away; what this block owes
+ * a first-time reader is the shape of the thing -- which specialties, how
+ * close, how confident -- not an exhaustive listing that pushes the ward scene
+ * off the screen. */
+const OPPORTUNITY_LIST_LIMIT = 4;
+
+function nearMissBlock(envelope) {
   const candidates = envelope.payload.candidates;
-  let body;
+  const wrap = document.createElement("div");
+  wrap.className = "stack";
+  const label = document.createElement("div");
+  label.className = "t-label";
+  label.textContent = "Near misses — for review, not findings";
+  wrap.appendChild(label);
+
   if (!candidates.length) {
-    body = ds.emptyState(
-      "No missed MDT opportunities detected",
-      "No clinician's routed path passed near an uninvolved patient who needed their specialty within the proximity and timing window. A real result, not an empty panel.",
+    wrap.appendChild(
+      ds.emptyState(
+        "Nothing flagged for review",
+        "No clinician passed close to a patient who needed their specialty without " +
+          "stopping. A ward whose rounds already coincide is the outcome this work is " +
+          "trying to produce: this is a result, not a missing panel.",
+      ),
     );
-  } else {
-    const ul = document.createElement("ul");
-    ul.className = "opps-list";
-    for (const c of candidates.slice(0, 8)) {
-      const li = document.createElement("li");
-      const head = document.createElement("div");
-      head.className = "t-body";
-      head.textContent = `${c.clinician} → ${c.patient} (${c.specialty})`;
-      const detail = document.createElement("div");
-      detail.className = "t-micro";
-      detail.textContent = `${c.proximity_m.toFixed(1)} m, confidence ${c.confidence.toFixed(2)} -- ${c.reason}`;
-      li.appendChild(head);
-      li.appendChild(detail);
-      ul.appendChild(li);
-    }
-    body = ul;
+    return wrap;
   }
-  const figureNode = ds.figure({
-    title: "Missed MDT opportunities",
-    subtitle: "Candidates only -- never reported as 'missed reviews' (SPEC-002)",
-    provenance: provenanceOf(envelope, manifest),
-    body,
-  });
-  slot.replaceChildren(figureNode);
+
+  const ul = document.createElement("ul");
+  ul.className = "opps-list";
+  for (const c of candidates.slice(0, OPPORTUNITY_LIST_LIMIT)) {
+    const li = document.createElement("li");
+    const head = document.createElement("div");
+    head.className = "t-body";
+    head.textContent = `${specialtyLabel(c.specialty)} — clinician ${c.clinician}, patient ${c.patient}`;
+    const detail = document.createElement("div");
+    detail.className = "t-micro";
+    detail.textContent = `Passed within ${c.proximity_m.toFixed(1)} m · confidence ${c.confidence.toFixed(2)}`;
+    li.append(head, detail);
+    ul.appendChild(li);
+  }
+  wrap.appendChild(ul);
+  if (candidates.length > OPPORTUNITY_LIST_LIMIT) {
+    const more = document.createElement("p");
+    more.className = "t-micro";
+    more.textContent = `Showing ${OPPORTUNITY_LIST_LIMIT} of ${candidates.length}.`;
+    wrap.appendChild(more);
+  }
+  return wrap;
 }
 
-function renderGovernanceFigure(slot, envelope, manifest, bundle) {
+/** One bound of the plausible range, as a term and a value.
+ *
+ * The reason a bound is withheld is printed here only when that bound is *not*
+ * the strategy currently selected -- otherwise the same paragraph appeared
+ * twice on screen, once in the figure's own withheld state and again inline,
+ * which read as insistence rather than as explanation. */
+function boundRow(dl, side, key, payload, alreadyExplained) {
+  const dt = document.createElement("dt");
+  dt.textContent = `${side} (${ds.strategyLabel(key)})`;
+  const dd = document.createElement("dd");
+  if (!payload) {
+    dd.textContent = "not available";
+  } else if (payload.withheld) {
+    dd.textContent = alreadyExplained ? "withheld — see above" : `withheld — ${payload.reason}`;
+  } else {
+    dd.textContent =
+      `${(100 * payload.coverage).toFixed(1)}% ` +
+      `(95% CI ${(100 * payload.ci95[0]).toFixed(1)} to ${(100 * payload.ci95[1]).toFixed(1)})`;
+  }
+  dl.append(dt, dd);
+}
+
+function renderJointReviewFigure(slot, envelope, oppsEnvelope, manifest, bundle) {
   const p = envelope.payload;
   const body = document.createElement("div");
   body.className = "stack";
+  const strategyName = ds.strategyLabel(envelope.strategy);
+  let summary;
+
+  const nearMissCount = oppsEnvelope.payload.candidates.length;
+  const nearMissClause = nearMissCount
+    ? ` A clinician walked past a patient needing their specialty ${nearMissCount} times without stopping.`
+    : " No clinician walked past a patient needing their specialty without stopping.";
 
   if (p.withheld) {
-    body.appendChild(
-      ds.emptyState(
-        "MDT coverage withheld",
-        p.reason,
-      ),
-    );
+    summary = ds.plainSummary({
+      status: "withheld",
+      text:
+        `Joint-review coverage is not reported under the ${strategyName} definition.` +
+        nearMissClause,
+    });
+    // The reason appears exactly once, here, in the figure's own state block.
+    body.appendChild(ds.emptyState("Why this figure is withheld", p.reason));
   } else {
+    summary = ds.plainSummary({
+      status: "measured",
+      text:
+        `${p.n_covered} of the ${p.n_patients} patients who needed more than one specialty ` +
+        "had at least two of them at the bedside at the same time." +
+        nearMissClause,
+    });
     body.appendChild(
       ds.statistic({
-        label: "MDT coverage",
+        label: `Share of multi-specialty patients, ${strategyName} definition`,
         value: (100 * p.coverage).toFixed(1),
         unit: "%",
         interval: p.ci95.map((v) => (100 * v).toFixed(1)),
+        note:
+          `Out of ${p.n_patients} patients. Quote the range alongside the number, and say ` +
+          "which definition it came from — the figure changes with the definition.",
       }),
     );
-    const detail = document.createElement("p");
-    detail.className = "t-micro";
-    detail.textContent =
-      `${p.n_covered} of ${p.n_patients} multi-specialty patients, ` +
-      `${p.n_published_cells} ward-day cell(s) published, ` +
-      `${p.n_suppressed_cells} withheld under the ADR-0005 floor.`;
-    body.appendChild(detail);
   }
 
-  // ADR-0006 point 3: union/intersection are always shown as bounds,
-  // regardless of which strategy is selected.
-  const boundsKeys = manifest.coverage_bounds_strategies || { upper: "union", lower: "intersection" };
+  // Union and intersection are always drawn as the outer bounds, whichever
+  // strategy is selected, so the plausible range stays on screen.
+  const boundsKeys = manifest.coverage_bounds_strategies || {
+    upper: "union",
+    lower: "intersection",
+  };
   const boundsWrap = document.createElement("div");
   boundsWrap.className = "stack";
-  const boundsLabel = document.createElement("p");
-  boundsLabel.className = "t-micro";
-  boundsLabel.textContent = "Plausible range across all five RequiredSpecialty strategies:";
+  const boundsLabel = document.createElement("div");
+  boundsLabel.className = "t-label";
+  boundsLabel.textContent = "Range across all five definitions";
   boundsWrap.appendChild(boundsLabel);
-  for (const [side, key] of Object.entries(boundsKeys)) {
-    const bp = bundle.coverage?.[key]?.payload;
-    const line = document.createElement("p");
-    line.className = "t-micro";
-    if (!bp || bp.withheld) {
-      line.textContent = `${side} bound (${key}): withheld -- ${bp ? bp.reason : "not available"}`;
-    } else {
-      line.textContent =
-        `${side} bound (${key}): ${(100 * bp.coverage).toFixed(1)}% ` +
-        `[${(100 * bp.ci95[0]).toFixed(1)}%, ${(100 * bp.ci95[1]).toFixed(1)}%]`;
-    }
-    boundsWrap.appendChild(line);
-  }
+  const dl = document.createElement("dl");
+  dl.className = "bounds";
+  boundRow(dl, "Widest", boundsKeys.upper, bundle.coverage?.[boundsKeys.upper]?.payload,
+    p.withheld && envelope.strategy === boundsKeys.upper);
+  boundRow(dl, "Strictest", boundsKeys.lower, bundle.coverage?.[boundsKeys.lower]?.payload,
+    p.withheld && envelope.strategy === boundsKeys.lower);
+  boundsWrap.appendChild(dl);
   body.appendChild(boundsWrap);
 
-  const warning = document.createElement("p");
-  warning.className = "t-micro";
-  warning.textContent =
-    "Measured, never attested (ADR-0006 rule 4). Never quote a bare percentage -- " +
-    "the interval and the strategy that produced this denominator travel with the number.";
-  body.appendChild(warning);
+  body.appendChild(nearMissBlock(oppsEnvelope));
+
+  const params = p.params ?? {};
+  const methodEntries = [
+    [
+      "What counts as covered",
+      params.numerator ??
+        "A patient counts as covered when two or more of the specialties they required " +
+          "were at the bedside at the same time — present together, not merely both on the ward.",
+    ],
+    [
+      "Who is counted",
+      params.denominator ??
+        "Patients observed on the ward who required two or more specialties under the " +
+          "selected definition. The definition changes the denominator, which is why the " +
+          "figure moves when you change it.",
+    ],
+    [
+      "Measured, never attested",
+      "This comes from observed bedside presence only. Nothing here is self-reported, " +
+        "signed off, or taken from a completion record, and it is not a target or a " +
+        "tolerance. ADR-0006 rule 4 fixes that boundary.",
+    ],
+    [
+      "How the interval was built",
+      params.ci_method ?? "An interval accompanies every published figure.",
+    ],
+    [
+      "Small numbers",
+      `${p.n_published_cells ?? 0} ward-day cell(s) are published and ` +
+        `${p.n_suppressed_cells ?? 0} are withheld. Any group below ` +
+        `${params.suppression_floor_min_patients ?? 5} patients is not displayed, so that no ` +
+        "individual can be identified from a small cell. ADR-0005.",
+    ],
+    [
+      "Not available by clinician",
+      "There is no breakdown by individual clinician, and this is a deliberate boundary " +
+        "rather than a missing feature or a permission setting. The measure describes how a " +
+        "ward is organised, not how hard an individual works, and a per-clinician version " +
+        "would be used as the second thing regardless of what it was labelled. ADR-0006 rule 5.",
+    ],
+    [
+      "What a near miss is",
+      "A clinician's reconstructed route passing within a few metres of a patient whose " +
+        "required specialty they hold, close in time to a visit they did make elsewhere. " +
+        "Proximity and timing are evidence that a review would have been cheap to add, " +
+        "not evidence that one was owed.",
+    ],
+    [
+      "Why near misses are never called missed reviews",
+      "The tool cannot see clinical reasoning, and a patient may have been reviewed " +
+        "elsewhere, reviewed earlier, or correctly not reviewed at all. SPEC-002 fixes the " +
+        "wording as candidates for that reason. The confidence score is uncalibrated: it " +
+        "orders candidates against each other and means nothing on its own.",
+    ],
+    [
+      "Governing decisions",
+      "ADR-0006 (how MDT coverage may be reported), ADR-0005 (disclosure floor), " +
+        "SPEC-002 (near-miss detection and its wording), SPEC-001 (the five definitions), " +
+        "SPEC-005 (how this figure may be presented).",
+    ],
+  ];
 
   const figureNode = ds.figure({
-    title: "Clinical Governance — MDT coverage",
-    subtitle: "Fraction of multi-specialty patients whose required review happened at the bedside",
+    title: "Is joint review happening?",
+    subtitle:
+      "Patients needing more than one specialty, whether those specialties met at the " +
+      "bedside, and where it nearly happened anyway",
     provenance: provenanceOf(envelope, manifest),
+    summary,
     body,
+    method: ds.methodNote({ entries: methodEntries }),
   });
   slot.replaceChildren(figureNode);
 }
@@ -328,20 +509,57 @@ function renderFrontFigure(slot, envelope, manifest, onSelect) {
     objectives: payload.objectives_meta,
     schedules: payload.schedules,
     baseline: payload.baseline,
-    onSelect: (id) => onSelect(id === "baseline" ? payload.baseline : payload.schedules.find((s) => s.id === id)),
+    onSelect: (id) =>
+      onSelect(id === "baseline" ? payload.baseline : payload.schedules.find((s) => s.id === id)),
   });
   wrap.appendChild(node);
   const hint = document.createElement("p");
   hint.className = "t-micro";
   hint.textContent =
-    `${payload.schedules.length} schedules shown, unsorted, against today's observed baseline. ` +
-    "Arrow keys move between them, Enter selects one into the ward view.";
+    "Each line is one schedule, crossing all five objectives at once. Hover or focus the " +
+    "plot and use the arrow keys; Enter walks the selected schedule through the ward above.";
   wrap.appendChild(hint);
+
   const figureNode = ds.figure({
-    title: "Pareto front — five-objective trade-off",
-    subtitle: "No ranking, no recommended schedule (ADR-0004): browse the trade-off yourself",
+    title: "Alternative round schedules",
+    subtitle: "Every schedule shown is better than the others at something and worse at something else",
     provenance: provenanceOf(envelope, manifest),
+    summary: ds.plainSummary({
+      status: "modelled",
+      text:
+        `${payload.schedules.length} alternative schedules, shown against today's observed ` +
+        "rounds. None of them is recommended: the trade-off between them is a clinical " +
+        "judgement, not an arithmetic one.",
+    }),
     body: wrap,
+    method: ds.methodNote({
+      entries: [
+        [
+          "Why nothing is ranked",
+          "These schedules are laid out unsorted and unscored on purpose. Putting them in an " +
+            "order would mean choosing how much walking is worth one more joint review, which " +
+            "is a decision for the ward and not for this tool. ADR-0004 removed that weighting " +
+            "from the calculation, and the interface must not put it back.",
+        ],
+        [
+          "Why today's rounds are always drawn",
+          "\"Better\" is anchored to what the ward actually does now, not to the best of the " +
+            "alternatives — otherwise every option looks like an improvement on the others " +
+            "while telling you nothing about improvement on reality.",
+        ],
+        [
+          "Feasibility",
+          "Any schedule that breaks a hard constraint is marked as infeasible on the plot " +
+            "itself. A schedule that animates smoothly through the ward is persuasive whether " +
+            "or not it could be run, so the marking is not optional.",
+        ],
+        [
+          "Governing decisions",
+          "ADR-0004 (no scalarisation, in the maths or the interface), SPEC-004 (the five " +
+            "objectives), SPEC-005 (how this browser may be presented).",
+        ],
+      ],
+    }),
   });
   slot.replaceChildren(figureNode);
   return highlight;
@@ -392,14 +610,38 @@ async function main() {
   sceneWrap.appendChild(scheduleReadout);
   sceneFigureSlot.replaceChildren(
     ds.figure({
-      title: "Ward",
-      subtitle: "Bed and corridor positions from layout.json (N06 routed travel graph) -- never hard-coded here",
+      title: "The ward",
+      subtitle: "Beds, corridors and lifts, with the walking routes between them",
       provenance: {
         strategy: ds.strategyLabel(selected),
         methodVersion: manifest.method_version,
         dateRange: manifest.date_range,
       },
+      summary: ds.plainSummary({
+        status: "reference",
+        text:
+          "The ward every distance on this page was measured against. Pick a schedule " +
+          "below to watch it walked.",
+      }),
       body: sceneWrap,
+      method: ds.methodNote({
+        label: "Where this layout comes from",
+        entries: [
+          [
+            "Served, not drawn",
+            "Every bed, corridor, lift and connecting route is read from the ward layout " +
+              "the analysis itself uses. No coordinate is written into this page, so the " +
+              "picture cannot drift away from the distances beside it. SPEC-005 criterion 1 " +
+              "makes that a test rather than a convention.",
+          ],
+          [
+            "Routes, not straight lines",
+            "The lines between beds are the routes a person can actually walk — the same " +
+              "travel graph the walking distances were measured on (node N06), not " +
+              "point-to-point distances through walls.",
+          ],
+        ],
+      }),
     }),
   );
 
@@ -420,17 +662,17 @@ async function main() {
 
   function render(strategyKey) {
     selected = strategyKey;
-    renderMotionFigure(document.getElementById("motion-figure-slot"), bundle.motion[strategyKey], manifest);
-    renderOpportunitiesFigure(
-      document.getElementById("opportunities-figure-slot"),
+    renderJointReviewFigure(
+      document.getElementById("joint-review-slot"),
+      bundle.coverage[strategyKey],
       bundle.opportunities[strategyKey],
       manifest,
-    );
-    renderGovernanceFigure(
-      document.getElementById("governance-figure-slot"),
-      bundle.coverage[strategyKey],
-      manifest,
       bundle,
+    );
+    renderMotionTile(
+      document.getElementById("motion-tile-slot"),
+      bundle.motion[strategyKey],
+      manifest,
     );
     highlightFn = renderFrontFigure(
       document.getElementById("front-figure-slot"),
@@ -441,17 +683,13 @@ async function main() {
     onScheduleSelected(null);
   }
 
-  const legendSlot = document.createElement("div");
-  legendSlot.appendChild(ds.strategyLegend(selected));
+  // The dash legend that used to sit here explained an encoding nothing on this
+  // page draws (no figure here is a strategy-keyed line chart), so it repeated
+  // the selector's own five labels underneath the selector. The bounds are now
+  // named where they are used, in the coverage figure's range block, which is
+  // where a reader is actually asking the question.
   document.getElementById("strategy-select-slot").replaceChildren(
-    ds.strategySelector({
-      selected,
-      onSelect: (key) => {
-        legendSlot.replaceChildren(ds.strategyLegend(key));
-        render(key);
-      },
-    }),
-    legendSlot,
+    ds.strategySelector({ selected, onSelect: render }),
   );
 
   render(selected);

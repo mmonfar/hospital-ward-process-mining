@@ -215,9 +215,14 @@ figure {
 
 .figure__head {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.figure__title-row {
+  display: flex;
   align-items: baseline;
-  gap: var(--s-4);
+  gap: var(--s-2);
 }
 
 .figure__subtitle {
@@ -231,30 +236,297 @@ figure {
   min-height: var(--s-7);
 }
 
-/* Provenance strip. Deliberately not styled away into invisibility: it is
-   evidence, and it is the difference between a figure that can be checked and
-   one that has to be trusted. */
+/* Provenance. Deliberately not styled away into invisibility: it is evidence,
+   and it is the difference between a figure that can be checked and one that
+   has to be trusted. Set as chips under the title rather than as a label block
+   under the body -- same information, same view (criterion 4), but scannable in
+   one pass and skippable in none. */
 .figure__provenance {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s-1) var(--s-4);
-  padding-top: var(--s-2);
-  border-top: 1px solid var(--line-hairline);
+  gap: var(--s-1);
+  margin: 0;
   font-size: var(--t-micro);
   line-height: var(--lh-micro);
   color: var(--ink-quiet);
 }
 
+.figure__prov {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-1);
+  background: var(--surface-sunken);
+  border-radius: var(--r-sm);
+  padding: var(--s-0) var(--s-2);
+  min-width: 0;
+}
+
+/* ADR-0006 rule 2: the definition that produced the denominator is the one
+   piece of provenance that changes what the number means. It is set apart from
+   the other two for that reason, not for emphasis' own sake. */
+.figure__prov--key {
+  background: var(--accent-quiet);
+}
+
 .figure__provenance dt {
-  display: inline;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  flex: none;
+}
+
+.figure__provenance dd {
+  margin: 0;
+  color: var(--ink-strong);
+  font-weight: var(--w-strong);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------ kpi tile ---- */
+
+/* A supporting measure, at the weight of a supporting measure. Sits on the
+   sunken surface rather than on a panel, so it reads as part of the page
+   furniture instead of competing with the three figures that are the point.
+   It still carries its interval and its provenance while collapsed -- it is
+   smaller because it carries less prose, never because it carries less
+   evidence. */
+.kpi {
+  background: var(--surface-sunken);
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-hairline);
+}
+
+.kpi__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  cursor: pointer;
+  list-style: none;
+}
+
+.kpi__head::-webkit-details-marker {
+  display: none;
+}
+
+.kpi__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.kpi__expand {
+  flex: none;
+  font-size: var(--t-micro);
+  line-height: var(--lh-micro);
+  font-weight: var(--w-strong);
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+
+.kpi__expand::after {
+  content: " +";
+}
+
+.kpi[open] .kpi__expand::after {
+  content: " \2212";
+}
+
+.kpi__figures {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-3);
+}
+
+/* Title-scale rather than figure-scale: a supporting number set at 30px is a
+   headline whatever the layout around it says. */
+.kpi__value {
+  font-size: var(--t-title);
+  line-height: var(--lh-title);
+  font-weight: var(--w-strong);
+  color: var(--ink-strong);
+}
+
+.kpi__caption {
+  font-size: var(--t-micro);
+  line-height: var(--lh-micro);
+  color: var(--ink-quiet);
+}
+
+.kpi__summary {
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+  color: var(--ink);
+}
+
+.kpi__detail {
+  padding: 0 var(--s-3) var(--s-3);
+}
+
+/* ------------------------------------------------- summary and method ----- */
+
+/* The plain-language headline. One sentence, in the register of the person
+   reading it, above the number rather than after it -- a figure that opens
+   with a statistic gets read as a statistic, and the statistic is the evidence
+   rather than the finding.
+
+   The left rule encodes what *kind* of claim the figure makes: measured,
+   bounded, for review, modelled, reference, withheld. Both hue and line style
+   vary, and the status word is always printed, so nothing here depends on
+   colour alone (design bar 6). None of the six is a verdict: there is no good
+   and no concerning, because SPEC-005 decision 5 keeps that judgement with the
+   reader and the interval. */
+.summary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  padding-left: var(--s-3);
+  border-left: 3px solid var(--accent);
+}
+
+.summary__status {
+  flex: none;
+  font-size: var(--t-micro);
+  line-height: var(--lh-micro);
+  font-weight: var(--w-strong);
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--ink-quiet);
+}
+
+.summary__text {
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+  font-weight: var(--w-strong);
+  color: var(--ink-strong);
+}
+
+.summary--bounded {
+  border-left-color: var(--data-waste);
+}
+
+.summary--candidate {
+  border-left-color: var(--data-waste);
+  border-left-style: dashed;
+}
+
+.summary--modelled {
+  border-left-style: dashed;
+}
+
+.summary--reference {
+  border-left-color: var(--line-hairline);
+}
+
+/* Withheld never softens into looking like a result (ADR-0005). It keeps the
+   hatch the suppressed state uses, so the two read as the same rule applied
+   twice rather than as two different situations. */
+.summary--withheld {
+  border-left-color: var(--data-suppressed);
+  border-left-style: dotted;
+  background-color: var(--surface-sunken);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0 5px,
+    var(--data-suppressed) 5px 6px
+  );
+  border-radius: var(--r-sm);
+  padding: var(--s-2) var(--s-3);
+}
+
+.summary--withheld .summary__text,
+.summary--withheld .summary__status {
+  background: var(--surface-panel);
+  border-radius: var(--r-sm);
+  padding: var(--s-0) var(--s-2);
+}
+
+/* Method, provenance detail and internal citation, collapsed by default.
+   `<details>` rather than a custom widget: keyboard operation and the
+   browser's own in-page search come with it, and both would otherwise have to
+   be re-earned. Nothing an interval, a denominator or a strategy key depends on
+   goes in here -- design bar 5 is explicit that an interval behind a disclosure
+   is read as absent. */
+.method {
+  border-top: 1px solid var(--line-hairline);
+  padding-top: var(--s-2);
+}
+
+.method__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  font-size: var(--t-micro);
+  line-height: var(--lh-micro);
+  font-weight: var(--w-strong);
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--ink-quiet);
+  cursor: pointer;
+  list-style: none;
+}
+
+.method__summary::-webkit-details-marker {
+  display: none;
+}
+
+.method__summary::before {
+  content: "+";
+  display: inline-block;
+  width: var(--s-3);
+  text-align: center;
+  font-weight: var(--w-strong);
+}
+
+.method[open] > .method__summary::before {
+  content: "\2212";
+}
+
+.method__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: var(--s-3) 0 0;
+  font-size: var(--t-micro);
+  line-height: var(--lh-micro);
+  color: var(--ink-quiet);
+}
+
+.method__row dt {
+  font-weight: var(--w-strong);
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.method__row dd {
+  margin: var(--s-0) 0 0;
+}
+
+/* A named pair of numbers -- the plausible range across definitions. A list of
+   sentences was doing this job; a two-column set of terms and values reads as
+   one quantity bounded twice, which is what it is. */
+.bounds {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--s-1) var(--s-3);
+  margin: 0;
+  font-size: var(--t-micro);
+  line-height: var(--lh-micro);
+}
+
+.bounds dt {
+  color: var(--ink-quiet);
   letter-spacing: var(--track-micro);
   text-transform: uppercase;
 }
 
-.figure__provenance dd {
-  display: inline;
-  margin: 0 0 0 var(--s-1);
-  color: var(--ink);
+.bounds dd {
+  margin: 0;
+  color: var(--ink-strong);
 }
 
 /* ---------------------------------------------------------------- charts --- */

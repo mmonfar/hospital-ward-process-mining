@@ -274,6 +274,16 @@ CONTRAST_REQUIREMENTS: Final[tuple[ContrastRule, ...]] = (
     ContrastRule("data-infeasible", "surface-panel", 3.0, "infeasible marking"),
     ContrastRule("data-axis", "surface-panel", 3.0, "axis lines and tick labels"),
     ContrastRule("data-suppressed", "surface-panel", 3.0, "suppressed-cell hatch"),
+    # Added with the KPI tile and the provenance chips (SPEC-005 decisions
+    # 11-13). A pair that goes on screen but not into this table is a pair
+    # nobody checks again after the day it was introduced, which is the whole
+    # reason design bar 6 makes accessibility a correctness property rather
+    # than a review item.
+    ContrastRule("ink-strong", "surface-sunken", 7.0, "KPI tile headline value"),
+    ContrastRule("accent-strong", "surface-sunken", 4.5, "KPI tile expand affordance"),
+    ContrastRule("ink-strong", "accent-quiet", 7.0, "definition chip value"),
+    ContrastRule("ink-quiet", "accent-quiet", 4.5, "definition chip label"),
+    ContrastRule("accent-strong", "surface-panel", 4.5, "method disclosure text"),
 )
 
 

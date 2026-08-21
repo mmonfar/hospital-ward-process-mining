@@ -9,6 +9,7 @@ export * as svg from "./svg.js";
 export * as scale from "./scale.js";
 export * as motion from "./motion.js";
 export * from "./figure.js";
+export * from "./summary.js";
 export * from "./states.js";
 export * from "./legend.js";
 export * from "./strategy.js";
