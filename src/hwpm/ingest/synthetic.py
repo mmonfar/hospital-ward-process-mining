@@ -31,8 +31,10 @@ calls to `generate(config, Random(42))` compare equal.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import date, datetime, time, timedelta
+from enum import Enum
 from random import Random
 
 from hwpm.domain import (
@@ -173,6 +175,10 @@ class GroundTruth:
 
 _SOURCE = "synthetic"
 
+#: Ward-day generator source tag. Distinct from `_SOURCE` so an event stream
+#: can be told apart from the single-shift generator's at a glance.
+_WARD_DAY_SOURCE = "synthetic:ward-day"
+
 
 def generate(config: SynthConfig, rng: Random) -> tuple[list[Event], GroundTruth]:
     """Generate a synthetic event log and its known ground truth.
@@ -298,6 +304,7 @@ def _events_for_round(
     bed_of: dict[PatientId, Location],
     config: SynthConfig,
     rng: Random,
+    source: str = _SOURCE,
 ) -> list[Event]:
     events: list[Event] = []
     for visit in visits:
@@ -323,7 +330,7 @@ def _events_for_round(
                 subject=clinician.id,
                 activity=activity,
                 location=bed.id,
-                source=_SOURCE,
+                source=source,
                 confidence=confidence,
             )
             events.append(event)
@@ -336,7 +343,7 @@ def _events_for_round(
                         subject=clinician.id,
                         activity=activity,
                         location=bed.id,
-                        source=_SOURCE,
+                        source=source,
                         confidence=confidence,
                     )
                 )
@@ -482,3 +489,370 @@ def generate_evidence(
         consult_notes=tuple(consult_notes),
         problem_list=tuple(problem_list),
     )
+
+
+# ---------------------------------------------------------------------------
+# Ward-days with a known day-type (SPEC-007 Part B oracle, node N20)
+#
+# SPEC-007 criterion 16 gates the learned trace embedding on beating the
+# interpretable feature baseline "by >= 0.10 adjusted Rand index against
+# `GroundTruth` day-types", and its "Test oracle" section says
+# `hwpm.ingest.synthetic.GroundTruth` "knows which day-type it generated".
+# It did not: `GroundTruth` carries schedules, required specialties and
+# distances, and `generate` produces exactly one shift with no notion of a day
+# at all, let alone a type. Criterion 17's 200-ward-day floor was likewise
+# unreachable -- one call produced one day.
+#
+# That is a spec/code disagreement of the kind CLAUDE.md rule 1 says must be
+# fixed rather than worked around, and it is fixed on the code side (the
+# spec's requirement is the sound one; the oracle simply had not been built).
+# The addition is deliberately a *separate* entry point rather than a change
+# to `generate`: `generate`'s output is the oracle for N01, N03, N05 and N06,
+# and altering it to grow a day dimension would silently move every one of
+# those nodes' fixtures.
+#
+# The unit is the **ward-day** (SPEC-007 modelling assumption 5), so a
+# day-type is drawn per `(date, ward)` rather than per date. Wards are
+# independent draws and each ward's round stays inside its own beds, which is
+# what makes a ward-day label an honest clustering target: with one label per
+# date shared by nine wards, the "clusters" would largely be recovering the
+# date.
+# ---------------------------------------------------------------------------
+
+
+class DayType(Enum):
+    """The four generated ward-day shapes. Named after what a ward would call
+    them, because the whole point of the oracle is that a recovered cluster
+    can be checked against something a clinician would recognise.
+
+    These are *generated* structure, not a claim about real wards. Nothing
+    downstream may treat a recovered cluster as one of these types; the
+    mapping exists only inside this module's tests and the criterion-16
+    measurement.
+    """
+
+    ROUTINE = "routine"
+    """A normal consultant-led round: moderate visit counts, moderate dwells."""
+
+    POST_TAKE = "post_take"
+    """Post-take: more clinicians, more visits, much shorter at each bedside."""
+
+    MDT_DAY = "mdt_day"
+    """A board/MDT day: clinicians converge on the same beds at the same
+    times, so co-presence -- and therefore `MDTMoment`s -- actually happens."""
+
+    SKELETON = "skeleton"
+    """Weekend/night cover: few clinicians, few patients seen, long dwells."""
+
+
+@dataclass(frozen=True)
+class DayTypeProfile:
+    """The generative parameters of one `DayType`.
+
+    `convergent` is the only non-numeric knob and it is the one that produces
+    a structurally different *sequence* rather than a differently-scaled one:
+    convergent clinicians walk the same bed order at the same times, which is
+    what an MDT day is. It is included because a trace encoder that only ever
+    saw rescaled versions of one shape would be tested against nothing.
+    """
+
+    n_clinicians: int
+    visits_per_clinician: int
+    visit_duration_minutes: int
+    gap_minutes: int
+    convergent: bool
+
+
+#: Deliberately overlapping: the jitter in `_jittered` is wide enough that
+#: ROUTINE and MDT_DAY share visit counts and dwell ranges, and POST_TAKE and
+#: SKELETON differ mainly in scale. A generator whose classes were linearly
+#: separable on one feature would make criterion 16 a formality.
+DAY_TYPE_PROFILES: Mapping[DayType, DayTypeProfile] = {
+    DayType.ROUTINE: DayTypeProfile(3, 5, 12, 4, False),
+    DayType.POST_TAKE: DayTypeProfile(4, 6, 5, 2, False),
+    DayType.MDT_DAY: DayTypeProfile(3, 5, 13, 4, True),
+    DayType.SKELETON: DayTypeProfile(2, 3, 24, 9, False),
+}
+
+#: Beds per ward in the reference geometry, hence patients per ward.
+_BEDS_PER_WARD = len(_BED_LOCAL_XZ)
+
+#: Roster size per ward. Ordered so that taking the first `n` for any `n >= 2`
+#: always yields at least one holder of the ward specialty and one of the
+#: visiting specialty -- otherwise a SKELETON day could draw two clinicians of
+#: one specialty and no MDT would be possible on any day of that ward.
+_ROSTER_PER_WARD = 5
+
+
+@dataclass(frozen=True)
+class WardDayGroundTruth:
+    """What the ward-day generator knows and the analysis must recover.
+
+    `day_types` is the criterion-16 oracle. The remaining fields are the joins
+    `hwpm.mining.attach_patients` / `attach_clinician_specialties` need, which
+    are not derivable from a clinician's event trajectory (see
+    `hwpm.mining.episodes`) and would otherwise have to be guessed at.
+    """
+
+    day_types: dict[tuple[date, str], DayType]
+    occupancy: dict[LocationId, PatientId]
+    required_specialties: dict[PatientId, frozenset[Specialty]]
+    clinician_specialties: dict[ClinicianId, frozenset[Specialty]]
+    patients: tuple[Patient, ...]
+    visits: dict[tuple[date, str], list[Visit]]
+
+    @property
+    def n_ward_days(self) -> int:
+        return len(self.day_types)
+
+
+@dataclass(frozen=True)
+class WardDayConfig:
+    """Ward-day generation parameters. `noise` reuses `SynthConfig` rather
+    than restating four rates, so there is one definition of what "clock skew"
+    means in this module."""
+
+    n_days: int = 24
+    first_day: date = field(default=date(2026, 1, 5))
+    day_start_hour: int = 8
+    noise: SynthConfig = field(default_factory=SynthConfig)
+    #: Restrict generation to these ward ids. `None` means all nine.
+    ward_ids: tuple[str, ...] | None = None
+
+    def __post_init__(self) -> None:
+        if self.n_days < 1:
+            raise ValueError(f"n_days must be >= 1, got {self.n_days!r}")
+        if not 0 <= self.day_start_hour <= 23:
+            raise ValueError(
+                f"day_start_hour must be in [0, 23], got {self.day_start_hour!r}"
+            )
+
+
+def _ward_roster(ward: Ward, wards: tuple[Ward, ...]) -> list[Clinician]:
+    """This ward's clinicians, alternating the ward specialty and a visiting
+    one so that a multi-specialty patient can actually be covered."""
+    index = wards.index(ward)
+    visiting = wards[(index + 1) % len(wards)].specialty
+    roles = (Role.CONSULTANT, Role.REGISTRAR, Role.NURSE, Role.AHP, Role.REGISTRAR)
+    out: list[Clinician] = []
+    for i in range(_ROSTER_PER_WARD):
+        specialty = ward.specialty if i % 2 == 0 else visiting
+        out.append(
+            Clinician(
+                id=ClinicianId(f"CLIN-{ward.ward_id}-{i}"),
+                role=roles[i % len(roles)],
+                specialties=frozenset({specialty}),
+            )
+        )
+    return out
+
+
+def _ward_patients(
+    ward: Ward, wards: tuple[Ward, ...], rng: Random
+) -> tuple[
+    list[Patient],
+    dict[LocationId, PatientId],
+    dict[PatientId, frozenset[Specialty]],
+]:
+    """One patient per bed, occupying it for the whole run.
+
+    Same simplification `SynthConfig` already makes ("assigns each patient one
+    bed for the whole run", `hwpm.mining.types.BedOccupancy`); modelling ADT
+    movement is a separate piece of work and faking it here would put motion
+    into the ward-day features that no event supports.
+    """
+    index = wards.index(ward)
+    visiting = wards[(index + 1) % len(wards)].specialty
+    acuities = list(Acuity)
+    patients: list[Patient] = []
+    occupancy: dict[LocationId, PatientId] = {}
+    required: dict[PatientId, frozenset[Specialty]] = {}
+    for bed_index, bed in enumerate(ward.beds):
+        pid = PatientId(f"PAT-{ward.ward_id}-{bed_index}")
+        patients.append(
+            Patient(
+                id=pid,
+                acuity=acuities[rng.randrange(len(acuities))],
+                isolation_status=IsolationStatus.NONE,
+            )
+        )
+        occupancy[bed.id] = pid
+        # Two thirds multi-specialty: the coverage denominator (ADR-0006)
+        # needs to be non-trivial on every ward-day, and a ward where nobody
+        # needs an MDT makes both the metric and the MDT_DAY day-type vacuous.
+        required[pid] = (
+            frozenset({ward.specialty, visiting})
+            if bed_index < 4
+            else frozenset({ward.specialty})
+        )
+    return patients, occupancy, required
+
+
+def _jittered(profile: DayTypeProfile, rng: Random) -> DayTypeProfile:
+    """One ward-day's realised parameters. Wide enough that the day-types
+    overlap -- see the note on `DAY_TYPE_PROFILES`."""
+    return DayTypeProfile(
+        n_clinicians=min(
+            _ROSTER_PER_WARD, max(2, profile.n_clinicians + rng.choice((-1, 0, 1)))
+        ),
+        visits_per_clinician=min(
+            _BEDS_PER_WARD,
+            max(2, profile.visits_per_clinician + rng.choice((-1, 0, 1))),
+        ),
+        visit_duration_minutes=max(
+            2, round(profile.visit_duration_minutes * rng.uniform(0.7, 1.3))
+        ),
+        gap_minutes=max(1, round(profile.gap_minutes * rng.uniform(0.7, 1.3))),
+        convergent=profile.convergent,
+    )
+
+
+def _ward_day_visits(
+    roster: list[Clinician],
+    patients: list[Patient],
+    day: date,
+    profile: DayTypeProfile,
+    config: WardDayConfig,
+    rng: Random,
+) -> list[tuple[Clinician, list[Visit]]]:
+    """Plan one ward-day's rounds.
+
+    Convergent days give every clinician the *same* bed order at the *same*
+    times, so `hwpm.mining.detect_mdt_moments` finds real co-presence.
+
+    Non-convergent days need more care than "stagger the start times", which
+    was the first attempt here and did not work, and a rotate-and-stagger
+    scheme was the second attempt and did not work either. Both are recorded
+    because the failure is instructive: SPEC-002's co-presence rule clusters
+    bedside episodes separated by up to `window_s` (300 s by default), so two
+    clinicians rounding one behind the other collide at every bed inside the
+    window. Measured on 216 generated ward-days, the staggered version gave
+    POST_TAKE *more* MDT moments per day (3.98) than MDT_DAY (3.41), and the
+    rotated version made it worse (4.95 against 3.29), because rotating by
+    `2i` modulo `k` collides for `i >= k/2`. Either way the day-type would
+    have been recoverable only from scale, and criterion 16's oracle would
+    have been testing something much weaker than it claims.
+
+    What is used instead: on a non-convergent day the teams round
+    **sequentially** -- clinician `i` starts only after clinician `i-1` has
+    finished -- so no two clinicians are on the ward at once and co-presence
+    is structurally impossible. That is also the more realistic model of a
+    ward where the consultant round, the therapy round and the pharmacy round
+    happen at different times of day, and it makes co-presence the one thing
+    that genuinely distinguishes MDT_DAY. The scale features (episode counts,
+    dwell, span) still overlap heavily across all four types after jitter, so
+    the clustering problem stays a real one.
+    """
+    start = datetime.combine(day, time(config.day_start_hour, 0))
+    working = roster[: profile.n_clinicians]
+    step = profile.visit_duration_minutes + profile.gap_minutes
+
+    chosen = rng.sample(patients, profile.visits_per_clinician)
+    chosen.sort(key=lambda p: (-int(p.acuity), p.id.value))
+    shared_order = [p.id for p in chosen]
+    k = len(shared_order)
+
+    out: list[tuple[Clinician, list[Visit]]] = []
+    for offset_index, clinician in enumerate(working):
+        if profile.convergent:
+            order = list(shared_order)
+            clock = start
+        else:
+            rotation = (2 * offset_index) % k
+            order = shared_order[rotation:] + shared_order[:rotation]
+            clock = start + timedelta(minutes=offset_index * k * step)
+        visits: list[Visit] = []
+        for pid in order:
+            visits.append(
+                Visit(
+                    clinician_id=clinician.id,
+                    patient_id=pid,
+                    start_slot=clock,
+                    duration=timedelta(minutes=profile.visit_duration_minutes),
+                )
+            )
+            clock += timedelta(
+                minutes=profile.visit_duration_minutes + profile.gap_minutes
+            )
+        out.append((clinician, visits))
+    return out
+
+
+def generate_ward_days(
+    config: WardDayConfig, rng: Random
+) -> tuple[list[Event], WardDayGroundTruth]:
+    """Generate `n_days` x `len(wards)` ward-days, each with a known `DayType`.
+
+    Every draw comes from `rng` in a fixed order (wards outer, days inner,
+    then clinicians), so `generate_ward_days(config, Random(7))` is
+    reproducible -- the same guarantee `generate` carries, and the one
+    criterion 19 rests on.
+
+    Returns the flat `Event` stream (which is what `hwpm.mining` consumes)
+    plus the ground truth. Deriving episodes from it is the caller's job and
+    is deliberately not done here: episode derivation has its own tunable
+    `EpisodeParams`, and a generator that pre-derived them would hide the
+    parameter sensitivity SPEC-002 exists to expose.
+    """
+    all_wards = _build_wards()
+    wards = all_wards
+    if config.ward_ids is not None:
+        wanted = set(config.ward_ids)
+        wards = tuple(w for w in all_wards if w.ward_id in wanted)
+        if not wards:
+            raise ValueError(f"no ward matches ward_ids={config.ward_ids!r}")
+
+    day_types: dict[tuple[date, str], DayType] = {}
+    occupancy: dict[LocationId, PatientId] = {}
+    required: dict[PatientId, frozenset[Specialty]] = {}
+    clinician_specialties: dict[ClinicianId, frozenset[Specialty]] = {}
+    all_patients: list[Patient] = []
+    visits_by_ward_day: dict[tuple[date, str], list[Visit]] = {}
+    events: list[Event] = []
+
+    types = list(DayType)
+    for ward in wards:
+        roster = _ward_roster(ward, all_wards)
+        for clinician in roster:
+            clinician_specialties[clinician.id] = clinician.specialties
+        patients, ward_occupancy, ward_required = _ward_patients(ward, all_wards, rng)
+        all_patients.extend(patients)
+        occupancy.update(ward_occupancy)
+        required.update(ward_required)
+        location_of = {
+            pid: bed
+            for bed_location in ward.beds
+            for bed, pid in [(bed_location, ward_occupancy[bed_location.id])]
+        }
+
+        for offset in range(config.n_days):
+            day = config.first_day + timedelta(days=offset)
+            day_type = types[rng.randrange(len(types))]
+            key = (day, ward.ward_id)
+            day_types[key] = day_type
+            profile = _jittered(DAY_TYPE_PROFILES[day_type], rng)
+            planned = _ward_day_visits(roster, patients, day, profile, config, rng)
+            day_visits: list[Visit] = []
+            for clinician, visits in planned:
+                day_visits.extend(visits)
+                events.extend(
+                    _events_for_round(
+                        clinician,
+                        visits,
+                        location_of,
+                        config.noise,
+                        rng,
+                        source=_WARD_DAY_SOURCE,
+                    )
+                )
+            visits_by_ward_day[key] = day_visits
+
+    truth = WardDayGroundTruth(
+        day_types=day_types,
+        occupancy=occupancy,
+        required_specialties=required,
+        clinician_specialties=clinician_specialties,
+        patients=tuple(all_patients),
+        visits=visits_by_ward_day,
+    )
+    return events, truth

@@ -642,6 +642,20 @@ nodes:
     gate: confirm
     budget_tokens: 180000
     decision: ADR-0007
+    status: completed
+    condition_met: false
+    artefacts:
+      [
+        src/hwpm/mining/embed.py,
+        src/hwpm/analytics/cohorts.py,
+        src/hwpm/optimize/warmstart.py,
+        src/hwpm/ingest/synthetic.py,
+        src/hwpm/artefact/envelope.py,
+        tests/test_embed.py,
+        tests/bench/test_embedding_gate.py,
+        pyproject.toml,
+        docs/specs/SPEC-007-vector-retrieval.md,
+      ]
     rationale: >
       Part B of SPEC-007, and a different system from N19 despite the shared
       embedding dependency -- this one touches nothing but patient-derived data.
@@ -651,6 +665,68 @@ nodes:
       measurably. Embeddings may drive retrieval, clustering, anomaly triage and
       optimiser warm starts, never a reported governance figure without an
       interpretable derivation alongside (ADR-0006).
+    outcome: >
+      RECOMMENDED FOR DOWNSTREAM USE: the interpretable feature vector
+      (hwpm.mining.embed.WardDayVector.features, 14 named unit-carrying
+      numbers). NOT the learned embedding. The SPEC-007 criterion 16 / ADR-0007
+      Part B gate DOES NOT CLEAR, so `condition_met: false` above -- the confirm
+      gate has nothing to confirm, because the measurement decided against the
+      opaque representation before it reached the user.
+
+      Measured 2026-08-21 on 216 synthetic ward-days (24 days x 9 wards, above
+      the criterion-17 floor of 200), adjusted Rand index against the
+      generator's known day-types, median over five k-means seeds, repeated
+      across three generator seeds. Interpretable features vs learned embedding
+      (BAAI/bge-small-en-v1.5 over ordered bed/dwell-bucket trace text, the same
+      local ONNX runtime N19b built): generator seed 7, 0.575 vs 0.508
+      (delta -0.067); seed 101, 0.930 vs 0.426 (delta -0.503); seed 202, 0.571
+      vs 0.476 (delta -0.095). The gate needs delta >= +0.10 on every draw. The
+      embedding lost on all three, by between 0.07 and 0.50 ARI. Embedding the
+      216 traces cost 72-99 s; the feature encoding is effectively free.
+
+      The learned path is kept in hwpm.mining.embed as the challenger so the
+      comparison stays runnable, and tests/bench/test_embedding_gate.py
+      ::test_embedding_gate asserts the real +0.10 threshold and is DELIBERATELY
+      RED -- the same treatment N19b gave ADR-0007 G3, and for the same reason:
+      a gate that reports itself as passing because it was allowed to is worse
+      than no gate. The honest reading of why it lost is recorded in
+      `trace_text`'s docstring: bge-small is an English sentence encoder being
+      asked to read a symbol sequence, and SPEC-007 forbids by name the
+      alternative (training a trace encoder on ward data, which would itself be
+      derived personal data).
+
+      Governance constraint discharged structurally, not by review: import-linter
+      contract "Governance figures do not depend on embeddings (ADR-0007)"
+      forbids hwpm.analytics.{coverage,motion,bounds,suppression} from importing
+      hwpm.mining.embed or hwpm.analytics.cohorts (verified to BREAK when a
+      forbidden import is added to coverage.py, then restored); the artefact
+      envelope raises EmbeddingDerivedFieldError on any embedding-derived
+      payload field at any depth, at construction and at load; and
+      hwpm.mining.embed is deliberately NOT re-exported from
+      hwpm/mining/__init__.py, so coverage.py's existing `hwpm.mining.mdt`
+      import cannot reach it through a package __init__ nobody watches. N18's
+      MDT-coverage figure is untouched by this node.
+
+      Also built: ward-day cohorts with the ADR-0005 aggregation floor applied
+      per cluster (hwpm.analytics.cohorts, criterion 18), atypicality as
+      candidates-for-human-review only, nearest-neighbour warm starts
+      (hwpm.optimize.warmstart.seed_population, returning only schedules that
+      pass Schedule.validate), and the criterion-16 oracle that did not exist
+      before this node -- hwpm.ingest.synthetic.generate_ward_days with known
+      DayTypes. Four spec/code disagreements found and logged as amendments to
+      SPEC-007.
+
+      KNOWN CONSEQUENCE, reported not hidden: adding three heavily-docstringed
+      modules to src/ pushed N19b's lexical retrieval baseline from recall@5
+      0.750 to 0.667, so tests/test_retrieve.py::test_lexical_recall_gate is now
+      red. Verified causal (removing the three modules restores the pass) and
+      diagnosed: warmstart.py and embed.py now outrank the labelled passages for
+      queries q10/q11/q17/q28/q30. That test's own docstring says a drift below
+      0.70 "is the signal that reopened N19b in the first place, not a test to
+      raise the bar on by relabelling queries", so neither the query set nor the
+      threshold was touched. It means ADR-0007 G2 (lexical-only recall@5 <= 0.70)
+      is now MET where N19b measured it unmet -- a retrieval question for a
+      follow-up node, not for N20.
 
   - id: N17-real-data
     title: First run against a real extract

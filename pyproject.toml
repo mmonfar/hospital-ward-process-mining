@@ -142,6 +142,44 @@ layers = [
     "hwpm.domain",
 ]
 
+# SPEC-007 criterion 14 / ADR-0007 decision 5. The most important contract in
+# this file, and the one written as a prohibition because it is the one that
+# would be traded away under pressure.
+#
+# An embedding may never be the basis of a reported governance figure without an
+# interpretable derivation published alongside. The named modules are the ones
+# that produce or underpin published figures: `coverage` is the N18 MDT-coverage
+# view, `motion` is SPEC-003's attributable-motion figure, `bounds` is the proven
+# lower bound `motion` rests on, and `suppression` is the ADR-0005 floor all of
+# them apply. None may reach `hwpm.mining.embed`.
+#
+# Two structural notes that make this contract bite rather than decorate:
+#
+#  1. `hwpm.mining.embed` is deliberately NOT re-exported from
+#     `hwpm/mining/__init__.py`, and `hwpm.analytics.cohorts` is deliberately NOT
+#     re-exported from `hwpm/analytics/__init__.py`. `hwpm.analytics.coverage`
+#     imports `hwpm.mining.mdt`, which pulls in the parent package `hwpm.mining`;
+#     had `embed` been re-exported there, every governance module would import it
+#     transitively through a package `__init__` nobody was looking at, and this
+#     contract would fail for a reason unrelated to anyone's intent -- or worse,
+#     be "fixed" by loosening it.
+#  2. `hwpm.analytics.cohorts` (which publishes cluster summaries, and therefore
+#     does import `embed`) is listed as forbidden to the four figure modules too,
+#     so the dependency cannot be laundered one hop.
+[[tool.importlinter.contracts]]
+name = "Governance figures do not depend on embeddings (ADR-0007)"
+type = "forbidden"
+source_modules = [
+    "hwpm.analytics.coverage",
+    "hwpm.analytics.motion",
+    "hwpm.analytics.bounds",
+    "hwpm.analytics.suppression",
+]
+forbidden_modules = [
+    "hwpm.mining.embed",
+    "hwpm.analytics.cohorts",
+]
+
 # ADR-0008: pm4py is AGPL v3. Confining it to one adapter keeps the dependency
 # swappable at a known, small cost while the organisation answers the licensing
 # question. A Protocol boundary is not a legal firewall -- it buys optionality.

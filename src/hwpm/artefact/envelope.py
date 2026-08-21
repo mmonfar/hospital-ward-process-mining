@@ -65,6 +65,19 @@ class IncompleteStrategySetError(ArtefactError):
     """Fewer than all five strategies present (criterion 9, ADR-0006 §3)."""
 
 
+class EmbeddingDerivedFieldError(ArtefactError):
+    """A payload field derived from a learned embedding. SPEC-007 criterion 15.
+
+    ADR-0007 decision 5 prohibits an embedding underpinning a reported figure
+    without an interpretable derivation alongside it, and says the mechanism of
+    the eventual breach is predictable: nobody proposes basing MDT coverage on
+    an embedding, somebody proposes a "similar wards" comparator. This is the
+    file boundary saying no to that, in the same place and the same way the
+    missing-strategy check does -- at load and at construction, where a
+    rendering path cannot route around it.
+    """
+
+
 @dataclass(frozen=True)
 class ArtefactEnvelope:
     """A payload plus the provenance a governance-monitored figure needs.
@@ -91,6 +104,7 @@ class ArtefactEnvelope:
                 "every artefact must offer all five strategies (SPEC-001 "
                 f"criterion 9, ADR-0006 §3); missing {missing}"
             )
+        reject_embedding_fields(self.payload)
         # No "is `strategy` available?" check: the line above has already
         # established that `available_strategies` is all five, and `strategy`
         # is an enum member, so it is. A second guard would be unreachable
@@ -183,6 +197,52 @@ class ArtefactEnvelope:
             payload=dict(data["payload"]),
             schema_version=int(data["schema_version"]),
         )
+
+
+#: Field-name fragments that mark a value as embedding-derived. Substring
+#: matching on a lowercased key, not an exact list, because the field that
+#: eventually appears will be called `similar_wards_embedding_distance` or
+#: `cohort_vector`, not `embedding`. A name-based check is admittedly a
+#: heuristic and cannot see a laundered field called `similarity_index`; it is
+#: the *second* line of defence. The first is the import-linter contract
+#: "Governance figures do not depend on embeddings" in `pyproject.toml`, which
+#: stops the code that would compute such a field from existing at all.
+EMBEDDING_FIELD_MARKERS: tuple[str, ...] = (
+    "embedding",
+    "cosine",
+    "atypicality",
+    "vector_distance",
+    "nearest_neighbour_distance",
+    "nearest_neighbor_distance",
+)
+
+
+def reject_embedding_fields(payload: Mapping[str, Any], _path: str = "payload") -> None:
+    """Raise `EmbeddingDerivedFieldError` if `payload` holds an
+    embedding-derived field, at any depth. SPEC-007 criterion 15.
+
+    Recurses into nested mappings and into lists of mappings, because a
+    payload's second level is exactly where a "similar days" comparator would
+    be added by someone who had read the top-level check and worked around it.
+    """
+    for key, value in payload.items():
+        lowered = str(key).lower()
+        for marker in EMBEDDING_FIELD_MARKERS:
+            if marker in lowered:
+                raise EmbeddingDerivedFieldError(
+                    f"{_path}.{key} looks embedding-derived (matched {marker!r}). "
+                    "ADR-0007 decision 5: an embedding may never be the basis of "
+                    "a reported governance figure without an interpretable "
+                    "derivation published alongside it. Publish the named, "
+                    "unit-carrying features (hwpm.mining.embed.FEATURE_NAMES) "
+                    "instead, or publish both"
+                )
+        if isinstance(value, Mapping):
+            reject_embedding_fields(value, f"{_path}.{key}")
+        elif isinstance(value, list | tuple):
+            for index, item in enumerate(value):
+                if isinstance(item, Mapping):
+                    reject_embedding_fields(item, f"{_path}.{key}[{index}]")
 
 
 def _parse_strategy(value: Any) -> RequiredSpecialtyStrategyKey:

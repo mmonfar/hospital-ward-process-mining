@@ -550,3 +550,62 @@ Part B:
   must record the neighbour set. Decide when N10 is implemented, not now.
 - **[non-blocking] Cluster count `k` for ward-day types.** A clinical question.
   Ask at N16 face validity rather than choosing it analytically.
+
+---
+
+## Amendments
+
+### 2026-08-21 — N20-trace-embeddings (Part B built and measured)
+
+Four disagreements between this spec and the code were found while building
+Part B. ADR-0001 requires each to be fixed on one side or the other and logged;
+all four are recorded here and in `docs/AUDIT-LOG.md`.
+
+1. **The criterion-16 oracle did not exist.** The "Test oracle" section states
+   that "`hwpm.ingest.synthetic.GroundTruth` knows which day-type it
+   generated". It did not: `GroundTruth` carries schedules, required
+   specialties and distances, and `generate` produces one shift with no notion
+   of a day at all. Criterion 17's 200-ward-day floor was equally unreachable —
+   one call produced one day. **Fixed on the code side** (the spec's
+   requirement is the sound one; the oracle had simply not been built):
+   `hwpm.ingest.synthetic` gains `DayType`, `DayTypeProfile`,
+   `WardDayConfig`, `WardDayGroundTruth` and `generate_ward_days`, as a
+   separate entry point so that `generate`'s output — the oracle for N01, N03,
+   N05 and N06 — is unchanged.
+
+2. **Criterion 14 names a module that does not exist.** There is no
+   `hwpm.analytics.governance`. The modules that produce or underpin published
+   figures are `hwpm.analytics.coverage` (N18's MDT coverage),
+   `hwpm.analytics.motion` (SPEC-003's attributable motion),
+   `hwpm.analytics.bounds` and `hwpm.analytics.suppression`. **Fixed on the
+   spec side**: criterion 14 is to be read as naming those four, which is what
+   the import-linter contract "Governance figures do not depend on embeddings
+   (ADR-0007)" in `pyproject.toml` enforces. The contract additionally forbids
+   `hwpm.analytics.cohorts`, so the dependency cannot be laundered one hop.
+
+3. **`neighbours(v, k=5)` implies an ambient corpus.** The interface sketch
+   takes no pool, which means a module-level store of ward-day vectors — a
+   hidden store of patient-derived data, which ADR-0007 decision 2 says must
+   never be ambient. **Fixed on the spec side**: the implemented signature is
+   `neighbours(v, pool, model, k=5)` and returns `(date, ward)` keys rather
+   than bare dates, because the unit of analysis is the ward-day (modelling
+   assumption 5) and a date does not identify one.
+
+4. **`encode_ward_day(episodes, rounds)` cannot compute its own feature list.**
+   Motion metres need a `TravelGraph` (the only sanctioned distance, SPEC-003)
+   and MDT moments need the `required` map (a runtime N04 strategy choice per
+   SPEC-001). **Fixed on the spec side**: the two positional arguments are
+   unchanged and three keyword-only arguments are added, following the
+   precedent of SPEC-003's `analyse(rounds, graph, rng, params=None)`.
+   `required=None` is permitted and recorded in provenance rather than
+   silently treated as "nobody needed an MDT".
+
+**Part B gate outcome (criterion 16): the learned embedding did not clear it.**
+Measured 2026-08-21 over 216 synthetic ward-days, three generator seeds and
+five k-means seeds. The interpretable feature baseline beat the learned
+embedding on every draw; medians −0.067, −0.503 and −0.095 ARI against a
+required margin of +0.10. Per criterion 16 the recommended representation for
+all downstream use is `WardDayVector.features`. The learned path remains in
+`hwpm.mining.embed` as the *challenger* so the measurement stays repeatable,
+and `tests/bench/test_embedding_gate.py::test_embedding_gate` asserts the real
+threshold and is deliberately red — the same treatment N19b gave G3.
