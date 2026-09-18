@@ -18,6 +18,8 @@ they were there. Detecting exactly that is `detect_opportunistic` in SPEC-002 �
 the highest-value output here, because acting on it needs a notification rather
 than an organisational change.
 
+Full problem statement: [`docs/00-VISION.md`](docs/00-VISION.md).
+
 ## What it does
 
 | Capability | Spec |
@@ -25,26 +27,55 @@ than an organisational change.
 | Ingest event logs into a canonical, pseudonymous stream | SPEC-001 |
 | Discover the real round process; detect MDT moments and missed opportunities | SPEC-002 |
 | Quantify motion waste over a routed travel graph, with uncertainty | SPEC-003 |
-| Produce a Pareto set of synchronised-MDT schedules | SPEC-004 |
-| Visualise it in 3D | SPEC-005 |
+| Produce a Pareto set of synchronised-MDT schedules (exact CP-SAT baseline, random/hill-climbing baselines, ACS routing, NSGA-II) | SPEC-004 |
+| Visualise it — ward scene, Pareto browser, governance coverage view | SPEC-005 |
+| Vector/hybrid context retrieval over the project's own docs (measured, lexical-only shipped) | SPEC-007 |
 | Audit the code and the method | SPEC-006 |
+
+## Status
+
+**20 of 24 planned nodes are complete.** The optimiser stack, motion-waste
+analytics, MDT-coverage governance view, ward viewer, and automated
+code/method auditor are all built, tested and committed — see
+[`docs/AUDIT-LOG.md`](docs/AUDIT-LOG.md) for the full, honestly-reported
+history, including negative results (a learned trace embedding and a hybrid
+vector retriever were both built, measured, and rejected in favour of the
+simpler interpretable/lexical alternative — the numbers are in the log).
+
+Two things remain, both requiring a human, not an agent:
+
+- **`N16-face-validity`** — clinician review of the discovered process model.
+  Nothing here has been checked against a real clinician's judgement yet.
+- **`N17-real-data`** — first run against real data. A hard stop by design
+  (`orchestration/graph.yaml`): no agent may proceed past it under any
+  circumstances.
+
+Everything in this repository, including the demo bundle in `web/demo/`, is
+synthetic. Run `hwpm govern graph -v` for the live state.
 
 ## Quick start
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev,analysis,optimize,retrieve]"
 python -m hwpm.cli govern graph -v
+python -m hwpm.cli govern budget --by-model
+python -m pytest -q
 ```
 
+### Viewer demo
+
 ```bash
-python -m hwpm.cli govern budget --by-model
+python tools/generate_viewer_artefacts.py   # regenerate web/demo/ (optional -- already committed)
+python -m http.server 8799 --directory web
 ```
+
+Then open `http://localhost:8799/viewer.html`.
 
 ## How this project is run
 
 Built largely by autonomous agents under a spec-driven protocol:
 
-- **`orchestration/graph.yaml`** is the work graph — 18 nodes with dependencies,
+- **`orchestration/graph.yaml`** is the work graph — 24 nodes with dependencies,
   an assigned model role, a token budget, and a gate. It is data: `hwpm govern
   graph` reads it to decide what is runnable.
 - **`docs/specs/`** is normative. No implementation without a spec (ADR-0001).
@@ -61,7 +92,10 @@ Optimisation choices follow `refs/metaheuristics/SELECTION-GUIDE.md`, which maps
 each sub-problem to a specific algorithm from Sean Luke's *Essentials of
 Metaheuristics* and records what was rejected. Its Rule 0 governs everything:
 **metaheuristics are a last resort** — exact methods first, then greedy, and
-nothing is reportable until it beats random search.
+nothing is reportable until it beats random search. That gate has fired twice
+so far: NSGA-II was demoted to a cross-check when CP-SAT proved optimal at
+single-ward scale, then reinstated once measurement showed hospital scale
+changes the answer (`docs/AUDIT-LOG.md`, N08/N21).
 
 MDT scheduling is solved multi-objectively and delivered as a Pareto front, not
 a single answer. The trade-off between protecting nursing time and minimising
@@ -75,7 +109,13 @@ outside the repo under `HWPM_DATA_DIR`; development runs on synthetic fixtures;
 aggregates are suppressed below 5 patients and never attributed to a named
 clinician. See **ADR-0005**, which is a hard stop, not a guideline.
 
-## Status
+## Project structure
 
-Foundation complete (N00). Next: `N01-synthetic-fixtures` and `N02-domain-core`.
-Run `hwpm govern graph` for the current state.
+| Path | What |
+|---|---|
+| `docs/01-DOMAIN-MODEL.md` | Ubiquitous language, entities, design rules |
+| `docs/02-ARCHITECTURE.md` | Layering, language choice |
+| `docs/adr/` | Architecture decisions, amended by addition only |
+| `src/hwpm/` | The governed Python package (domain, ingest, mining, analytics, optimize, retrieve, govern) |
+| `web/` | The ward viewer (three.js), served statically against `web/demo/` |
+| `tests/`, `tests/bench/` | Unit tests and benchmark/gate measurements |

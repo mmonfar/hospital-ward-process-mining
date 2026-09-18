@@ -51,3 +51,7 @@ Thumbs.db
 .thumbnail
 .idea/
 .vscode/
+
+# --- Claude Code session state (machine/process-local, never shared) -------
+.claude/scheduled_tasks.lock
+.claude/session-env/

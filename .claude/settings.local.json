@@ -44,7 +44,8 @@
       "Bash(PYTHONPATH=src python -m pytest tests/test_ingest.py -q)",
       "Bash(PYTHONPATH=src python -m pytest tests/test_travel.py -q)",
       "Bash(PYTHONPATH=src python -m pytest tests/ --collect-only -q)",
-      "Bash(python -m ruff check src/hwpm/ingest/ tests/test_ingest.py)"
+      "Bash(python -m ruff check src/hwpm/ingest/ tests/test_ingest.py)",
+      "Bash(python -m vulture src/hwpm/optimize/acs.py)"
     ]
   }
 }

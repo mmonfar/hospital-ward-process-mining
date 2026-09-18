@@ -78,3 +78,9 @@ python -m hwpm.cli govern audit "what was done" \
 ```
 
 One node, one commit, one audit entry. Then update `status:` in `graph.yaml`.
+
+## Reference brain
+Algorithm/forecasting reference material lives at `C:\Users\marti\Python_Projects\refs_books` (not part of this repo).
+Before designing an algorithm/forecasting approach from scratch, search it:
+    python C:\Users\marti\Python_Projects\refs_books\_system\query_brain.py search "<topic>"
+Then read the matching book's `APPLICATION-GUIDE.md` for the curated when/how-to-use notes.
