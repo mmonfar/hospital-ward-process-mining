@@ -5,7 +5,6 @@
       "Bash(python -c \"import pypdf; print\\('pypdf ok'\\)\")",
       "Bash(python -c \"import pdfplumber; print\\('pdfplumber ok'\\)\")",
       "Bash(pdftotext -layout Essentials.pdf Essentials.txt)",
-      "Bash(python -c ' *)",
       "Bash(git init *)",
       "Bash(git config *)",
       "Bash(git add *)",
