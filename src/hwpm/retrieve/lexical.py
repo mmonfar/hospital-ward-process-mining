@@ -30,8 +30,21 @@ _K1 = 1.5
 _B = 0.75
 
 
+# Standard short English function-word list (NLTK-style core, no domain
+# words). Without it, common words in a natural-language question ("what",
+# "how", "does") match long docstring-heavy source chunks by sheer volume and
+# outrank the short documentation passage that actually answers the question.
+# Applied to both index and query, so symbol names and identifiers are kept.
+_STOPWORDS = frozenset(
+    "a an and are as at be been but by can did do does for from had has have "
+    "how i if in into is it its of on or so such than that the their then "
+    "there these they this to was were what when where which who why will "
+    "with would".split()
+)
+
+
 def tokenize(text: str) -> list[str]:
-    return _TOKEN_RE.findall(text.lower())
+    return [t for t in _TOKEN_RE.findall(text.lower()) if t not in _STOPWORDS]
 
 
 @dataclass
