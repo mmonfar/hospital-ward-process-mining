@@ -46,9 +46,9 @@ Two things remain, both requiring a human, not an agent:
 
 - **`N16-face-validity`** — clinician review of the discovered process model.
   Nothing here has been checked against a real clinician's judgement yet.
-- **`N17-real-data`** — first run against real data. A hard stop by design
-  (`orchestration/graph.yaml`): no agent may proceed past it under any
-  circumstances.
+- **`N17-real-data`** — a first run on a user's own data, after information-governance
+  approval. A hard stop by design (`orchestration/graph.yaml`): no agent may
+  proceed past it under any circumstances.
 
 Everything in this repository, including the demo bundle in `web/demo/`, is
 synthetic. Run `hwpm govern graph -v` for the live state.
@@ -101,6 +101,16 @@ MDT scheduling is solved multi-objectively and delivered as a Pareto front, not
 a single answer. The trade-off between protecting nursing time and minimising
 clinician walking is a management decision, and scalarising it into a weight
 vector would hide that decision rather than make it (ADR-0004).
+
+## Sources
+
+- Luke, S. (2013). *Essentials of Metaheuristics*, 2nd ed. Lulu. Free online: https://cs.gmu.edu/~sean/book/metaheuristics/ . Used to choose the optimisation methods (see Method).
+
+Other numbers are design choices of this project, not literature values:
+
+- Small-number suppression floor of 5 patients (`src/hwpm/analytics/suppression.py`). Source needed: a disclosure-control reference.
+- Confidence thresholds 0.8 and 1/N (`src/hwpm/ingest/location.py`, `src/hwpm/domain/specialty.py`). Design values from SPEC-001.
+- Ward spacing 32 m and floor height 4.2 m (`src/hwpm/domain/travel.py`). Illustrative synthetic geometry.
 
 ## Data protection
 

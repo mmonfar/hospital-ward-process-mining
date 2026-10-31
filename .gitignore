@@ -55,3 +55,9 @@ Thumbs.db
 # --- Claude Code session state (machine/process-local, never shared) -------
 .claude/scheduled_tasks.lock
 .claude/session-env/
+
+# --- Personal marketing material (not project source) ----------------------
+marketing/
+
+# Local agent settings (machine-specific paths)
+.claude/settings.local.json
