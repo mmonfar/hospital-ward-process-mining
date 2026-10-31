@@ -104,7 +104,7 @@ vector would hide that decision rather than make it (ADR-0004).
 
 ## Sources
 
-- Luke, S. (2013). *Essentials of Metaheuristics*, 2nd ed. Lulu. Free online: https://cs.gmu.edu/~sean/book/metaheuristics/ . Used to choose the optimisation methods (see Method).
+- Luke, S. (2013). *Essentials of Metaheuristics*, second edition. Lulu. Free online: https://cs.gmu.edu/~sean/book/metaheuristics/ . Used to choose the optimisation methods (see Method).
 
 Other numbers are design choices of this project, not literature values:
 
