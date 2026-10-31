@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Hospital Process Mining — Physician Motion</title>
+<title>Clinician walking distance</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script type="importmap">
 {
@@ -31,59 +31,72 @@
   #ui { position: fixed; inset: 0; pointer-events: none; z-index: 10; display: flex; flex-direction: column; justify-content: space-between; }
   #header { pointer-events: auto; padding: 16px 20px 0 20px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
   #title-block h1 { margin: 0; font-size: 17px; font-weight: 700; color: #1c2b30; letter-spacing: -0.01em; }
-  #title-block p { margin: 3px 0 0 0; font-size: 12px; color: #5b6d72; max-width: 420px; line-height: 1.4; }
+  #title-block p { margin: 3px 0 0 0; font-size: 14px; color: #4a5c61; max-width: 760px; line-height: 1.4; }
   .panel { pointer-events: auto; background: rgba(255,255,255,0.95); backdrop-filter: blur(6px); border-radius: 10px; box-shadow: 0 2px 12px rgba(20,40,40,0.1); }
-  #left-col { position: fixed; left: 20px; top: 76px; bottom: 20px; width: 250px; display: flex; flex-direction: column; gap: 12px; pointer-events: none; overflow-y: auto; }
+  #left-col { position: fixed; left: 20px; top: 118px; bottom: 20px; width: 320px; display: flex; flex-direction: column; gap: 12px; pointer-events: none; overflow-y: auto; }
   #left-col .panel { pointer-events: auto; padding: 12px; }
-  #floormap h2, #import-panel h2, #actor-panel h2 { margin: 0 0 8px 0; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #5b6d72; }
+  #floormap h2, #import-panel h2, #actor-panel h2 { margin: 0 0 8px 0; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #4a5c61; }
   .floor-row { margin-bottom: 8px; }
-  .floor-row .fl-label { font-size: 10.5px; color: #8a9599; margin-bottom: 4px; }
+  .floor-row .fl-label { font-size: 14px; color: #55666b; margin-bottom: 4px; }
   .ward-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
-  .ward-tile { border: 1px solid rgba(20,40,40,0.14); border-radius: 6px; padding: 6px 4px; font-size: 10px; text-align: center; cursor: pointer; background: #f7f9f8; color: #33454b; line-height: 1.3; }
+  .ward-tile { overflow-wrap: anywhere; border: 1px solid rgba(20,40,40,0.14); border-radius: 6px; padding: 6px 2px; font-size: 14px; text-align: center; cursor: pointer; background: #f7f9f8; color: #33454b; line-height: 1.3; }
   .ward-tile:hover { border-color: #16777a; }
   .ward-tile.active { background: #16777a; color: #fff; border-color: #16777a; font-weight: 600; }
   .ward-tile.visited:not(.active) { border-color: #16777a; box-shadow: inset 0 0 0 1px #16777a; }
-  #import-panel { font-size: 12px; }
+  #import-panel { font-size: 14px; }
 #floormap, #actor-panel, #import-panel { flex: none; }
   #import-panel button, #actor-panel select, #import-panel select { font-family: inherit; }
-  .btn { appearance: none; border: none; border-radius: 7px; background: #16777a; color: #fff; font-size: 11.5px; font-weight: 600; padding: 7px 10px; cursor: pointer; }
+  .btn { appearance: none; border: none; border-radius: 7px; background: #16777a; color: #fff; font-size: 14px; font-weight: 600; padding: 7px 10px; cursor: pointer; }
   .btn:hover { background: #106064; }
   .btn.secondary { background: #eef1f0; color: #26333a; border: 1px solid rgba(20,40,40,0.14); }
   .btn.secondary:hover { background: #e2e8e6; }
   .btn:disabled { opacity: 0.45; cursor: default; }
   #file-row { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
-  #map-table { width: 100%; border-collapse: collapse; font-size: 10.5px; margin-bottom: 8px; }
+  #map-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 8px; }
   #map-table th, #map-table td { text-align: left; padding: 3px 2px; border-bottom: 1px solid rgba(20,40,40,0.08); }
-  #map-table select { width: 100%; font-size: 10.5px; padding: 2px; }
+  #map-table select { width: 100%; font-size: 14px; padding: 2px; }
   #loc-map-list { max-height: 150px; overflow-y: auto; margin-bottom: 8px; }
-  .loc-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; align-items: center; margin-bottom: 4px; font-size: 10px; }
-  .loc-row select { font-size: 10px; padding: 2px; }
+  .loc-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; align-items: center; margin-bottom: 4px; font-size: 14px; }
+  .loc-row select { font-size: 14px; padding: 2px; }
   .loc-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #33454b; }
-  #import-status { font-size: 10.5px; color: #5b6d72; margin-top: 4px; line-height: 1.4; }
-  #actor-panel select { width: 100%; padding: 6px; border-radius: 6px; border: 1px solid rgba(20,40,40,0.16); font-size: 12px; margin-bottom: 8px; }
+  #import-status { font-size: 14px; color: #4a5c61; margin-top: 4px; line-height: 1.4; }
+  #actor-panel select { width: 100%; padding: 6px; border-radius: 6px; border: 1px solid rgba(20,40,40,0.16); font-size: 14px; margin-bottom: 8px; }
   #speed-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
   #speed-row input[type=range] { flex: 1; accent-color: #16777a; }
-  #speed-val { font-size: 11px; color: #33454b; min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
+  #speed-val { font-size: 14px; color: #33454b; min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
   .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
   .stat { background: #f4f7f6; border-radius: 7px; padding: 6px 8px; }
-  .stat .lab { font-size: 9.5px; color: #8a9599; text-transform: uppercase; letter-spacing: 0.03em; }
+  .stat .lab { font-size: 14px; color: #55666b; text-transform: uppercase; letter-spacing: 0.03em; }
   .stat .val { font-size: 14px; font-weight: 700; color: #16474a; font-variant-numeric: tabular-nums; }
-  #bottom { pointer-events: none; display: flex; gap: 16px; align-items: flex-end; padding: 0 20px 20px 290px; }
+  #bottom { pointer-events: none; display: flex; gap: 16px; align-items: flex-end; padding: 0 20px 20px 360px; }
   #timeline-panel { pointer-events: auto; flex: 1 1 auto; padding: 12px 16px; }
   #time-row { display: flex; align-items: center; gap: 12px; }
-  #play-btn { appearance: none; border: none; border-radius: 8px; width: 32px; height: 32px; background: #16777a; color: #fff; font-size: 13px; cursor: pointer; flex: none; display: flex; align-items: center; justify-content: center; }
+  #play-btn { appearance: none; border: none; border-radius: 8px; width: 40px; height: 40px; background: #16777a; color: #fff; font-size: 16px; cursor: pointer; flex: none; display: flex; align-items: center; justify-content: center; }
   #play-btn:hover { background: #106064; }
   #clock { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 14px; color: #1c2b30; min-width: 74px; }
   #slider { flex: 1; accent-color: #16777a; height: 4px; }
-  #ward-label { font-size: 11px; color: #5b6d72; margin-top: 6px; }
+  #ward-label { font-size: 14px; color: #4a5c61; margin-top: 6px; }
   #log-panel { pointer-events: auto; width: 300px; max-height: 190px; overflow-y: auto; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
-  .log-item { font-size: 11px; line-height: 1.35; padding: 5px 7px; border-radius: 6px; color: #9aa3a5; cursor: pointer; border-left: 3px solid transparent; }
+  .log-item { font-size: 14px; line-height: 1.35; padding: 5px 7px; border-radius: 6px; color: #55666b; cursor: pointer; border-left: 3px solid transparent; }
   .log-item:hover { background: rgba(22,119,122,0.08); }
   .log-item.done { color: #33454b; }
   .log-item.current { background: rgba(22,119,122,0.1); color: #12474a; font-weight: 600; border-left-color: #16777a; }
   .log-time { font-variant-numeric: tabular-nums; opacity: 0.85; margin-right: 6px; }
-  .log-meta { display: block; font-size: 9.5px; color: #8a9599; margin-top: 1px; }
-  #empty-note { pointer-events: none; position: fixed; left: 290px; right: 20px; top: 46%; text-align: center; font-size: 13px; color: #7c8a8e; }
+  .log-meta { display: block; font-size: 14px; color: #55666b; margin-top: 1px; }
+  #import-panel { order: -1; }
+  #log-panel:empty { display: none; }
+  .btn.primary { width: 100%; padding: 12px 10px; font-size: 16px; }
+  #title-block .disclaimer { font-size: 14px; color: #4a5c61; margin-top: 2px; }
+  #more-btn { display: none; pointer-events: auto; }
+  @media (max-width: 700px) {
+    #title-block h1 { font-size: 20px; }
+    #left-col { width: calc(100% - 40px); top: auto; bottom: 150px; max-height: 42vh; }
+    #more-btn { display: block; width: 100%; }
+    #floormap, #actor-panel { display: none; }
+    body.show-more #floormap, body.show-more #actor-panel { display: block; }
+    #bottom { flex-direction: column; align-items: stretch; padding: 0 20px 16px 20px; gap: 8px; }
+    #log-panel { width: auto; max-height: 70px; }
+  }
 </style>
 </head>
 <body>
@@ -94,12 +107,12 @@
 <div id="ui">
   <div id="header">
     <div id="title-block">
-      <h1>Hospital Process Mining — Physician Motion</h1>
-      <p>Import a case log to see how far, and how long, clinicians walk between wards when subspecialties don't coordinate.</p>
+      <h1>Clinician walking distance</h1>
+      <p><strong>Step 1:</strong> press "Load sample data" (left). <strong>Step 2:</strong> press "Build timeline". <strong>Step 3:</strong> press play (bottom) to watch how far, and how long, clinicians walk between wards.</p>
+      <p class="disclaimer">Demonstration tool on synthetic data. Not a medical device.</p>
     </div>
   </div>
 
-  <div id="empty-note">Load the sample data or import a CSV to begin →</div>
   <div id="bottom">
     <div id="timeline-panel" class="panel">
       <div id="time-row">
@@ -114,12 +127,13 @@
 </div>
 
 <div id="left-col">
+  <button class="btn secondary" id="more-btn" aria-expanded="false">Show map and statistics</button>
   <div id="floormap" class="panel"><h2>Hospital map</h2><div id="floor-rows"></div></div>
   <div id="actor-panel" class="panel">
     <h2>Motion &amp; speed</h2>
     <select id="actor-select" disabled><option>No data loaded</option></select>
     <div id="speed-row">
-      <span style="font-size:11px;color:#5b6d72">Walk speed</span>
+      <span style="font-size:14px;color:#4a5c61">Walk speed</span>
       <input id="speed-slider" type="range" min="0.3" max="2.0" step="0.1" value="1.2">
       <span id="speed-val">1.2 m/s</span>
     </div>
@@ -133,11 +147,11 @@
     </div>
   </div>
   <div id="import-panel" class="panel">
-    <h2>Import case log</h2>
+    <h2>Start here: case log</h2>
     <div id="file-row">
-      <label class="btn secondary" for="csv-file" style="display:inline-block">Choose CSV</label>
+      <button class="btn primary" id="sample-btn">Load sample data</button>
+      <label class="btn secondary" for="csv-file" style="display:inline-block">or choose your own CSV file</label>
       <input type="file" id="csv-file" accept=".csv" style="display:none">
-      <button class="btn secondary" id="sample-btn">Load sample</button>
     </div>
     <div id="mapping-area"></div>
     <div id="import-status"></div>
@@ -148,6 +162,19 @@
 import * as THREE from 'three';
 const stage = document.getElementById('stage');
 await stage.ready;
+// Download buttons: hidden until data is loaded, moved to the top right so they never sit over the playback bar.
+{
+  const st = document.createElement('style');
+  st.textContent = '.toolbar{display:none;top:16px;bottom:auto;flex-wrap:wrap;justify-content:flex-end;max-width:60vw}.toolbar.on{display:flex}.toolbar button{font-size:14px;padding:10px 12px}.note{font-size:14px !important;color:#4a5c61 !important}@media(max-width:700px){.note{display:none}}';
+  stage.shadowRoot.appendChild(st);
+  stage.setToolbarVisible = (on) => stage.shadowRoot.querySelector('.toolbar').classList.toggle('on', on);
+}
+const moreBtn = document.getElementById('more-btn');
+moreBtn.addEventListener('click', () => {
+  const open = document.body.classList.toggle('show-more');
+  moreBtn.textContent = open ? 'Hide map and statistics' : 'Show map and statistics';
+  moreBtn.setAttribute('aria-expanded', String(open));
+});
 
 // ---------- hospital layout ----------
 const WARDS = [
@@ -371,7 +398,7 @@ function renderMappingUI() {
   const locIdx = colRoles.indexOf('Location');
   if (locIdx >= 0) {
     const distinct = [...new Set(csvRows.map(r => r[locIdx]))];
-    html += '<div style="font-size:10.5px;color:#5b6d72;margin-bottom:4px">Map location values to ward + bed</div><div id="loc-map-list">';
+    html += '<div style="font-size:14px;color:#4a5c61;margin-bottom:4px">Map location values to ward + bed</div><div id="loc-map-list">';
     distinct.forEach(val => {
       const guess = locMap[val] || guessLocation(val) || { wardId: WARDS[0].id, bedIndex: 0 };
       locMap[val] = guess;
@@ -428,7 +455,7 @@ function buildTimeline() {
   const actorSelect = document.getElementById('actor-select');
   actorSelect.disabled = false;
   actorSelect.innerHTML = [...DATASET.keys()].map(a => `<option value="${a}">${a}</option>`).join('');
-  document.getElementById('empty-note').style.display = 'none';
+  document.getElementById('stage').setToolbarVisible(true);
   selectActor([...DATASET.keys()][0]);
 }
 
