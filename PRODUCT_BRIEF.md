@@ -18,10 +18,10 @@ Open the page. Press "Load sample data". Press "Build timeline". Press play.
 ## What is still missing before it can go public
 1. A clinician check of the discovered process (graph node N16). Not done. Nothing here is checked against a real clinician.
 2. A first run on a user's own data, after information-governance approval (N17). Not done, by design.
-3. The CEO's decision on showcase tier (below) and his OK on the post text (post 26 Jan 2027, draft).
+3. The owner's decision on showcase tier (below) and the owner's OK on the post text (post 26 Jan 2027, draft).
 4. Security scan tools (ruff, bandit, gitleaks) are not installed here, so the release check shows them as unknown.
 5. Short video for the post exists (marketing/); it needs the usual quality gate.
-6. Remote state: a public repo (mmonfar/hospital-ward-process-mining) exists and local is level with it. Any push needs the CEO.
+6. Remote state: a public repo (mmonfar/hospital-ward-process-mining) exists and local is level with it. Any push needs the owner.
 
 ## Showcase tier: recommendation
 Recommend **video-only first, live demo second**.
