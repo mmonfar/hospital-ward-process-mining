@@ -98,7 +98,7 @@
     #floormap, #actor-panel { display: none; }
     body.show-more #floormap, body.show-more #actor-panel { display: block; }
     #bottom { flex-direction: column; align-items: stretch; padding: 0 20px 16px 20px; gap: 8px; }
-    #log-panel { width: auto; max-height: 70px; }
+    #log-panel { display: none; }
   }
 </style>
 </head>
@@ -169,7 +169,7 @@ await stage.ready;
 // Download buttons: hidden until data is loaded, moved to the top right so they never sit over the playback bar.
 {
   const st = document.createElement('style');
-  st.textContent = '.toolbar{display:none;top:16px;bottom:auto;flex-wrap:wrap;justify-content:flex-end;max-width:60vw}.toolbar.on{display:flex}.toolbar button{font-size:14px;padding:10px 12px}.note{font-size:14px !important;color:#4a5c61 !important}@media(max-width:700px){.note,.toolbar,.toolbar.on{display:none !important}}';
+  st.textContent = '.toolbar{display:none;top:16px;bottom:auto;flex-wrap:wrap;justify-content:flex-end;max-width:60vw}.toolbar.on{display:flex}.toolbar button{font-size:14px;padding:10px 12px}.note{font-size:14px !important;color:#4a5c61 !important;left:380px !important;bottom:110px !important}@media(max-width:700px){.note,.toolbar,.toolbar.on{display:none !important}}';
   stage.shadowRoot.appendChild(st);
   stage.setToolbarVisible = (on) => stage.shadowRoot.querySelector('.toolbar').classList.toggle('on', on);
 }
