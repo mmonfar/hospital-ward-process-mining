@@ -1,5 +1,11 @@
 # Hospital ward process mining model
 
+**Clinician walking distance** (the ward viewer): how far, in metres, and for how long, in minutes, clinicians walk between wards. See [`PRODUCT_BRIEF.md`](PRODUCT_BRIEF.md).
+
+![Ward viewer on a desktop screen: a 3D ward room, a left panel with "Load sample data", and a timeline bar. Screenshot with synthetic data.](docs/screenshots/readme_desktop.png)
+
+![Ward viewer on a phone (390 px wide): title, one main button "Load sample data", and the play bar. Screenshot with synthetic data.](docs/screenshots/readme_phone.png)
+
 Measuring motion waste and finding **MDT synchronisation opportunities** from
 hospital ward event logs.
 

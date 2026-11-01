@@ -30,10 +30,10 @@
   a { color: #16777a; } a:hover { color: #106064; }
   #ui { position: fixed; inset: 0; pointer-events: none; z-index: 10; display: flex; flex-direction: column; justify-content: space-between; }
   #header { pointer-events: auto; padding: 16px 20px 0 20px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
-  #title-block h1 { margin: 0; font-size: 17px; font-weight: 700; color: #1c2b30; letter-spacing: -0.01em; }
+  #title-block h1 { margin: 0; font-size: 17px; font-weight: 700; color: #17242B; letter-spacing: -0.01em; }
   #title-block p { margin: 3px 0 0 0; font-size: 14px; color: #4a5c61; max-width: 760px; line-height: 1.4; }
   .panel { pointer-events: auto; background: rgba(255,255,255,0.95); backdrop-filter: blur(6px); border-radius: 10px; box-shadow: 0 2px 12px rgba(20,40,40,0.1); }
-  #left-col { position: fixed; left: 20px; top: 118px; bottom: 20px; width: 320px; display: flex; flex-direction: column; gap: 12px; pointer-events: none; overflow-y: auto; }
+  #left-col { position: fixed; left: 20px; top: 156px; bottom: 20px; width: 320px; display: flex; flex-direction: column; gap: 12px; pointer-events: none; overflow-y: auto; }
   #left-col .panel { pointer-events: auto; padding: 12px; }
   #floormap h2, #import-panel h2, #actor-panel h2 { margin: 0 0 8px 0; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #4a5c61; }
   .floor-row { margin-bottom: 8px; }
@@ -46,7 +46,7 @@
   #import-panel { font-size: 14px; }
 #floormap, #actor-panel, #import-panel { flex: none; }
   #import-panel button, #actor-panel select, #import-panel select { font-family: inherit; }
-  .btn { appearance: none; border: none; border-radius: 7px; background: #16777a; color: #fff; font-size: 14px; font-weight: 600; padding: 7px 10px; cursor: pointer; }
+  .btn { appearance: none; border: none; border-radius: 7px; background: #008080; color: #fff; font-size: 14px; font-weight: 600; padding: 7px 10px; cursor: pointer; }
   .btn:hover { background: #106064; }
   .btn.secondary { background: #eef1f0; color: #26333a; border: 1px solid rgba(20,40,40,0.14); }
   .btn.secondary:hover { background: #e2e8e6; }
@@ -87,6 +87,9 @@
   #log-panel:empty { display: none; }
   .btn.primary { width: 100%; padding: 12px 10px; font-size: 16px; }
   #title-block .disclaimer { font-size: 14px; color: #4a5c61; margin-top: 2px; }
+  #title-block .foot { font-size: 14px; color: #4a5c61; margin-top: 4px; }
+  #title-block .foot b { color: #17242B; letter-spacing: 0.01em; }
+  #title-block .foot i { display: inline-block; width: 0.11em; min-width: 2px; height: 0.11em; min-height: 2px; background: #008080; margin-left: 1px; }
   #more-btn { display: none; pointer-events: auto; }
   @media (max-width: 700px) {
     #title-block h1 { font-size: 20px; }
@@ -108,8 +111,9 @@
   <div id="header">
     <div id="title-block">
       <h1>Clinician walking distance</h1>
-      <p><strong>Step 1:</strong> press "Load sample data" (left). <strong>Step 2:</strong> press "Build timeline". <strong>Step 3:</strong> press play (bottom) to watch how far, and how long, clinicians walk between wards.</p>
+      <p>Shows how far, in metres, and for how long, in minutes, clinicians walk between wards. <strong>Step 1:</strong> press "Load sample data". Then "Build timeline", then play.</p>
       <p class="disclaimer">Demonstration tool on synthetic data. Not a medical device.</p>
+      <p class="foot"><b>mmonfar</b><i></i> · Code AGPL-3.0, commercial licence on request · Content CC BY-NC 4.0 · Independent personal project, not affiliated with any employer. Views are my own.</p>
     </div>
   </div>
 
@@ -165,7 +169,7 @@ await stage.ready;
 // Download buttons: hidden until data is loaded, moved to the top right so they never sit over the playback bar.
 {
   const st = document.createElement('style');
-  st.textContent = '.toolbar{display:none;top:16px;bottom:auto;flex-wrap:wrap;justify-content:flex-end;max-width:60vw}.toolbar.on{display:flex}.toolbar button{font-size:14px;padding:10px 12px}.note{font-size:14px !important;color:#4a5c61 !important}@media(max-width:700px){.note{display:none}}';
+  st.textContent = '.toolbar{display:none;top:16px;bottom:auto;flex-wrap:wrap;justify-content:flex-end;max-width:60vw}.toolbar.on{display:flex}.toolbar button{font-size:14px;padding:10px 12px}.note{font-size:14px !important;color:#4a5c61 !important}@media(max-width:700px){.note,.toolbar,.toolbar.on{display:none !important}}';
   stage.shadowRoot.appendChild(st);
   stage.setToolbarVisible = (on) => stage.shadowRoot.querySelector('.toolbar').classList.toggle('on', on);
 }
@@ -455,6 +459,7 @@ function buildTimeline() {
   const actorSelect = document.getElementById('actor-select');
   actorSelect.disabled = false;
   actorSelect.innerHTML = [...DATASET.keys()].map(a => `<option value="${a}">${a}</option>`).join('');
+  mappingArea.innerHTML = '';  // column mapping is done: free the space for the scene
   document.getElementById('stage').setToolbarVisible(true);
   selectActor([...DATASET.keys()][0]);
 }
