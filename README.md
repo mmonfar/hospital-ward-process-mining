@@ -68,6 +68,8 @@ python -m hwpm.cli govern budget --by-model
 python -m pytest -q
 ```
 
+Last full test run (8 Nov 2026, benchmarks excluded): **403 passed, 4 skipped, 0 failed**. See [`docs/QA-RUN-2026-11.md`](docs/QA-RUN-2026-11.md).
+
 ### Viewer demo
 
 ```bash
