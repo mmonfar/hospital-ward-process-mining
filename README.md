@@ -151,3 +151,7 @@ Built with AI assistance (Claude); all code and claims reviewed by the author. S
 ## Independence and data notice
 
 **Independence and data notice.** This is a personal project, developed independently in my own time and on my own equipment. It is not affiliated with, endorsed by, or representative of my employer or any other organisation. It contains no employer data, systems, code or confidential information. All data in this repository is synthetic or fictitious, and any resemblance to real patients, staff or events is coincidental. Views are my own.
+
+## Author
+
+Built by Martin Monteagudo Farina. More open hospital tools and contact: [mmonfar.com](https://mmonfar.com/)
